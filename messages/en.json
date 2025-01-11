@@ -1,0 +1,9 @@
+{
+    "Post": {
+        "comment": "Comment",
+        "share": "Share",
+        "comments": "comments",
+        "shares": "shares",
+        "writeComment": "Write comment"
+    }
+}

@@ -1,0 +1,107 @@
+.images-layout {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.images-layout.layout-1 {
+    grid: auto;
+}
+
+.images-layout.layout-1 .image-wrapper {
+    border-radius: 1rem;
+}
+
+.images-layout.layout-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.images-layout.layout-2 .image-wrapper:first-child {
+    border-top-left-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+}
+
+.images-layout.layout-2 .image-wrapper:last-child {
+    border-top-right-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+}
+
+.images-layout.layout-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.images-layout.layout-3 .image-wrapper:first-child {
+    grid-area: 1 / 1 / span 2 / span 1;
+    aspect-ratio: unset;
+    border-top-left-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+}
+
+.images-layout.layout-3 .image-wrapper:nth-child(2) {
+    border-top-right-radius: 1rem;
+}
+
+.images-layout.layout-3 .image-wrapper:last-child {
+    border-bottom-right-radius: 1rem;
+}
+
+.images-layout.layout-4 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.images-layout.layout-4 .image-wrapper:first-child {
+    border-top-left-radius: 1rem;
+}
+
+.images-layout.layout-4 .image-wrapper:nth-child(2) {
+    border-top-right-radius: 1rem;
+}
+
+.images-layout.layout-4 .image-wrapper:nth-child(3) {
+    border-bottom-left-radius: 1rem;
+}
+
+.images-layout.layout-4 .image-wrapper:last-child {
+    border-bottom-right-radius: 1rem;
+}
+
+.images-layout.layout-remaining {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.images-layout.layout-remaining .image-wrapper:first-child {
+    border-top-left-radius: 1rem;
+}
+
+.images-layout.layout-remaining .image-wrapper:nth-child(2) {
+    border-top-right-radius: 1rem;
+}
+
+.images-layout.layout-remaining .image-wrapper:nth-child(3) {
+    border-bottom-left-radius: 1rem;
+}
+
+.overlay {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    border-bottom-right-radius: 1rem;
+}
+
+.image-wrapper {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid #ececec;
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
