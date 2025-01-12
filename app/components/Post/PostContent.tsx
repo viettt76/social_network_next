@@ -40,7 +40,7 @@ export default function PostContent({
                     height={32}
                 />
                 <div>
-                    <div className="text-primary">
+                    <div className="text-foreground">
                         {postInfo.creatorInfo.lastName} {postInfo.creatorInfo.firstName}
                     </div>
                     <div className="text-gray text-xs">6 ngày trước</div>
