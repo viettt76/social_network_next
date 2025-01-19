@@ -6,6 +6,7 @@ import { getMessages } from 'next-intl/server';
 import { Locale } from '@/i18n/routing';
 import { NextIntlClientProvider } from 'next-intl';
 import Header from '@/app/components/Header';
+import AuthProvider from '@/app/[locale]/AuthProvider';
 import 'react-photo-view/dist/react-photo-view.css';
 
 const geistSans = Geist({
@@ -36,12 +37,14 @@ export default async function RootLayout({
         <html lang={locale}>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <ThemeProviderWrapper>
-                    <NextIntlClientProvider messages={messages}>
-                        <div id="root">
-                            <Header />
-                            {children}
-                        </div>
-                    </NextIntlClientProvider>
+                    <AuthProvider>
+                        <NextIntlClientProvider messages={messages}>
+                            <div id="root">
+                                <Header />
+                                {children}
+                            </div>
+                        </NextIntlClientProvider>
+                    </AuthProvider>
                 </ThemeProviderWrapper>
             </body>
         </html>

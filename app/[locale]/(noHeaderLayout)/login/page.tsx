@@ -1,34 +1,24 @@
 'use client';
 
-import { LockKeyhole, User } from 'lucide-react';
+import { Eye, EyeSlash, LockKey, User } from '@phosphor-icons/react';
 import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Link, useRouter } from '@/i18n/routing';
+import { loginService } from '@/lib/services/authService';
+import { AxiosError } from 'axios';
+import { useState } from 'react';
 
 const formSchema = z.object({
-    username: z
-        .string()
-        .min(6, {
-            message: 'Username must be at least 6 characters.',
-        })
-        .max(30, {
-            message: 'Username must not exceed 30 characters',
-        }),
-    password: z
-        .string()
-        .min(2, {
-            message: 'Password must be at least 2 characters.',
-        })
-        .max(32, {
-            message: 'Password must not exceed 32 characters',
-        })
-        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
-        .regex(/[a-z]/, 'Password must contain at least one lowercase letter.')
-        .regex(/\d/, 'Password must contain at least one number.')
-        .regex(/[@$!%*?&]/, 'Password must contain at least one special character (@$!%*?&).'),
+    username: z.string().min(1, {
+        message: 'Please type your username.',
+    }),
+    password: z.string().min(1, {
+        message: 'Please type your password',
+    }),
 });
 
 export default function Login() {
@@ -40,15 +30,36 @@ export default function Login() {
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
-    }
+    const router = useRouter();
+
+    const [isShowPassword, setIsShowPassword] = useState(false);
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        try {
+            await loginService(values);
+            router.push('/');
+        } catch (error) {
+            form.setError('password', {
+                type: 'manual',
+                message: error instanceof AxiosError && error.response?.data?.message,
+            });
+            console.log(error);
+        }
+    };
 
     return (
         <div className="h-screen w-screen bg-input flex justify-center items-center">
             <div className="bg-background w-[40rem] -translate-y-10 flex min-h-96 rounded-lg">
                 <div className="flex-1 flex flex-col justify-center items-center relative">
-                    <Image className="absolute top-4 left-6" src="/images/logo.png" width={60} height={60} alt="logo" />
+                    <Image
+                        className="absolute top-4 left-6"
+                        priority
+                        src="/images/logo.png"
+                        width={60}
+                        height={60}
+                        alt="logo"
+                    />
+                    <Link href="/profile">CLick</Link>
                     <div className="text-3xl text-center">
                         Welcome to <span className="text-primary">Heyoy</span>
                     </div>
@@ -84,13 +95,18 @@ export default function Login() {
                                     <FormItem className="w-4/5">
                                         <FormControl className="w-4/5">
                                             <div className="w-full border-b pb-2 flex items-center mt-3">
-                                                <LockKeyhole className="w-5 h-5 me-2" />
+                                                <LockKey className="w-5 h-5 me-2" />
                                                 <input
-                                                    type="password"
+                                                    type={isShowPassword ? 'text' : 'password'}
                                                     className="w-4/5 p-0 border-none outline-none focus:shadow-none focus:ring-transparent"
                                                     placeholder="Type your password"
                                                     {...field}
                                                 />
+                                                {isShowPassword ? (
+                                                    <EyeSlash onClick={() => setIsShowPassword(false)} />
+                                                ) : (
+                                                    <Eye onClick={() => setIsShowPassword(true)} />
+                                                )}
                                             </div>
                                         </FormControl>
                                         <FormMessage />
@@ -98,8 +114,14 @@ export default function Login() {
                                 )}
                             />
                             <Button className="w-3/5 mt-6 py-1 bg-primary text-background rounded-full" type="submit">
-                                Submit
+                                Login
                             </Button>
+                            <div className="text-sm mt-2">
+                                Bạn chưa có tài khoản?
+                                <Link href="signup" className="text-primary ms-1">
+                                    Đăng ký
+                                </Link>
+                            </div>
                         </form>
                     </Form>
                 </div>

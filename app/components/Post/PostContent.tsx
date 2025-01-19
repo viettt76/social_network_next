@@ -3,11 +3,11 @@
 import Image from 'next/image';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { LikeIcon, LoveIcon, LoveLoveIcon, HaHaIcon, WowIcon, SadIcon, AngryIcon } from '@/app/components/Icons';
-import { MessageCircle, MessageSquareMore, Share, SquareArrowOutUpRight } from 'lucide-react';
+import { ChatCircle, ChatCircleDots, Share, ShareFat } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import styles from './Post.module.css';
 import clsx from 'clsx';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { PostInfoType } from '@/app/dataType';
 
 export default function PostContent({
@@ -36,8 +36,8 @@ export default function PostContent({
                     className="rounded-full w-10 h-10 me-2"
                     src="/images/default-avatar.png"
                     alt="avatar"
-                    width={32}
-                    height={32}
+                    width={800}
+                    height={800}
                 />
                 <div>
                     <div className="text-foreground">
@@ -85,7 +85,7 @@ export default function PostContent({
                 </div>
                 <div className="flex items-center">
                     <div className="flex items-center group cursor-pointer" onClick={handleShowDialogPost}>
-                        <MessageCircle className="w-4 h-4" />
+                        <ChatCircleDots className="w-4 h-4" />
                         <span className="text-gray ms-1 text-sm group-hover:underline">0 {t('Post.comments')}</span>
                     </div>
                     <div className="flex items-center ms-4 group cursor-pointer">
@@ -127,11 +127,11 @@ export default function PostContent({
                     className="flex-1 flex justify-center items-center py-2 hover:bg-input rounded-2xl cursor-pointer"
                     onClick={handleShowDialogPost}
                 >
-                    <MessageSquareMore className="w-5 h-5" />
+                    <ChatCircle className="w-5 h-5" />
                     <span className="text-gray ms-1 text-md">{t('Post.comment')}</span>
                 </div>
                 <div className="flex-1 flex justify-center items-center py-2 hover:bg-input rounded-2xl cursor-pointer">
-                    <SquareArrowOutUpRight className="w-5 h-5" />
+                    <ShareFat className="w-5 h-5" />
                     <span className="text-gray ms-1 text-md">{t('Post.share')}</span>
                 </div>
             </div>
