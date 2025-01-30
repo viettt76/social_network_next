@@ -23,12 +23,12 @@ const Comment = ({ comment }: { comment: CommentType }) => {
                     {comment.commenterInfo.lastName} {comment.commenterInfo.firstName}
                 </div>
                 {comment.content && <div className="text-sm">{comment.content}</div>}
-                {comment.picture && (
+                {comment.image && (
                     <PhotoProvider>
-                        <PhotoView src={comment.picture}>
+                        <PhotoView src={comment.image}>
                             <Image
                                 className="object-container h-40 w-fit rounded-xl"
-                                src={comment.picture}
+                                src={comment.image}
                                 width={800}
                                 height={800}
                                 alt=""
@@ -65,7 +65,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                 avatar: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
             },
             content: 'Chào mọi người',
-            picture: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
+            image: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
             commentChild: [
                 {
                     commentId: '3',
@@ -76,8 +76,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                         avatar: '/images/default-avatar.png',
                     },
                     content: 'Chào Việt',
-                    picture:
-                        'https://cdn.donmai.us/sample/27/08/__kamisato_ayaka_genshin_impact_drawn_by_re0n__sample-270877f9d8f1c566c1a9e245b4890ffc.jpg',
+                    image: 'https://cdn.donmai.us/sample/27/08/__kamisato_ayaka_genshin_impact_drawn_by_re0n__sample-270877f9d8f1c566c1a9e245b4890ffc.jpg',
                     commentChild: [
                         {
                             commentId: '4',
@@ -88,8 +87,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                                 avatar: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
                             },
                             content: 'Hi',
-                            picture:
-                                'https://th.bing.com/th/id/OIP.2Cp3FVsgVWkcDTwBeEdnuQHaHa?w=1536&h=1536&rs=1&pid=ImgDetMain',
+                            image: 'https://th.bing.com/th/id/OIP.2Cp3FVsgVWkcDTwBeEdnuQHaHa?w=1536&h=1536&rs=1&pid=ImgDetMain',
                         },
                     ],
                 },
@@ -104,14 +102,14 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                 avatar: '/images/default-avatar.png',
             },
             content: 'Chào mọi người',
-            picture: 'https://img3.thuthuatphanmem.vn/uploads/2019/06/13/anh-nen-anime-cho-may-tinh-dep_095239016.jpg',
+            image: 'https://img3.thuthuatphanmem.vn/uploads/2019/06/13/anh-nen-anime-cho-may-tinh-dep_095239016.jpg',
         },
     ]);
 
     return (
         <div className="bg-background rounded-xl px-2 py-2 mb-4">
             <PostContent postInfo={postInfo} handleShowDialogPost={handleShowDialogPost} />
-            <Modal className="bg-foreground/40" dismissible show={isShowPostDialog} onClose={handleHideDialogPost}>
+            <Modal className="bg-foreground/50" dismissible show={isShowPostDialog} onClose={handleHideDialogPost}>
                 <Modal.Body className="p-4">
                     <PostContent postInfo={postInfo} handleShowDialogPost={handleShowDialogPost} />
                     <div className="border-t pt-1">

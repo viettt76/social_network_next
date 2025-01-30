@@ -72,10 +72,8 @@ export default function Signup() {
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
-            if (router) {
-                await signUpService(values);
-                router.push('login');
-            }
+            await signUpService(values);
+            router.push('login');
         } catch (error) {
             if (error instanceof AxiosError && error?.response?.data.message === 'Username already exists') {
                 form.setError('username', {

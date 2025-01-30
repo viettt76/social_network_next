@@ -7,7 +7,6 @@ import { ChatCircle, ChatCircleDots, Share, ShareFat } from '@phosphor-icons/rea
 import { useTranslations } from 'next-intl';
 import styles from './Post.module.css';
 import clsx from 'clsx';
-import { Link } from '@/i18n/routing';
 import { PostInfoType } from '@/app/dataType';
 
 export default function PostContent({
@@ -22,11 +21,11 @@ export default function PostContent({
     const maxVisibleImages = 4;
     let visibleImages;
     let remainingImages = 0;
-    if (postInfo.pictures && postInfo.pictures.length > maxVisibleImages) {
-        visibleImages = postInfo.pictures.slice(0, maxVisibleImages - 1);
-        remainingImages = postInfo.pictures.length - maxVisibleImages + 1;
-    } else if (postInfo.pictures) {
-        visibleImages = [...postInfo.pictures];
+    if (postInfo.images && postInfo.images.length > maxVisibleImages) {
+        visibleImages = postInfo.images.slice(0, maxVisibleImages);
+        remainingImages = postInfo.images.length - maxVisibleImages + 1;
+    } else if (postInfo.images) {
+        visibleImages = [...postInfo.images];
     }
 
     return (
@@ -46,35 +45,35 @@ export default function PostContent({
                     <div className="text-gray text-xs">6 ngày trước</div>
                 </div>
             </div>
-            <div className="mt-2">{postInfo.content}</div>
+            {postInfo.content && <div className="mt-2" dangerouslySetInnerHTML={{ __html: postInfo.content }}></div>}
             {visibleImages && (
                 <PhotoProvider>
                     <div
-                        className={clsx(styles['images-layout'], {
+                        className={clsx('mt-2', styles['images-layout'], {
                             [styles[`layout-${visibleImages?.length}`]]: remainingImages <= 0,
                             [styles[`layout-remaining`]]: remainingImages > 0,
                         })}
                     >
-                        {visibleImages?.map((img, i) => {
+                        {postInfo.images?.map((img: string, index: number) => {
                             return (
-                                <PhotoView key={`picture-${i}`} src={img}>
+                                <PhotoView key={`image-${index}`} src={img}>
                                     <div className={clsx(styles['image-wrapper'])}>
-                                        <Image
-                                            className={clsx(styles['image'])}
-                                            src={img}
-                                            alt="image"
-                                            width={8000}
-                                            height={8000}
-                                        />
+                                        {index <= 3 &&
+                                            (remainingImages > 0 && index === 3 ? (
+                                                <div className={clsx(styles['overlay'])}>+{remainingImages}</div>
+                                            ) : (
+                                                <Image
+                                                    className={clsx(styles['image'])}
+                                                    src={img}
+                                                    alt="image"
+                                                    width={8000}
+                                                    height={8000}
+                                                />
+                                            ))}
                                     </div>
                                 </PhotoView>
                             );
                         })}
-                        {remainingImages > 0 && (
-                            <Link href={''} tabIndex={-1} className={clsx(styles['overlay'])}>
-                                +{remainingImages}
-                            </Link>
-                        )}
                     </div>
                 </PhotoProvider>
             )}

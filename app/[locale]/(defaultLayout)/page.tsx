@@ -4,58 +4,90 @@ import Post from '@/app/components/Post';
 import Sidebar from '@/app/components/Sidebar';
 import SuggestionsPanel from '@/app/components/SuggestionsPanel';
 import { PostInfoType } from '@/app/dataType';
-import { useState } from 'react';
+import WritePost from '@/app/components/WritePost';
+import { getPostsService } from '@/lib/services/postService';
+import { Link } from '@/i18n/routing';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
-    const [posts, setPosts] = useState<PostInfoType[]>([
-        {
-            postId: '1',
-            creatorInfo: {
-                userId: '1',
-                firstName: 'Vân',
-                lastName: 'Vũ',
-                avatar: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
+    const [posts, setPosts] = useState<PostInfoType[]>([]);
+    const observerTarget = useRef(null);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [isNoNewPost, setIsNoNewPost] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            const res = await getPostsService(page);
+            if (res.data.length > 0) {
+                setPosts((prev) => [
+                    ...prev,
+                    ...res.data.map((post: any) => ({
+                        postId: post.postId,
+                        creatorInfo: post.posterInfo,
+                        content: post.content,
+                        images: post.pictures.map((picture: any) => picture.pictureUrl),
+                        createdAt: post.createdAt,
+                    })),
+                ]);
+                setLoading(false);
+            } else {
+                setIsNoNewPost(true);
+            }
+        })();
+    }, [page]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !loading) {
+                    setPage((prev) => prev + 1);
+                }
             },
-            content: `Lưu ý: Bật unoptimized sẽ tắt toàn bộ tối ưu hóa hình ảnh của Next.js, khiến ứng dụng không sử dụng CDN
-                của Next.js cho hình ảnh. Với cách sử dụng fill, bạn có thể vừa giữ được tính năng tối ưu của Next.js,
-                vừa tránh phải đặt thủ công width và height.`,
-            pictures: [
-                'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
-                '/images/logo.png',
-                '/images/default-avatar.png',
-                '/images/default-avatar.png',
-                '/images/default-avatar.png',
-            ],
-        },
-        {
-            postId: '2',
-            creatorInfo: {
-                userId: '1',
-                firstName: 'Vân',
-                lastName: 'Vũ',
-                avatar: 'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
-            },
-            content: `Lưu ý: Bật unoptimized sẽ tắt toàn bộ tối ưu hóa hình ảnh của Next.js, khiến ứng dụng không sử dụng CDN
-                của Next.js cho hình ảnh. Với cách sử dụng fill, bạn có thể vừa giữ được tính năng tối ưu của Next.js,
-                vừa tránh phải đặt thủ công width và height.`,
-            pictures: [
-                'https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg',
-                '/images/logo.png',
-                '/images/default-avatar.png',
-                '/images/default-avatar.png',
-                '/images/default-avatar.png',
-            ],
-        },
-    ]);
+            { threshold: 0.5 },
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [loading]);
 
     return (
         <div className="bg-secondary">
             <div className="flex max-w-[1024px] mx-auto relative gap-x-6 pt-2">
                 <Sidebar />
-                <div className="h-[3000px] flex-1">
-                    {posts.map((post: PostInfoType) => (
-                        <Post key={`post-${post.postId}`} postInfo={post} />
-                    ))}
+                <div className="flex-1">
+                    <WritePost />
+                    <div className="mt-3">
+                        {posts.length > 0 ? (
+                            <>
+                                {posts.map((post: PostInfoType) => (
+                                    <Post key={`post-${post.postId}`} postInfo={post} />
+                                ))}
+                                {isNoNewPost && (
+                                    <Link
+                                        href="/friends/suggestions"
+                                        className="text-sm text-primary block text-center underline"
+                                    >
+                                        Hãy kết bạn thêm để xem nhiều bài viết hơn
+                                    </Link>
+                                )}
+                                <div ref={observerTarget} className="h-20"></div>
+                            </>
+                        ) : (
+                            !loading && (
+                                <Link
+                                    href="/friends/suggestions"
+                                    className="text-sm text-primary block text-center underline"
+                                >
+                                    Hãy kết bạn thêm để xem nhiều bài viết hơn
+                                </Link>
+                            )
+                        )}
+                    </div>
                 </div>
                 <SuggestionsPanel />
             </div>

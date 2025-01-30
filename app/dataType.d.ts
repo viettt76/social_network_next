@@ -9,13 +9,14 @@ export type PostInfoType = {
     postId: string;
     creatorInfo: UserInfoType;
     content?: string;
-    pictures?: string[];
+    images?: string[];
+    createdAt: Date;
 };
 
 export type CommentType = {
     commentId: string;
     commenterInfo: UserInfoType;
     content?: string;
-    picture?: string;
+    image?: string;
     commentChild?: CommentType[];
 };

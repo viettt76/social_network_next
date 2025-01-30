@@ -7,8 +7,17 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
     /* config options here */
     images: {
-        domains: ['kynguyenlamdep.com', 'img3.thuthuatphanmem.vn', 'cdn.donmai.us', 'th.bing.com'],
+        domains: [
+            'kynguyenlamdep.com',
+            'img3.thuthuatphanmem.vn',
+            'cdn.donmai.us',
+            'th.bing.com',
+            'khoinguonsangtao.vn',
+            'bedental.vn',
+            'demoda.vn',
+        ],
     },
+    reactStrictMode: false,
 };
 
 export default withNextIntl(nextConfig);

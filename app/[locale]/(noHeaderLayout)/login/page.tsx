@@ -59,7 +59,6 @@ export default function Login() {
                         height={60}
                         alt="logo"
                     />
-                    <Link href="/profile">CLick</Link>
                     <div className="text-3xl text-center">
                         Welcome to <span className="text-primary">Heyoy</span>
                     </div>

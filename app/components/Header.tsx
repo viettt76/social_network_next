@@ -25,6 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { resetInfo } from '@/lib/features/users/usersSlice';
 import { logoutService } from '@/lib/services/authService';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Header() {
     const { theme, setTheme } = useTheme();
@@ -32,12 +33,31 @@ export default function Header() {
     const { toast } = useToast();
     const router = useRouter();
 
+    const [width, setWidth] = useState(0);
+    const parentRef = useRef<HTMLDivElement | null>(null);
+    const headerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const updateWidth = () => {
+            if (parentRef.current && headerRef.current) {
+                setWidth(parentRef.current.offsetWidth);
+            }
+        };
+
+        window.addEventListener('resize', updateWidth);
+        updateWidth();
+
+        return () => {
+            window.removeEventListener('resize', updateWidth);
+        };
+    }, []);
+
     const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
     const handleLogout = async () => {
         try {
-            dispatch(resetInfo());
             await logoutService();
+            dispatch(resetInfo());
             router.push('/login');
         } catch (error) {
             toast({
@@ -48,8 +68,8 @@ export default function Header() {
     };
 
     return (
-        <div>
-            <div className="h-16 bg-background shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div ref={parentRef} className="w-full relative">
+            <div ref={headerRef} className="h-16 bg-background shadow-sm fixed top-0 left-0 z-50" style={{ width }}>
                 <div className="max-w-[1024px] h-full mx-auto flex items-center gap-x-6">
                     <div className="w-64">
                         <Link href="/">
@@ -81,9 +101,11 @@ export default function Header() {
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuLabel>
+                                    <Link href="/profile">My Account</Link>
+                                </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout}>
+                                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                                     <SignOut />
                                     Log out
                                 </DropdownMenuItem>

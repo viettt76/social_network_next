@@ -16,7 +16,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         (async () => {
             try {
                 const res = await getMyInfoService();
-                storeRef.current?.dispatch(setInfo(res));
+                storeRef.current?.dispatch(setInfo(res.data));
             } catch (error) {
                 console.log(error);
             } finally {

@@ -8,6 +8,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import Header from '@/app/components/Header';
 import AuthProvider from '@/app/[locale]/AuthProvider';
 import 'react-photo-view/dist/react-photo-view.css';
+import 'draft-js/dist/Draft.css';
+import ScrollToTop from '@/app/components/ScrollToTop';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -36,16 +38,17 @@ export default async function RootLayout({
     return (
         <html lang={locale}>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ThemeProviderWrapper>
-                    <AuthProvider>
+                <AuthProvider>
+                    <ThemeProviderWrapper>
+                        <ScrollToTop />
                         <NextIntlClientProvider messages={messages}>
                             <div id="root">
                                 <Header />
                                 {children}
                             </div>
                         </NextIntlClientProvider>
-                    </AuthProvider>
-                </ThemeProviderWrapper>
+                    </ThemeProviderWrapper>
+                </AuthProvider>
             </body>
         </html>
     );
