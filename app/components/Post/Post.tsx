@@ -1,12 +1,14 @@
 'use client';
 
-import { CommentType, PostInfoType } from '@/app/dataType';
-import { useState } from 'react';
+import { CommentType, PostInfoType, PostReactionNameType, PostReactionType } from '@/app/dataType';
+import { useEffect, useState } from 'react';
 import PostContent from './PostContent';
 import { Modal } from 'flowbite-react';
 import Image from 'next/image';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useTranslations } from 'next-intl';
+import { groupBy, sortBy } from 'lodash';
+import { socket } from '@/lib/socket';
 
 const Comment = ({ comment }: { comment: CommentType }) => {
     return (
@@ -106,12 +108,62 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         },
     ]);
 
+    const [postReactions, setPostReactions] = useState<PostReactionType[]>(postInfo.reactions);
+    const [mostReactions, setMostReactions] = useState<PostReactionNameType[]>([]);
+    const [currentReaction, setCurrentReaction] = useState<PostReactionNameType | null>(null);
+
+    useEffect(() => {
+        const _reactions = groupBy(postReactions, 'reactionType');
+        const mostReactions = sortBy(_reactions, 'length').reverse();
+
+        if (mostReactions.length > 0) {
+            setMostReactions([mostReactions[0][0].reactionType]);
+            if (mostReactions.length > 1) {
+                setMostReactions((prev) => [...prev, mostReactions[1][0].reactionType]);
+            }
+        } else {
+            setMostReactions([]);
+        }
+    }, [postReactions]);
+
+    useEffect(() => {
+        if (postInfo.currentReactionType) setCurrentReaction(postInfo.currentReactionType);
+    }, [postInfo.currentReactionType]);
+
+    useEffect(() => {
+        const handleNewReactions = ({ postId, newReactions }: { postId: string; newReactions: PostReactionType[] }) => {
+            if (postInfo.postId === postId) {
+                setPostReactions(newReactions);
+            }
+        };
+
+        socket.on('reactToPost', handleNewReactions);
+
+        return () => {
+            socket.off('reactToPost', handleNewReactions);
+        };
+    }, [postInfo.postId]);
+
     return (
         <div className="bg-background rounded-xl px-2 py-2 mb-4">
-            <PostContent postInfo={postInfo} handleShowDialogPost={handleShowDialogPost} />
+            <PostContent
+                postInfo={postInfo}
+                postReactions={postReactions}
+                mostReactions={mostReactions}
+                currentReaction={currentReaction}
+                setCurrentReaction={setCurrentReaction}
+                handleShowDialogPost={handleShowDialogPost}
+            />
             <Modal className="bg-foreground/50" dismissible show={isShowPostDialog} onClose={handleHideDialogPost}>
                 <Modal.Body className="p-4">
-                    <PostContent postInfo={postInfo} handleShowDialogPost={handleShowDialogPost} />
+                    <PostContent
+                        postInfo={postInfo}
+                        postReactions={postReactions}
+                        mostReactions={mostReactions}
+                        currentReaction={currentReaction}
+                        setCurrentReaction={setCurrentReaction}
+                        handleShowDialogPost={handleShowDialogPost}
+                    />
                     <div className="border-t pt-1">
                         {comments?.map((comment: CommentType) => (
                             <Comment comment={comment} key={`comment-${comment.commentId}`} />

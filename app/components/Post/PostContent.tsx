@@ -2,18 +2,36 @@
 
 import Image from 'next/image';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
-import { LikeIcon, LoveIcon, LoveLoveIcon, HaHaIcon, WowIcon, SadIcon, AngryIcon } from '@/app/components/Icons';
-import { ChatCircle, ChatCircleDots, Share, ShareFat } from '@phosphor-icons/react';
+import { ChatCircle, ChatCircleDots, Share, ShareFat, ThumbsUp } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import styles from './Post.module.css';
 import clsx from 'clsx';
-import { PostInfoType } from '@/app/dataType';
+import {
+    PostInfoType,
+    PostReactionNameType,
+    PostReactionType,
+    PostReactionTypeColor,
+    PostReactionTypeIcon,
+    PostReactionTypeName,
+} from '@/app/dataType';
+import { reactToPostService } from '@/lib/services/postService';
+import { useAppSelector } from '@/lib/hooks';
+import { selectPostReactionType } from '@/lib/features/reactionType/reactionTypeSlice';
+import { createElement, Dispatch, SetStateAction } from 'react';
 
 export default function PostContent({
     postInfo,
+    postReactions,
+    mostReactions,
+    currentReaction,
+    setCurrentReaction,
     handleShowDialogPost,
 }: {
     postInfo: PostInfoType;
+    postReactions: PostReactionType[];
+    mostReactions: PostReactionNameType[];
+    currentReaction: PostReactionNameType | null;
+    setCurrentReaction: Dispatch<SetStateAction<PostReactionNameType | null>>;
     handleShowDialogPost: () => void;
 }) {
     const t = useTranslations();
@@ -28,6 +46,18 @@ export default function PostContent({
         visibleImages = [...postInfo.images];
     }
 
+    const postReactionType = useAppSelector(selectPostReactionType);
+
+    const handleReactToPost = async (reactionType: PostReactionNameType | null) => {
+        try {
+            setCurrentReaction(reactionType);
+            await reactToPostService({ postId: postInfo.postId, reactionType });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    console.log(mostReactions);
     return (
         <div className="overflow-auto">
             <div className="flex items-center">
@@ -79,8 +109,13 @@ export default function PostContent({
             )}
             <div className="flex justify-between mt-3">
                 <div className="flex items-center">
-                    <LoveIcon />
-                    <span className="text-gray ms-1 text-sm">1</span>
+                    {postReactions.length > 0 && (
+                        <>
+                            {mostReactions.length > 0 && createElement(PostReactionTypeIcon[mostReactions[0]])}
+                            {mostReactions.length > 1 && createElement(PostReactionTypeIcon[mostReactions[1]])}
+                            <span className="text-gray ms-1 text-sm">{postReactions.length}</span>
+                        </>
+                    )}
                 </div>
                 <div className="flex items-center">
                     <div className="flex items-center group cursor-pointer" onClick={handleShowDialogPost}>
@@ -94,31 +129,41 @@ export default function PostContent({
                 </div>
             </div>
             <div className="border-t mt-3 flex">
-                <div className="group flex-1 flex justify-center items-center py-2 hover:bg-input rounded-2xl cursor-pointer relative">
-                    <LoveIcon width={20} height={20} />
-                    <span className="text-gray ms-1 text-md">Haha</span>
-                    <div className="absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full opacity-0 group-hover:opacity-100 group-hover:flex transition-opacity duration-300 ease-in-out ">
-                        <div className="w-7">
-                            <LikeIcon width={28} height={28} />
+                <div className="group flex-1 hover:bg-input rounded-2xl cursor-pointer relative">
+                    {currentReaction ? (
+                        <div
+                            className="flex items-center flex justify-center items-center py-2"
+                            onClick={() => handleReactToPost(null)}
+                        >
+                            {createElement(PostReactionTypeIcon[currentReaction], {
+                                width: 20,
+                                height: 20,
+                            })}
+                            <span className="ms-1 text-md" style={{ color: PostReactionTypeColor[currentReaction] }}>
+                                {PostReactionTypeName[currentReaction]}
+                            </span>
                         </div>
-                        <div className="w-7">
-                            <LoveIcon width={28} height={28} />
+                    ) : (
+                        <div
+                            className="flex items-center flex justify-center items-center py-2"
+                            onClick={() => handleReactToPost('LIKE')}
+                        >
+                            <ThumbsUp className="me-1 text-xl" /> <span className="text-gray text-md">Thích</span>
                         </div>
-                        <div className="w-7">
-                            <LoveLoveIcon width={28} height={28} />
-                        </div>
-                        <div className="w-7">
-                            <HaHaIcon width={28} height={28} />
-                        </div>
-                        <div className="w-7">
-                            <WowIcon width={28} height={28} />
-                        </div>
-                        <div className="w-7">
-                            <SadIcon width={28} height={28} />
-                        </div>
-                        <div className="w-7">
-                            <AngryIcon width={28} height={28} />
-                        </div>
+                    )}
+                    <div className="absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full opacity-0 group-hover:opacity-100 group-hover:flex transition-opacity duration-300 ease-in-out">
+                        {Object.keys(postReactionType).map((reactionType) => {
+                            const Icon = PostReactionTypeIcon[reactionType];
+                            return (
+                                <div
+                                    className="w-7"
+                                    key={reactionType}
+                                    onClick={() => handleReactToPost(reactionType as PostReactionNameType)}
+                                >
+                                    <Icon width={28} height={28} />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

@@ -27,7 +27,18 @@ export default function Home() {
                         postId: post.postId,
                         creatorInfo: post.posterInfo,
                         content: post.content,
+                        currentReactionType: post.currentReactionType,
                         images: post.pictures.map((picture: any) => picture.pictureUrl),
+                        reactions: post.reactions.map((reaction: any) => ({
+                            postReactionId: reaction.id,
+                            reactionType: reaction.reactionType,
+                            userInfo: {
+                                userId: reaction.user.id,
+                                firstName: reaction.user.firstName,
+                                lastName: reaction.user.lastName,
+                                avatar: reaction.user.avatar,
+                            },
+                        })),
                         createdAt: post.createdAt,
                     })),
                 ]);

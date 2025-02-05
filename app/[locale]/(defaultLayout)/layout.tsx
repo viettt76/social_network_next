@@ -10,6 +10,7 @@ import AuthProvider from '@/app/[locale]/AuthProvider';
 import 'react-photo-view/dist/react-photo-view.css';
 import 'draft-js/dist/Draft.css';
 import ScrollToTop from '@/app/components/ScrollToTop';
+import ReactionTypeProviderWrapper from '@/app/components/ReactionTypeProviderWrapper';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -35,19 +36,22 @@ export default async function RootLayout({
 }>) {
     const { locale } = await params;
     const messages = await getMessages();
+
     return (
         <html lang={locale}>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <AuthProvider>
-                    <ThemeProviderWrapper>
-                        <ScrollToTop />
-                        <NextIntlClientProvider messages={messages}>
-                            <div id="root">
-                                <Header />
-                                {children}
-                            </div>
-                        </NextIntlClientProvider>
-                    </ThemeProviderWrapper>
+                    <ReactionTypeProviderWrapper>
+                        <ThemeProviderWrapper>
+                            <ScrollToTop />
+                            <NextIntlClientProvider messages={messages}>
+                                <div id="root">
+                                    <Header />
+                                    {children}
+                                </div>
+                            </NextIntlClientProvider>
+                        </ThemeProviderWrapper>
+                    </ReactionTypeProviderWrapper>
                 </AuthProvider>
             </body>
         </html>

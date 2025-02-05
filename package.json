@@ -30,6 +30,7 @@
         "draft-js": "^0.11.7",
         "draft-js-export-html": "^1.4.1",
         "flowbite-react": "^0.10.2",
+        "lodash": "^4.17.21",
         "lucide-react": "^0.473.0",
         "next": "15.1.4",
         "next-intl": "^3.26.3",
@@ -41,6 +42,7 @@
         "react-photo-view": "^1.2.7",
         "react-redux": "^9.2.0",
         "shadcn-ui": "^0.9.4",
+        "socket.io-client": "^4.8.1",
         "tailwind-merge": "^2.6.0",
         "tailwindcss-animate": "^1.0.7",
         "zod": "^3.24.1"
@@ -48,6 +50,7 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3",
         "@types/draft-js": "^0.11.18",
+        "@types/lodash": "^4.17.15",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",

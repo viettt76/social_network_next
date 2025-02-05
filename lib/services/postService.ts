@@ -1,3 +1,4 @@
+import { PostReactionNameType } from '@/app/dataType';
 import axios from './api';
 
 export const createPostService = ({ content, images }: { content: string; images: string[] }) => {
@@ -9,4 +10,21 @@ export const createPostService = ({ content, images }: { content: string; images
 
 export const getPostsService = (page: number) => {
     return axios.get(`/posts?page=${page}`);
+};
+
+export const getPostReactions = async () => {
+    return axios.get('/posts/reactionType');
+};
+
+export const reactToPostService = ({
+    postId,
+    reactionType,
+}: {
+    postId: string;
+    reactionType: PostReactionNameType | null;
+}) => {
+    return axios.put('/posts/reaction', {
+        postId,
+        reactionType,
+    });
 };
