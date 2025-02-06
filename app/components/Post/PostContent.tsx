@@ -17,7 +17,7 @@ import {
 import { reactToPostService } from '@/lib/services/postService';
 import { useAppSelector } from '@/lib/hooks';
 import { selectPostReactionType } from '@/lib/features/reactionType/reactionTypeSlice';
-import { createElement, Dispatch, SetStateAction } from 'react';
+import { createElement, Dispatch, SetStateAction, useState } from 'react';
 
 export default function PostContent({
     postInfo,
@@ -46,18 +46,19 @@ export default function PostContent({
         visibleImages = [...postInfo.images];
     }
 
+    const [showListReactions, setShowListReactions] = useState(false);
     const postReactionType = useAppSelector(selectPostReactionType);
 
     const handleReactToPost = async (reactionType: PostReactionNameType | null) => {
         try {
             setCurrentReaction(reactionType);
+            setShowListReactions(false);
             await reactToPostService({ postId: postInfo.postId, reactionType });
         } catch (error) {
             console.log(error);
         }
     };
 
-    console.log(mostReactions);
     return (
         <div className="overflow-auto">
             <div className="flex items-center">
@@ -129,7 +130,11 @@ export default function PostContent({
                 </div>
             </div>
             <div className="border-t mt-3 flex">
-                <div className="group flex-1 hover:bg-input rounded-2xl cursor-pointer relative">
+                <div
+                    className="flex-1 hover:bg-input rounded-2xl cursor-pointer relative"
+                    onMouseEnter={() => setShowListReactions(true)}
+                    onMouseLeave={() => setShowListReactions(false)}
+                >
                     {currentReaction ? (
                         <div
                             className="flex items-center flex justify-center items-center py-2"
@@ -151,7 +156,11 @@ export default function PostContent({
                             <ThumbsUp className="me-1 text-xl" /> <span className="text-gray text-md">Thích</span>
                         </div>
                     )}
-                    <div className="absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full opacity-0 group-hover:opacity-100 group-hover:flex transition-opacity duration-300 ease-in-out">
+                    <div
+                        className={`absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full transition-opacity duration-300 ease-in-out ${
+                            showListReactions ? 'flex opacity-100 visibility-visible' : 'visibility-hidden opacity-0'
+                        }`}
+                    >
                         {Object.keys(postReactionType).map((reactionType) => {
                             const Icon = PostReactionTypeIcon[reactionType];
                             return (
