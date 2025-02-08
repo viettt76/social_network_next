@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useTranslations } from 'next-intl';
 import { groupBy, sortBy } from 'lodash';
-import { socket } from '@/lib/socket';
+import { useSocket } from '@/app/components/SocketProvider';
 
 const Comment = ({ comment }: { comment: CommentType }) => {
     return (
@@ -52,6 +52,7 @@ const Comment = ({ comment }: { comment: CommentType }) => {
 
 export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     const t = useTranslations();
+    const socket = useSocket();
 
     const [isShowPostDialog, setIsShowPostDialog] = useState(false);
     const handleShowDialogPost = () => setIsShowPostDialog(true);
@@ -142,7 +143,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         return () => {
             socket.off('reactToPost', handleNewReactions);
         };
-    }, [postInfo.postId]);
+    }, [postInfo.postId, socket]);
 
     return (
         <div className="bg-background rounded-xl px-2 py-2 mb-4">

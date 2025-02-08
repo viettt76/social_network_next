@@ -16,7 +16,7 @@ import {
 } from '@/app/dataType';
 import { reactToPostService } from '@/lib/services/postService';
 import { useAppSelector } from '@/lib/hooks';
-import { selectPostReactionType } from '@/lib/features/reactionType/reactionTypeSlice';
+import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { createElement, Dispatch, SetStateAction, useState } from 'react';
 
 export default function PostContent({

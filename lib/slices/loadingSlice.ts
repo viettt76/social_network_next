@@ -1,5 +1,5 @@
 import { RootState } from '@/lib/store';
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface LoadingState {
     [key: string]: boolean;
@@ -14,27 +14,16 @@ export const loadingSlice = createSlice({
     initialState,
     reducers: {
         startLoadingApp(state) {
-            return {
-                ...state,
-                app: true,
-            };
+            state.app = true;
         },
         stopLoadingApp(state) {
-            return {
-                ...state,
-                app: false,
-            };
+            state.app = false;
         },
-        startLoadingComponent(state, action) {
-            return {
-                ...state,
-                [action.payload]: true,
-            };
+        startLoadingComponent(state, action: PayloadAction<string>) {
+            state[action.payload] = true;
         },
-        stopLoadingComponent(state, action) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [action.payload]: _, ...newState } = state;
-            return newState;
+        stopLoadingComponent(state, action: PayloadAction<string>) {
+            delete state[action.payload];
         },
     },
 });

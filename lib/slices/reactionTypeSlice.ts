@@ -1,6 +1,6 @@
 import { PostReactionNameType } from '@/app/dataType';
 import { RootState } from '@/lib/store';
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface ReactionTypeState {
     postReactionType: Record<string, PostReactionNameType>;
@@ -14,13 +14,8 @@ export const reactionTypeSlice = createSlice({
     name: 'reactionType',
     initialState,
     reducers: {
-        setPostReactionType(state, action) {
-            return {
-                ...state,
-                postReactionType: {
-                    ...action.payload,
-                },
-            };
+        setPostReactionType(state, action: PayloadAction<Record<string, PostReactionNameType>>) {
+            state.postReactionType = action.payload;
         },
     },
 });

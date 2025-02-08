@@ -19,36 +19,41 @@ export default function Home() {
     useEffect(() => {
         (async () => {
             setLoading(true);
-            const res = await getPostsService(page);
-            if (res.data.length > 0) {
-                setPosts((prev) => [
-                    ...prev,
-                    ...res.data.map((post: any) => ({
-                        postId: post.postId,
-                        creatorInfo: post.posterInfo,
-                        content: post.content,
-                        currentReactionType: post.currentReactionType,
-                        images: post.pictures.map((picture: any) => picture.pictureUrl),
-                        reactions: post.reactions.map((reaction: any) => ({
-                            postReactionId: reaction.id,
-                            reactionType: reaction.reactionType,
-                            userInfo: {
-                                userId: reaction.user.id,
-                                firstName: reaction.user.firstName,
-                                lastName: reaction.user.lastName,
-                                avatar: reaction.user.avatar,
-                            },
+            try {
+                const res = await getPostsService(page);
+                if (res.data.length > 0) {
+                    setPosts((prev) => [
+                        ...prev,
+                        ...res.data.map((post: any) => ({
+                            postId: post.postId,
+                            creatorInfo: post.posterInfo,
+                            content: post.content,
+                            currentReactionType: post.currentReactionType,
+                            images: post.pictures.map((picture: any) => picture.pictureUrl),
+                            reactions: post.reactions.map((reaction: any) => ({
+                                postReactionId: reaction.id,
+                                reactionType: reaction.reactionType,
+                                userInfo: {
+                                    userId: reaction.user.id,
+                                    firstName: reaction.user.firstName,
+                                    lastName: reaction.user.lastName,
+                                    avatar: reaction.user.avatar,
+                                },
+                            })),
+                            createdAt: post.createdAt,
                         })),
-                        createdAt: post.createdAt,
-                    })),
-                ]);
-                setLoading(false);
-            } else {
-                setIsNoNewPost(true);
+                    ]);
+                    setLoading(false);
+                } else {
+                    setIsNoNewPost(true);
+                }
+            } catch (error) {
+                console.log(error);
             }
         })();
     }, [page]);
 
+    // Sets up an IntersectionObserver to load more content when the target element is visible and not loading
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {

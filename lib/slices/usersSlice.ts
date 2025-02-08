@@ -1,5 +1,5 @@
 import { RootState } from '@/lib/store';
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export enum Gender {
     MALE = 'MALE',
@@ -24,6 +24,7 @@ export interface UserState {
     avatar: string;
     isPrivate: boolean | null;
     role: Role | null;
+    friendRequestCount: number | null;
 }
 
 const initialState: UserState = {
@@ -38,21 +39,17 @@ const initialState: UserState = {
     avatar: '',
     isPrivate: null,
     role: null,
+    friendRequestCount: null,
 };
 
 export const userSlice = createSlice({
     name: 'user',
     initialState,
     reducers: {
-        setInfo(state, action) {
-            return {
-                ...state,
-                ...action.payload,
-            };
+        setInfo(state, action: PayloadAction<Partial<UserState>>) {
+            Object.assign(state, action.payload);
         },
-        resetInfo() {
-            return initialState;
-        },
+        resetInfo: () => initialState,
     },
 });
 

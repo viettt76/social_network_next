@@ -10,7 +10,7 @@ import { stateToHTML } from 'draft-js-export-html';
 import { cn, uploadToCloudinary } from '@/lib/utils';
 import { createPostService } from '@/lib/services/postService';
 import { useAppDispatch } from '@/lib/hooks';
-import { startLoadingApp, stopLoadingApp } from '@/lib/features/loading/loadingSlice';
+import { startLoadingApp, stopLoadingApp } from '@/lib/slices/loadingSlice';
 
 export default function WritePost() {
     const dispatch = useAppDispatch();

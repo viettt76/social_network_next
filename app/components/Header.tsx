@@ -23,7 +23,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { resetInfo } from '@/lib/features/users/usersSlice';
+import { resetInfo } from '@/lib/slices/usersSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 
@@ -84,7 +84,9 @@ export default function Header() {
                         <MagnifyingGlass />
                     </div>
                     <div className="flex items-center justify-around w-64">
-                        <UserPlus className="text-ring" />
+                        <Link href="/friends/suggestions">
+                            <UserPlus className="text-ring" />
+                        </Link>
                         <ChatCenteredDots className="text-ring" />
                         <BellRinging className="text-ring" />
                         <DropdownMenu modal={false}>

@@ -12,8 +12,8 @@ export const getPostsService = (page: number) => {
     return axios.get(`/posts?page=${page}`);
 };
 
-export const getPostReactions = async () => {
-    return axios.get('/posts/reactionType');
+export const getPostReactionTypesService = () => {
+    return axios.get('/posts/reactionTypes');
 };
 
 export const reactToPostService = ({
@@ -23,7 +23,7 @@ export const reactToPostService = ({
     postId: string;
     reactionType: PostReactionNameType | null;
 }) => {
-    return axios.put('/posts/reaction', {
+    return axios.put('/posts/reactions', {
         postId,
         reactionType,
     });

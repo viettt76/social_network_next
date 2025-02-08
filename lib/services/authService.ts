@@ -13,7 +13,7 @@ export const signUpService = ({
     lastName: string;
     gender: string;
 }) => {
-    return axios.post('/auth/signup', {
+    return axios.post('/auth/users', {
         username,
         password,
         firstName,
@@ -23,12 +23,12 @@ export const signUpService = ({
 };
 
 export const loginService = ({ username, password }: { username: string; password: string }) => {
-    return axios.post('/auth/login', {
+    return axios.post('/auth/token', {
         username,
         password,
     });
 };
 
 export const logoutService = () => {
-    return axios.post('/auth/logout');
+    return axios.delete('/auth/token');
 };
