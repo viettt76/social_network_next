@@ -29,7 +29,7 @@ export default function Home() {
                             creatorInfo: post.posterInfo,
                             content: post.content,
                             currentReactionType: post.currentReactionType,
-                            images: post.pictures.map((picture: any) => picture.pictureUrl),
+                            images: post.images.map((image: any) => image.imageUrl),
                             reactions: post.reactions.map((reaction: any) => ({
                                 postReactionId: reaction.id,
                                 reactionType: reaction.reactionType,

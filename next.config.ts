@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
             'khoinguonsangtao.vn',
             'bedental.vn',
             'demoda.vn',
+            'res.cloudinary.com',
         ],
     },
     reactStrictMode: false,

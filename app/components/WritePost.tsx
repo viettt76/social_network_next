@@ -5,21 +5,24 @@ import { Modal } from 'flowbite-react';
 import { Button } from '@/components/ui/button';
 import React, { ChangeEvent, useRef, useState, WheelEvent } from 'react';
 import { Images, X } from 'lucide-react';
-import { Editor, EditorState } from 'draft-js';
-import { stateToHTML } from 'draft-js-export-html';
 import { cn, uploadToCloudinary } from '@/lib/utils';
 import { createPostService } from '@/lib/services/postService';
 import { useAppDispatch } from '@/lib/hooks';
 import { startLoadingApp, stopLoadingApp } from '@/lib/slices/loadingSlice';
+import Textarea from '@/app/components/Textarea';
 
 export default function WritePost() {
     const dispatch = useAppDispatch();
 
     const [openModal, setOpenModal] = useState(false);
 
-    const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
+    const [postContent, setPostContent] = useState('');
     const [images, setImages] = useState<string[]>([]);
     const [imagesUpload, setImagesUpload] = useState<File[]>([]);
+
+    const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        setPostContent(e.target.value);
+    };
 
     const handleChooseFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -52,8 +55,9 @@ export default function WritePost() {
                 }),
             );
 
-            await createPostService({ content: stateToHTML(editorState.getCurrentContent()), images: imagesUrl });
-            setEditorState(() => EditorState.createEmpty());
+            await createPostService({ content: postContent, images: imagesUrl });
+            setOpenModal(false);
+            setPostContent('');
             setImages([]);
             setImagesUpload([]);
         } catch (error) {
@@ -123,11 +127,15 @@ export default function WritePost() {
                 <Modal.Header className="pt-2 pb-0">Write Post</Modal.Header>
                 <Modal.Body className="py-2">
                     <div>
-                        <Editor editorState={editorState} onChange={setEditorState} />
+                        <Textarea
+                            text={postContent}
+                            className="max-h-48 outline-none border-none focus:shadow-none focus:ring-transparent"
+                            handleChange={handleChange}
+                        />
 
                         <div
                             className={cn(
-                                'flex overflow-auto gap-2 scrollbar-none mt-2',
+                                'flex overflow-auto gap-2 scrollbar-none mt-4',
                                 isDragging ? 'cursor-grabbing' : 'cursor-grab',
                             )}
                             ref={imageWrapperRef}
@@ -157,11 +165,15 @@ export default function WritePost() {
                             ))}
                         </div>
                     </div>
-                    <label htmlFor="write-post-select-file">
+                    <label htmlFor="write-post-select-file" className="mt-2 block w-fit cursor-pointer">
                         <Images className="text-[#41b35d]" />
                     </label>
                     <input type="file" multiple hidden id="write-post-select-file" onChange={handleChooseFile} />
-                    <Button onClick={handleSubmitPost} className="w-full mt-3">
+                    <Button
+                        onClick={handleSubmitPost}
+                        className="w-full mt-3"
+                        disabled={!postContent.trim() && imagesUpload.length === 0}
+                    >
                         Tạo
                     </Button>
                 </Modal.Body>

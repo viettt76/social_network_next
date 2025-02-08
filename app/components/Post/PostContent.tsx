@@ -5,7 +5,7 @@ import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { ChatCircle, ChatCircleDots, Share, ShareFat, ThumbsUp } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import styles from './Post.module.css';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 import {
     PostInfoType,
     PostReactionNameType,
@@ -76,11 +76,11 @@ export default function PostContent({
                     <div className="text-gray text-xs">6 ngày trước</div>
                 </div>
             </div>
-            {postInfo.content && <div className="mt-2" dangerouslySetInnerHTML={{ __html: postInfo.content }}></div>}
+            {postInfo.content && <div className="mt-2 whitespace-pre-line">{postInfo.content}</div>}
             {visibleImages && (
                 <PhotoProvider>
                     <div
-                        className={clsx('mt-2', styles['images-layout'], {
+                        className={cn('mt-2', styles['images-layout'], {
                             [styles[`layout-${visibleImages?.length}`]]: remainingImages <= 0,
                             [styles[`layout-remaining`]]: remainingImages > 0,
                         })}
@@ -88,13 +88,13 @@ export default function PostContent({
                         {postInfo.images?.map((img: string, index: number) => {
                             return (
                                 <PhotoView key={`image-${index}`} src={img}>
-                                    <div className={clsx(styles['image-wrapper'])}>
+                                    <div className={cn(styles['image-wrapper'])}>
                                         {index <= 3 &&
                                             (remainingImages > 0 && index === 3 ? (
-                                                <div className={clsx(styles['overlay'])}>+{remainingImages}</div>
+                                                <div className={cn(styles['overlay'])}>+{remainingImages}</div>
                                             ) : (
                                                 <Image
-                                                    className={clsx(styles['image'])}
+                                                    className={cn(styles['image'])}
                                                     src={img}
                                                     alt="image"
                                                     width={8000}
@@ -158,7 +158,9 @@ export default function PostContent({
                     )}
                     <div
                         className={`absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full transition-opacity duration-300 ease-in-out ${
-                            showListReactions ? 'flex opacity-100 visibility-visible' : 'visibility-hidden opacity-0'
+                            showListReactions
+                                ? 'opacity-100 visibility-visible'
+                                : 'visibility-hidden opacity-0 pointer-events-none'
                         }`}
                     >
                         {Object.keys(postReactionType).map((reactionType) => {

@@ -115,3 +115,13 @@
     object-fit: cover;
     object-position: center;
 }
+
+.comment-list-reactions::after {
+    content: '';
+    display: block;
+    width: 10rem;
+    height: 2rem;
+    position: absolute;
+    bottom: -0.8rem;
+    left: 0;
+}

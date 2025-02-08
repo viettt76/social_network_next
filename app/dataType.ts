@@ -57,7 +57,7 @@ export type PostInfoType = {
 
 export type CommentType = {
     commentId: string;
-    commenterInfo: UserInfoType;
+    commentatorInfo: UserInfoType;
     content?: string;
     image?: string;
     commentChild?: CommentType[];

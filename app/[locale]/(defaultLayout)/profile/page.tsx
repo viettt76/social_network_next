@@ -7,8 +7,11 @@ import { PostInfoType } from '@/app/dataType';
 import { useState } from 'react';
 import { BriefcaseBusiness, House, Images, Pencil } from 'lucide-react';
 import WritePost from '@/app/components/WritePost';
+import { useAppSelector } from '@/lib/hooks';
+import { selectUserInfo } from '@/lib/slices/usersSlice';
 
 export default function Profile() {
+    const userInfo = useAppSelector(selectUserInfo);
     const [posts, setPosts] = useState<PostInfoType[]>([]);
 
     return (
@@ -34,7 +37,7 @@ export default function Profile() {
                             alt="avatar"
                         />
                         <div className="text-3xl -translate-y-4 font-semibold text-background drop-shadow-2xl">
-                            Hoàng Việt
+                            {userInfo.lastName} {userInfo.firstName}
                         </div>
                     </div>
                     <div className="bg-background w-fit rounded-full p-2 absolute bottom-4 right-2 cursor-pointer">
