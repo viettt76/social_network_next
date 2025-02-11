@@ -5,11 +5,13 @@ const Textarea = memo(
     ({
         text,
         className,
+        rows,
         placeholder,
         handleChange,
     }: {
         text: string;
         className?: string;
+        rows?: number;
         placeholder?: string;
         handleChange: ChangeEventHandler<HTMLTextAreaElement>;
     }) => {
@@ -32,7 +34,7 @@ const Textarea = memo(
             <textarea
                 ref={textareaRef}
                 value={text}
-                rows={1}
+                rows={rows || 1}
                 className={cn(
                     'flex w-full bg-transparent p-0 text-base placeholder:text-muted-foreground md:text-sm resize-none',
                     className,

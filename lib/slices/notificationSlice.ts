@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/lib/store';
 
-interface FriendRequestType {
+export interface FriendRequestType {
     friendRequestId: string;
     senderId: string;
     content: string;

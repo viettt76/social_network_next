@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch } from '@/lib/hooks';
-import { addFriendRequestNotification } from '@/lib/slices/notificationSlice';
+import { addFriendRequestNotification, FriendRequestType } from '@/lib/slices/notificationSlice';
 import { socket } from '@/lib/socket';
 import { createContext, ReactNode, useContext, useEffect } from 'react';
 
@@ -13,11 +13,14 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         socket.connect();
 
-        socket.on('newFriendRequestNotification', (newFriendRequestNotification) => {
+        const handleNewFriendRequest = (newFriendRequestNotification: FriendRequestType) => {
             dispatch(addFriendRequestNotification(newFriendRequestNotification));
-        });
+        };
+
+        socket.on('newFriendRequestNotification', handleNewFriendRequest);
 
         return () => {
+            socket.off('newFriendRequestNotification', handleNewFriendRequest);
             socket.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps

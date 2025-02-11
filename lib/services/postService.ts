@@ -1,4 +1,4 @@
-import { PostReactionNameType } from '@/app/dataType';
+import { ReactionNameType } from '@/app/dataType';
 import axios from './api';
 
 export const createPostService = ({
@@ -18,12 +18,14 @@ export const getPostReactionTypesService = () => {
 
 export const reactToPostService = ({
     postId,
+    posterId,
     reactionType,
 }: {
     postId: string;
-    reactionType: PostReactionNameType | null;
+    posterId: string;
+    reactionType: ReactionNameType | null;
 }) => {
-    return axios.put('/posts/reactions', { postId, reactionType });
+    return axios.put(`/posts/reactions/${postId}`, { posterId, reactionType });
 };
 
 export const sendCommentService = ({
@@ -58,4 +60,36 @@ export const getCommentsService = ({
             sortType,
         },
     });
+};
+
+export const getCommentRepliesService = ({
+    commentId,
+    page,
+    sortField = 'createdAt',
+    sortType = 'DESC',
+}: {
+    commentId: string;
+    page: number;
+    sortField?: string;
+    sortType?: 'DESC' | 'ASC';
+}) => {
+    return axios.get(`/posts/comments/${commentId}/replies`, {
+        params: {
+            page,
+            sortField,
+            sortType,
+        },
+    });
+};
+
+export const reactToCommentService = ({
+    commentId,
+    postId,
+    reactionType,
+}: {
+    commentId: string;
+    postId: string;
+    reactionType: ReactionNameType | null;
+}) => {
+    return axios.put(`/posts/comments/reactions/${commentId}`, { postId, reactionType });
 };

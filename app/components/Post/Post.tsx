@@ -1,136 +1,43 @@
 'use client';
 
-import {
-    CommentType,
-    PostInfoType,
-    PostReactionNameType,
-    PostReactionType,
-    PostReactionTypeIcon,
-} from '@/app/dataType';
+import { CommentType, PostInfoType, ReactionNameType, PostReactionType } from '@/app/dataType';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import PostContent from './PostContent';
 import { Modal } from 'flowbite-react';
 import Image from 'next/image';
-import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useTranslations } from 'next-intl';
 import { groupBy, sortBy } from 'lodash';
 import { useSocket } from '@/app/components/SocketProvider';
 import { getCommentsService, sendCommentService } from '@/lib/services/postService';
 import { ImageUp, SendHorizonal, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
-import { cn, uploadToCloudinary } from '@/lib/utils';
+import { uploadToCloudinary } from '@/lib/utils';
+import Comment from '@/app/components/Post/Comment';
 import { useAppSelector } from '@/lib/hooks';
-import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
-import styles from './Post.module.css';
-
-const Comment = ({ comment }: { comment: CommentType }) => {
-    const [showListReactions, setShowListReactions] = useState(false);
-    const postReactionType = useAppSelector(selectPostReactionType);
-
-    const handleReactToComment = async (reactionType: PostReactionNameType | null) => {
-        try {
-            // setCurrentReaction(reactionType);
-            // setShowListReactions(false);
-            // await reactToPostService({ postId: postInfo.postId, reactionType });
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-    return (
-        <div className="flex mt-2" key={`comment-${comment.commentId}`}>
-            <Image
-                className="rounded-full w-10 h-10 me-2 object-cover"
-                src={comment.commentatorInfo.avatar || '/images/default-avatar.png'}
-                width={800}
-                height={800}
-                alt=""
-            />
-            <div>
-                <div className="bg-input/60 py-1 px-3 rounded-xl">
-                    <div className="text-sm font-bold">
-                        {comment.commentatorInfo.lastName} {comment.commentatorInfo.firstName}
-                    </div>
-                    {comment.content && (
-                        <div className="text-sm whitespace-pre-line break-all max-w-[32rem]">{comment.content}</div>
-                    )}
-                </div>
-                {comment.image && (
-                    <PhotoProvider>
-                        <PhotoView src={comment.image}>
-                            <Image
-                                className="object-container h-40 w-fit rounded-xl border mt-1"
-                                src={comment.image}
-                                width={800}
-                                height={800}
-                                alt=""
-                            />
-                        </PhotoView>
-                    </PhotoProvider>
-                )}
-                <div className="flex text-sm text-gray">
-                    <span>3 giờ</span>
-                    <div
-                        className="relative ms-3 cursor-pointer"
-                        onMouseEnter={() => setShowListReactions(true)}
-                        onMouseLeave={() => setShowListReactions(false)}
-                    >
-                        Thích
-                        <div
-                            className={cn(
-                                `absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full transition-opacity duration-300 ease-in-out ${
-                                    showListReactions
-                                        ? 'opacity-100 visibility-visible'
-                                        : 'visibility-hidden opacity-0 pointer-events-none'
-                                }`,
-                                styles['comment-list-reactions'],
-                            )}
-                        >
-                            {Object.keys(postReactionType).map((reactionType) => {
-                                const Icon = PostReactionTypeIcon[reactionType];
-                                return (
-                                    <div
-                                        className="w-7"
-                                        key={reactionType}
-                                        onClick={() => handleReactToComment(reactionType as PostReactionNameType)}
-                                    >
-                                        <Icon width={28} height={28} />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-                {comment.commentChild && comment.commentChild.length > 0 && (
-                    <div>
-                        {comment.commentChild.map((commentChild: CommentType) => (
-                            <Comment comment={commentChild} key={`comment-${commentChild.commentId}`} />
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
+import { selectUserInfo } from '@/lib/slices/usersSlice';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     const t = useTranslations();
     const socket = useSocket();
+    const userInfo = useAppSelector(selectUserInfo);
 
     const [isShowPostDialog, setIsShowPostDialog] = useState(false);
-    const handleShowDialogPost = () => setIsShowPostDialog(true);
-    const handleHideDialogPost = () => setIsShowPostDialog(false);
 
     const [comments, setComments] = useState<CommentType[]>([]);
     const [pageComment, setPageComment] = useState(1);
+    const [commentLoading, setCommentLoading] = useState(false);
+
     const [contentWriteComment, setContentWriteComment] = useState('');
     const [imageWriteComment, setImageWriteComment] = useState<string | null>();
     const [imageUploadWriteComment, setImageUploadWriteComment] = useState<File | null>();
 
     const [postReactions, setPostReactions] = useState<PostReactionType[]>(postInfo.reactions);
-    const [mostReactions, setMostReactions] = useState<PostReactionNameType[]>([]);
-    const [currentReaction, setCurrentReaction] = useState<PostReactionNameType | null>(null);
+    const [mostReactions, setMostReactions] = useState<ReactionNameType[]>([]);
+    const [currentReaction, setCurrentReaction] = useState<ReactionNameType | null>(null);
+    const [commentsCount, setCommentsCount] = useState<number>(0);
 
+    // Set most reactions when reactions of post change
     useEffect(() => {
         const _reactions = groupBy(postReactions, 'reactionType');
         const mostReactions = sortBy(_reactions, 'length').reverse();
@@ -145,23 +52,183 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         }
     }, [postReactions]);
 
+    // Set current reaction, comments count
     useEffect(() => {
         if (postInfo.currentReactionType) setCurrentReaction(postInfo.currentReactionType);
-    }, [postInfo.currentReactionType]);
+        setCommentsCount(postInfo.commentsCount);
+    }, [postInfo]);
 
+    // Socket handle add, update, delete react to post
     useEffect(() => {
-        const handleNewReactions = ({ postId, newReactions }: { postId: string; newReactions: PostReactionType[] }) => {
+        const handleAddReactionToPost = ({ postId, newReaction }: { postId: string; newReaction: any }) => {
             if (postInfo.postId === postId) {
-                setPostReactions(newReactions);
+                setPostReactions((prev) => [
+                    ...prev,
+                    {
+                        postReactionId: newReaction.postReactionId,
+                        reactionType: newReaction.reactionType,
+                        user: {
+                            userId: newReaction.user.id,
+                            firstName: newReaction.user.firstName,
+                            lastName: newReaction.user.lastName,
+                            avatar: newReaction.user.avatar,
+                        },
+                    },
+                ]);
             }
         };
 
-        socket.on('reactToPost', handleNewReactions);
+        const handleUpdateReactionToPost = ({
+            postId,
+            postReactionId,
+            reactionType,
+        }: {
+            postId: string;
+            postReactionId: string;
+            reactionType: ReactionNameType;
+        }) => {
+            if (postInfo.postId === postId) {
+                setPostReactions((prev) => {
+                    const reactionPostUpdated = prev.find(
+                        (postReaction) => postReaction.postReactionId === postReactionId,
+                    );
+                    if (reactionPostUpdated) {
+                        reactionPostUpdated.reactionType = reactionType;
+                    }
+                    return [...prev];
+                });
+            }
+        };
+
+        const handleRemoveReactionToPost = ({
+            postId,
+            postReactionId,
+        }: {
+            postId: string;
+            postReactionId: string;
+            reactionType: ReactionNameType;
+        }) => {
+            if (postInfo.postId === postId) {
+                setPostReactions((prev) =>
+                    prev.filter((postReaction) => postReaction.postReactionId !== postReactionId),
+                );
+            }
+        };
+
+        socket.on('reactToPost', handleAddReactionToPost);
+        socket.on('updateReactToPost', handleUpdateReactionToPost);
+        socket.on('deleteReactToPost', handleRemoveReactionToPost);
 
         return () => {
-            socket.off('reactToPost', handleNewReactions);
+            socket.off('reactToPost', handleAddReactionToPost);
+            socket.off('updateReactToPost', handleUpdateReactionToPost);
+            socket.off('deleteReactToPost', handleRemoveReactionToPost);
         };
     }, [postInfo.postId, socket]);
+
+    // Get comments when show post dialog
+    useEffect(() => {
+        const getComments = async () => {
+            setCommentLoading(true);
+            try {
+                const res = await getCommentsService({
+                    postId: postInfo.postId,
+                    page: pageComment,
+                });
+                if (res.data.length > 0) {
+                    setComments((prev) => [
+                        ...prev,
+                        ...res.data.map((comment: any) => {
+                            return {
+                                commentId: comment.commentId,
+                                commentatorInfo: {
+                                    userId: comment.commentatorId,
+                                    firstName: comment.commentatorFirstName,
+                                    lastName: comment.commentatorLastName,
+                                    avatar: comment.commentatorAvatar,
+                                },
+                                content: comment.content,
+                                image: comment.image,
+                                currentReactionType: comment.currentReactionType,
+                                repliesCount: comment.repliesCount,
+                                reactions: comment.reactions.map((reaction: any) => ({
+                                    commentReactionId: reaction.id,
+                                    reactionType: reaction.reactionType,
+                                    userInfo: {
+                                        userId: reaction.user.id,
+                                        firstName: reaction.user.firstName,
+                                        lastName: reaction.user.lastName,
+                                        avatar: reaction.user.avatar,
+                                    },
+                                })),
+                            };
+                        }),
+                    ]);
+                    setCommentLoading(false);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        if (isShowPostDialog) {
+            getComments();
+        }
+    }, [isShowPostDialog, postInfo.postId, pageComment]);
+
+    // Socket handle new comment and new comment reply
+    useEffect(() => {
+        const handleNewComment = (newComment: any) => {
+            if (postInfo.postId === newComment.postId) {
+                setComments((prev) => [
+                    {
+                        commentId: newComment.id,
+                        commentatorInfo: {
+                            userId: newComment.commentatorId,
+                            firstName: newComment.commentatorFirstName,
+                            lastName: newComment.commentatorLastName,
+                            avatar: newComment.commentatorAvatar,
+                        },
+                        content: newComment.content,
+                        image: newComment.image,
+                        repliesCount: 0,
+                        reactions: [],
+                    },
+                    ...prev,
+                ]);
+                setCommentsCount((prev) => prev + 1);
+            }
+        };
+
+        const handleNewReply = () => setCommentsCount((prev) => prev + 1);
+        socket.on('newComment', handleNewComment);
+        socket.on('newReply', handleNewReply);
+
+        return () => {
+            socket.off('newComment', handleNewComment);
+            socket.off('newReply', handleNewReply);
+        };
+    }, [comments, postInfo.postId, socket, userInfo]);
+
+    const increasePage = () => setPageComment((prev) => prev + 1);
+
+    // Hook for infinite scrolling: Calls `increasePage` when the user scrolls near the bottom
+    const { observerTarget } = useInfiniteScroll({
+        callback: increasePage,
+        threshold: 0.5,
+        loading: commentLoading,
+    });
+
+    const handleShowDialogPost = () => {
+        socket.emit('joinPost', postInfo.postId);
+        setIsShowPostDialog(true);
+    };
+    const handleHideDialogPost = () => {
+        socket.emit('leavePost', postInfo.postId);
+        setIsShowPostDialog(false);
+        setPageComment(1);
+        setComments([]);
+    };
 
     const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
         setContentWriteComment(e.target.value);
@@ -201,38 +268,6 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         }
     };
 
-    useEffect(() => {
-        const getComments = async () => {
-            try {
-                const res = await getCommentsService({
-                    postId: postInfo.postId,
-                    page: pageComment,
-                });
-                setComments(
-                    res.data.map((comment) => {
-                        return {
-                            commentId: comment.commentId,
-                            commentatorInfo: {
-                                userId: comment.commentatorId,
-                                firstName: comment.commentatorFirstName,
-                                lastName: comment.commentatorLastName,
-                                avatar: comment.commentatorAvatar,
-                            },
-                            content: comment.content,
-                            image: comment.image,
-                        };
-                    }),
-                );
-            } catch (error) {
-                console.log(error);
-            }
-        };
-
-        if (isShowPostDialog) {
-            getComments();
-        }
-    }, [isShowPostDialog, postInfo.postId, pageComment]);
-
     return (
         <div className="bg-background rounded-xl px-2 py-2 mb-4">
             <PostContent
@@ -240,6 +275,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                 postReactions={postReactions}
                 mostReactions={mostReactions}
                 currentReaction={currentReaction}
+                commentsCount={commentsCount}
                 setCurrentReaction={setCurrentReaction}
                 handleShowDialogPost={handleShowDialogPost}
             />
@@ -250,13 +286,15 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                         postReactions={postReactions}
                         mostReactions={mostReactions}
                         currentReaction={currentReaction}
+                        commentsCount={commentsCount}
                         setCurrentReaction={setCurrentReaction}
                         handleShowDialogPost={handleShowDialogPost}
                     />
                     <div className="border-t pt-1">
                         {comments?.map((comment: CommentType) => (
-                            <Comment comment={comment} key={`comment-${comment.commentId}`} />
+                            <Comment postId={postInfo.postId} comment={comment} key={`comment-${comment.commentId}`} />
                         ))}
+                        <div ref={observerTarget} className="h-1"></div>
                     </div>
                 </Modal.Body>
                 <Modal.Footer className="px-4 py-2">
@@ -292,7 +330,10 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                                 )}
                             </div>
                             <SendHorizonal
-                                className={`mt-1 ${contentWriteComment.trim() && 'fill-primary text-primary'}`}
+                                className={`mt-1 ${
+                                    (contentWriteComment.trim() || imageUploadWriteComment) &&
+                                    'fill-primary/40 text-primary'
+                                }`}
                                 onClick={handleSendComment}
                             />
                         </div>

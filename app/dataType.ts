@@ -1,6 +1,6 @@
 import { LikeIcon, LoveIcon, LoveLoveIcon, HaHaIcon, WowIcon, SadIcon, AngryIcon } from '@/app/components/Icons';
 
-export const PostReactionTypeIcon = {
+export const ReactionTypeIcon = {
     LIKE: LikeIcon,
     LOVE: LoveIcon,
     LOVE_LOVE: LoveLoveIcon,
@@ -10,7 +10,7 @@ export const PostReactionTypeIcon = {
     ANGRY: AngryIcon,
 } as const;
 
-export const PostReactionTypeName = {
+export const ReactionTypeName = {
     LIKE: 'Thích',
     LOVE: 'Yêu thích',
     LOVE_LOVE: 'Thương thương',
@@ -20,7 +20,7 @@ export const PostReactionTypeName = {
     ANGRY: 'Phẫn nộ',
 } as const;
 
-export const PostReactionTypeColor = {
+export const ReactionTypeColor = {
     LIKE: '#0677fe',
     LOVE: '#fe484f',
     LOVE_LOVE: '#fed674',
@@ -30,7 +30,7 @@ export const PostReactionTypeColor = {
     ANGRY: '#ee6451',
 } as const;
 
-export type PostReactionNameType = keyof typeof PostReactionTypeIcon;
+export type ReactionNameType = keyof typeof ReactionTypeIcon;
 
 export type UserInfoType = {
     userId: string;
@@ -39,26 +39,38 @@ export type UserInfoType = {
     avatar?: string | null;
 };
 
-export type PostReactionType = {
-    postReactionId: string;
-    reactionType: PostReactionNameType;
+export type ReactionTypeBase = {
+    reactionType: ReactionNameType;
     user: UserInfoType;
+};
+
+export type PostReactionType = ReactionTypeBase & {
+    postReactionId: string;
+};
+
+export type CommentReactionType = ReactionTypeBase & {
+    commentReactionId: string;
 };
 
 export type PostInfoType = {
     postId: string;
     creatorInfo: UserInfoType;
     content?: string;
-    currentReactionType?: PostReactionNameType;
+    currentReactionType?: ReactionNameType;
     images?: string[];
     reactions: PostReactionType[];
+    commentsCount: number;
     createdAt: Date | string;
 };
 
 export type CommentType = {
     commentId: string;
+    parentCommentId?: string;
     commentatorInfo: UserInfoType;
     content?: string;
     image?: string;
     commentChild?: CommentType[];
+    currentReactionType?: ReactionNameType;
+    repliesCount: number;
+    reactions: CommentReactionType[];
 };

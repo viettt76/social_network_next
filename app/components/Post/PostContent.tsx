@@ -8,11 +8,11 @@ import styles from './Post.module.css';
 import { cn } from '@/lib/utils';
 import {
     PostInfoType,
-    PostReactionNameType,
+    ReactionNameType,
     PostReactionType,
-    PostReactionTypeColor,
-    PostReactionTypeIcon,
-    PostReactionTypeName,
+    ReactionTypeColor,
+    ReactionTypeIcon,
+    ReactionTypeName,
 } from '@/app/dataType';
 import { reactToPostService } from '@/lib/services/postService';
 import { useAppSelector } from '@/lib/hooks';
@@ -24,14 +24,16 @@ export default function PostContent({
     postReactions,
     mostReactions,
     currentReaction,
+    commentsCount,
     setCurrentReaction,
     handleShowDialogPost,
 }: {
     postInfo: PostInfoType;
     postReactions: PostReactionType[];
-    mostReactions: PostReactionNameType[];
-    currentReaction: PostReactionNameType | null;
-    setCurrentReaction: Dispatch<SetStateAction<PostReactionNameType | null>>;
+    mostReactions: ReactionNameType[];
+    currentReaction: ReactionNameType | null;
+    commentsCount: number;
+    setCurrentReaction: Dispatch<SetStateAction<ReactionNameType | null>>;
     handleShowDialogPost: () => void;
 }) {
     const t = useTranslations();
@@ -49,11 +51,11 @@ export default function PostContent({
     const [showListReactions, setShowListReactions] = useState(false);
     const postReactionType = useAppSelector(selectPostReactionType);
 
-    const handleReactToPost = async (reactionType: PostReactionNameType | null) => {
+    const handleReactToPost = async (reactionType: ReactionNameType | null) => {
         try {
             setCurrentReaction(reactionType);
             setShowListReactions(false);
-            await reactToPostService({ postId: postInfo.postId, reactionType });
+            await reactToPostService({ postId: postInfo.postId, posterId: postInfo.creatorInfo.userId, reactionType });
         } catch (error) {
             console.log(error);
         }
@@ -112,8 +114,8 @@ export default function PostContent({
                 <div className="flex items-center">
                     {postReactions.length > 0 && (
                         <>
-                            {mostReactions.length > 0 && createElement(PostReactionTypeIcon[mostReactions[0]])}
-                            {mostReactions.length > 1 && createElement(PostReactionTypeIcon[mostReactions[1]])}
+                            {mostReactions.length > 0 && createElement(ReactionTypeIcon[mostReactions[0]])}
+                            {mostReactions.length > 1 && createElement(ReactionTypeIcon[mostReactions[1]])}
                             <span className="text-gray ms-1 text-sm">{postReactions.length}</span>
                         </>
                     )}
@@ -121,7 +123,9 @@ export default function PostContent({
                 <div className="flex items-center">
                     <div className="flex items-center group cursor-pointer" onClick={handleShowDialogPost}>
                         <ChatCircleDots className="w-4 h-4" />
-                        <span className="text-gray ms-1 text-sm group-hover:underline">0 {t('Post.comments')}</span>
+                        <span className="text-gray ms-1 text-sm group-hover:underline">
+                            {commentsCount || 0} {t('Post.comments')}
+                        </span>
                     </div>
                     <div className="flex items-center ms-4 group cursor-pointer">
                         <Share className="w-4 h-4" />
@@ -135,41 +139,45 @@ export default function PostContent({
                     onMouseEnter={() => setShowListReactions(true)}
                     onMouseLeave={() => setShowListReactions(false)}
                 >
-                    {currentReaction ? (
-                        <div
-                            className="flex items-center flex justify-center items-center py-2"
-                            onClick={() => handleReactToPost(null)}
-                        >
-                            {createElement(PostReactionTypeIcon[currentReaction], {
-                                width: 20,
-                                height: 20,
-                            })}
-                            <span className="ms-1 text-md" style={{ color: PostReactionTypeColor[currentReaction] }}>
-                                {PostReactionTypeName[currentReaction]}
-                            </span>
-                        </div>
-                    ) : (
-                        <div
-                            className="flex items-center flex justify-center items-center py-2"
-                            onClick={() => handleReactToPost('LIKE')}
-                        >
-                            <ThumbsUp className="me-1 text-xl" /> <span className="text-gray text-md">Thích</span>
-                        </div>
-                    )}
+                    <div className={cn('relative', showListReactions && styles['post-list-reactions'])}>
+                        {currentReaction ? (
+                            <div
+                                className="flex items-center flex justify-center items-center py-2"
+                                onClick={() => handleReactToPost(null)}
+                            >
+                                {createElement(ReactionTypeIcon[currentReaction], {
+                                    width: 20,
+                                    height: 20,
+                                })}
+                                <span className="ms-1 text-md" style={{ color: ReactionTypeColor[currentReaction] }}>
+                                    {ReactionTypeName[currentReaction]}
+                                </span>
+                            </div>
+                        ) : (
+                            <div
+                                className="flex items-center flex justify-center items-center py-2"
+                                onClick={() => handleReactToPost('LIKE')}
+                            >
+                                <ThumbsUp className="me-1 text-xl" /> <span className="text-gray text-md">Thích</span>
+                            </div>
+                        )}
+                    </div>
                     <div
-                        className={`absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full transition-opacity duration-300 ease-in-out ${
-                            showListReactions
-                                ? 'opacity-100 visibility-visible'
-                                : 'visibility-hidden opacity-0 pointer-events-none'
-                        }`}
+                        className={cn(
+                            `absolute flex -top-9 left-0 bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full transition-opacity duration-300 ease-in-out ${
+                                showListReactions
+                                    ? 'opacity-100 visibility-visible'
+                                    : 'visibility-hidden opacity-0 pointer-events-none'
+                            }`,
+                        )}
                     >
                         {Object.keys(postReactionType).map((reactionType) => {
-                            const Icon = PostReactionTypeIcon[reactionType];
+                            const Icon = ReactionTypeIcon[reactionType];
                             return (
                                 <div
                                     className="w-7"
                                     key={reactionType}
-                                    onClick={() => handleReactToPost(reactionType as PostReactionNameType)}
+                                    onClick={() => handleReactToPost(reactionType as ReactionNameType)}
                                 >
                                     <Icon width={28} height={28} />
                                 </div>

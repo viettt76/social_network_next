@@ -120,8 +120,18 @@
     content: '';
     display: block;
     width: 10rem;
-    height: 2rem;
+    height: 1rem;
     position: absolute;
-    bottom: -0.8rem;
-    left: 0;
+    top: 0;
+    left: 100%;
+}
+
+.post-list-reactions::after {
+    content: '';
+    display: block;
+    width: 5rem;
+    height: 1.4rem;
+    position: absolute;
+    top: 0;
+    left: 100%;
 }

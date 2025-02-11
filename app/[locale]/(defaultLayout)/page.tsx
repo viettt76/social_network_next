@@ -7,15 +7,18 @@ import { PostInfoType } from '@/app/dataType';
 import WritePost from '@/app/components/WritePost';
 import { getPostsService } from '@/lib/services/postService';
 import { Link } from '@/i18n/routing';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 export default function Home() {
     const [posts, setPosts] = useState<PostInfoType[]>([]);
-    const observerTarget = useRef(null);
-    const [page, setPage] = useState(1);
+
     const [loading, setLoading] = useState(false);
+
+    const [page, setPage] = useState(1);
     const [isNoNewPost, setIsNoNewPost] = useState(false);
 
+    // Get more posts when change page
     useEffect(() => {
         (async () => {
             setLoading(true);
@@ -40,6 +43,7 @@ export default function Home() {
                                     avatar: reaction.user.avatar,
                                 },
                             })),
+                            commentsCount: Number(post.commentsCount),
                             createdAt: post.createdAt,
                         })),
                     ]);
@@ -53,23 +57,14 @@ export default function Home() {
         })();
     }, [page]);
 
-    // Sets up an IntersectionObserver to load more content when the target element is visible and not loading
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && !loading) {
-                    setPage((prev) => prev + 1);
-                }
-            },
-            { threshold: 0.5 },
-        );
+    const increasePage = () => setPage((prev) => prev + 1);
 
-        if (observerTarget.current) {
-            observer.observe(observerTarget.current);
-        }
-
-        return () => observer.disconnect();
-    }, [loading]);
+    // Hook for infinite scrolling: Calls `increasePage` when the user scrolls near the bottom
+    const { observerTarget } = useInfiniteScroll({
+        callback: increasePage,
+        threshold: 0.5,
+        loading,
+    });
 
     return (
         <div className="bg-secondary">
