@@ -127,6 +127,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     }, [postInfo.postId, socket]);
 
     // Get comments when show post dialog
+    // Get more comments when scroll near bottom
     useEffect(() => {
         const getComments = async () => {
             setCommentLoading(true);

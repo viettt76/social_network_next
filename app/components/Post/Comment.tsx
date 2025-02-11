@@ -20,6 +20,8 @@ import Textarea from '@/app/components/Textarea';
 import { ImageUp, SendHorizonal, X } from 'lucide-react';
 import { useSocket } from '@/app/components/SocketProvider';
 import { groupBy, sortBy } from 'lodash';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
+import { Spinner } from 'flowbite-react';
 
 export default function Comment({ postId, comment }: { postId: string; comment: CommentType }) {
     const socket = useSocket();
@@ -35,11 +37,13 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
     const [contentReply, setContentReply] = useState('');
     const [imageWriteComment, setImageWriteComment] = useState<string | null>();
     const [imageUploadWriteComment, setImageUploadWriteComment] = useState<File | null>();
+    const [sendingReply, setSendingReply] = useState(false);
 
     const [showReplies, setShowReplies] = useState(false);
     const [pageReplies, setPageReplies] = useState(1);
     const [replies, setReplies] = useState<CommentType[]>([]);
     const [repliesCount, setRepliesCount] = useState<number>(0);
+    const [repliesLoading, setRepliesLoading] = useState(false);
 
     // Set most reactions when reactions list the comment change
     useEffect(() => {
@@ -64,33 +68,38 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
     }, [comment]);
 
     // Get comment replies
+    // Add more replies when scroll near bottom
     useEffect(() => {
         const handleGetCommentReplies = async () => {
             try {
+                setRepliesLoading(true);
                 const res = await getCommentRepliesService({
                     commentId: comment.commentId,
                     page: pageReplies,
                 });
-                setReplies((prev) => [
-                    ...prev,
-                    ...res.data.map((comment: any) => {
-                        return {
-                            commentId: comment.commentId,
-                            parentCommentId: comment.parentCommentId,
-                            commentatorInfo: {
-                                userId: comment.commentatorId,
-                                firstName: comment.commentatorFirstName,
-                                lastName: comment.commentatorLastName,
-                                avatar: comment.commentatorAvatar,
-                            },
-                            content: comment.content,
-                            image: comment.image,
-                            currentReactionType: comment.currentReactionType,
-                            reactions: comment.reactions,
-                            repliesCount: comment.repliesCount,
-                        };
-                    }),
-                ]);
+                if (res.data.length > 0) {
+                    setReplies((prev) => [
+                        ...prev,
+                        ...res.data.map((comment: any) => {
+                            return {
+                                commentId: comment.commentId,
+                                parentCommentId: comment.parentCommentId,
+                                commentatorInfo: {
+                                    userId: comment.commentatorId,
+                                    firstName: comment.commentatorFirstName,
+                                    lastName: comment.commentatorLastName,
+                                    avatar: comment.commentatorAvatar,
+                                },
+                                content: comment.content,
+                                image: comment.image,
+                                currentReactionType: comment.currentReactionType,
+                                reactions: comment.reactions,
+                                repliesCount: comment.repliesCount,
+                            };
+                        }),
+                    ]);
+                    setRepliesLoading(false);
+                }
             } catch (error) {
                 console.log(error);
             }
@@ -196,6 +205,15 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
         socket.on('deleteReactToComment', handleDeleteCommentReaction);
     }, [socket, comment.commentId]);
 
+    const increasePage = () => setPageReplies((prev) => prev + 1);
+
+    // Hook for infinite scrolling: Calls `increasePage` when the user scrolls near the bottom
+    const { observerTarget } = useInfiniteScroll({
+        callback: increasePage,
+        threshold: 0.5,
+        loading: repliesLoading,
+    });
+
     const handleChangeContentReply = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setContentReply(e.target.value);
     };
@@ -228,6 +246,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
 
     const handleSendReply = async (parentCommentId: string) => {
         try {
+            setSendingReply(true);
             let imageUrl;
             if (imageUploadWriteComment) {
                 imageUrl = await uploadToCloudinary(imageUploadWriteComment);
@@ -243,6 +262,8 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
             });
         } catch (error) {
             console.log(error);
+        } finally {
+            setSendingReply(false);
         }
     };
 
@@ -351,16 +372,11 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                 </div>
                 {repliesCount > 0 &&
                     (showReplies ? (
-                        <div>
-                            <div
-                                className="text-secondary-foreground/50 font-semibold text-sm mt-1 cursor-pointer"
-                                onClick={handleHideReplies}
-                            >
-                                Ẩn bớt câu trả lời
-                            </div>
-                            {replies.map((reply: CommentType) => {
-                                return <Comment key={`comment-${reply.commentId}`} postId={postId} comment={reply} />;
-                            })}
+                        <div
+                            className="text-secondary-foreground/50 font-semibold text-sm mt-1 cursor-pointer"
+                            onClick={handleHideReplies}
+                        >
+                            Ẩn bớt câu trả lời
                         </div>
                     ) : (
                         <div
@@ -379,12 +395,17 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                             handleChange={handleChangeContentReply}
                         />
                         <div className="ms-2">
-                            <SendHorizonal
-                                className={`w-4 ${
-                                    (contentReply.trim() || imageUploadWriteComment) && 'fill-primary/40 text-primary'
-                                }`}
-                                onClick={() => handleSendReply(comment.commentId)}
-                            />
+                            <div className="relative">
+                                <SendHorizonal
+                                    className={`w-4 ${
+                                        (contentReply.trim() || imageUploadWriteComment) &&
+                                        'fill-primary/40 text-primary'
+                                    }`}
+                                    onClick={() => !sendingReply && handleSendReply(comment.commentId)}
+                                />
+                                {sendingReply && <Spinner className="absolute top-2 -right-1 w-3 !stroke-[6px]" />}
+                            </div>
+
                             <div>
                                 <label htmlFor="write-post-select-file" className="block w-fit cursor-pointer">
                                     <ImageUp className="text-[#41b35d] w-4" />
@@ -394,7 +415,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                         </div>
                     </div>
                 )}
-                {imageWriteComment && (
+                {showInputReply && imageWriteComment && (
                     <div className="relative w-fit">
                         <Image
                             className="w-20 mt-2 border rounded-sm"
@@ -411,11 +432,12 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                         </div>
                     </div>
                 )}
-                {comment.commentChild && comment.commentChild.length > 0 && (
+                {showReplies && (
                     <div>
-                        {comment.commentChild.map((commentChild: CommentType) => (
-                            <Comment postId={postId} comment={commentChild} key={`comment-${commentChild.commentId}`} />
-                        ))}
+                        {replies.map((reply: CommentType) => {
+                            return <Comment key={`comment-${reply.commentId}`} postId={postId} comment={reply} />;
+                        })}
+                        <div ref={observerTarget} className="h-1"></div>
                     </div>
                 )}
             </div>

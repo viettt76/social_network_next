@@ -20,6 +20,11 @@ export default function WritePost() {
     const [images, setImages] = useState<string[]>([]);
     const [imagesUpload, setImagesUpload] = useState<File[]>([]);
 
+    const imageWrapperRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setPostContent(e.target.value);
     };
@@ -68,8 +73,6 @@ export default function WritePost() {
     };
 
     // Scroll ngang
-    const imageWrapperRef = useRef<HTMLDivElement>(null);
-
     const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
         if (e.shiftKey && imageWrapperRef.current) {
             e.preventDefault();
@@ -79,10 +82,6 @@ export default function WritePost() {
             });
         }
     };
-
-    const [isDragging, setIsDragging] = useState(false);
-    const [startX, setStartX] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(0);
 
     const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         if (!imageWrapperRef.current) return;
