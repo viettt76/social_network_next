@@ -135,6 +135,67 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
         };
     }, [socket, showReplies, comment.commentId, comment.repliesCount]);
 
+    // Socket handle add, update, delete comment reaction
+    useEffect(() => {
+        const handleNewCommentReaction = (newReaction: any) => {
+            if (comment.commentId === newReaction.commentId) {
+                setCommentReactions((prev) => [
+                    ...prev,
+                    {
+                        commentReactionId: newReaction.commentReactionId,
+                        reactionType: newReaction.reactionType,
+                        user: {
+                            userId: newReaction.user.userId,
+                            firstName: newReaction.user.firstName,
+                            lastName: newReaction.user.lastName,
+                            avatar: newReaction.user.avatar,
+                        },
+                    },
+                ]);
+            }
+        };
+
+        const handleUpdateCommentReaction = ({
+            commentId,
+            commentReactionId,
+            reactionType,
+        }: {
+            commentId: string;
+            commentReactionId: string;
+            reactionType: ReactionNameType;
+        }) => {
+            if (comment.commentId === commentId) {
+                setCommentReactions((prev) => {
+                    const commentReactionUpdated = prev.find(
+                        (commentReaction) => commentReaction.commentReactionId === commentReactionId,
+                    );
+                    if (commentReactionUpdated) {
+                        commentReactionUpdated.reactionType = reactionType;
+                    }
+                    return [...prev];
+                });
+            }
+        };
+
+        const handleDeleteCommentReaction = ({
+            commentId,
+            commentReactionId,
+        }: {
+            commentId: string;
+            commentReactionId: string;
+        }) => {
+            if (comment.commentId === commentId) {
+                setCommentReactions((prev) =>
+                    prev.filter((commentReaction) => commentReaction.commentReactionId !== commentReactionId),
+                );
+            }
+        };
+
+        socket.on('reactToComment', handleNewCommentReaction);
+        socket.on('updateReactToComment', handleUpdateCommentReaction);
+        socket.on('deleteReactToComment', handleDeleteCommentReaction);
+    }, [socket, comment.commentId]);
+
     const handleChangeContentReply = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setContentReply(e.target.value);
     };
