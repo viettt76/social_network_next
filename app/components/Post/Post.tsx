@@ -14,7 +14,7 @@ import Textarea from '@/app/components/Textarea';
 import { uploadToCloudinary } from '@/lib/utils';
 import Comment from '@/app/components/Post/Comment';
 import { useAppSelector } from '@/lib/hooks';
-import { selectUserInfo } from '@/lib/slices/usersSlice';
+import { selectUserInfo } from '@/lib/slices/userSlice';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 export default function Post({ postInfo }: { postInfo: PostInfoType }) {

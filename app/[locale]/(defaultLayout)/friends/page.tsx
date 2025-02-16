@@ -1,41 +1,27 @@
 'use client';
 
 import { UserInfoType } from '@/app/dataType';
-import { getFriendsService, unfriendService } from '@/lib/services/relationshipService';
+import { unfriendService } from '@/lib/services/relationshipService';
 import { UserRoundMinus } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from 'flowbite-react';
 import { Link } from '@/i18n/routing';
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { removeFriend, selectFriends } from '@/lib/slices/relationshipSlice';
 
 export default function Friends() {
-    const [friends, setFriends] = useState<UserInfoType[]>([]);
+    const dispatch = useAppDispatch();
+    const friends = useAppSelector(selectFriends);
+
     const [friendInfoToUnfriend, setFriendInfoToUnfriend] = useState<UserInfoType>();
     const [showModalUnfriend, setShowModalUnfriend] = useState(false);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await getFriendsService();
-                setFriends(
-                    res.data.map((friend: any) => ({
-                        userId: friend.id,
-                        firstName: friend.firstName,
-                        lastName: friend.lastName,
-                        avatar: friend.avatar,
-                    })),
-                );
-            } catch (error) {
-                console.log(error);
-            }
-        })();
-    }, []);
 
     const handleUnfriend = async () => {
         try {
             if (friendInfoToUnfriend?.userId) {
-                setFriends((prev) => prev.filter((friend) => friend.userId != friendInfoToUnfriend?.userId));
+                dispatch(removeFriend(friendInfoToUnfriend.userId));
                 setShowModalUnfriend(false);
                 await unfriendService(friendInfoToUnfriend?.userId);
             }

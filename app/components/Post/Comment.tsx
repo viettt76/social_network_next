@@ -297,7 +297,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                     <PhotoProvider>
                         <PhotoView src={comment.image}>
                             <Image
-                                className="object-container h-40 w-fit rounded-xl border mt-1 cursor-pointer"
+                                className="object-cover h-40 w-fit rounded-xl border mt-1 cursor-pointer"
                                 src={comment.image}
                                 width={800}
                                 height={800}
@@ -389,7 +389,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                 {showInputReply && (
                     <div className="flex mt-1">
                         <Textarea
-                            className="flex-1 rounded-2xl px-2 py-1 max-h-28 scrollbar-none"
+                            className="flex-1 rounded-2xl px-2 py-1 max-h-28"
                             text={contentReply}
                             placeholder="Trả lời..."
                             handleChange={handleChangeContentReply}

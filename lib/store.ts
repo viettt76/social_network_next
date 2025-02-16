@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import userReducer from '@/lib/slices/usersSlice';
+import userReducer from '@/lib/slices/userSlice';
 import loadingReducer from '@/lib/slices/loadingSlice';
 import reactionTypeReducer from '@/lib/slices/reactionTypeSlice';
 import notificationReducer from '@/lib/slices/notificationSlice';
+import conversationReducer from '@/lib/slices/conversationSlice';
+import relationshipReducer from '@/lib/slices/relationshipSlice';
 
 export const makeStore = () => {
     return configureStore({
@@ -11,6 +13,8 @@ export const makeStore = () => {
             loading: loadingReducer,
             reactionType: reactionTypeReducer,
             notification: notificationReducer,
+            conversation: conversationReducer,
+            relationship: relationshipReducer,
         },
     });
 };

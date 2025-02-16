@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ChangeEventHandler, memo, useEffect, useRef } from 'react';
+import React, { ChangeEventHandler, memo, TextareaHTMLAttributes, useEffect, useRef } from 'react';
 
 const Textarea = memo(
     ({
@@ -8,13 +8,14 @@ const Textarea = memo(
         rows,
         placeholder,
         handleChange,
+        ...props
     }: {
         text: string;
         className?: string;
         rows?: number;
         placeholder?: string;
         handleChange: ChangeEventHandler<HTMLTextAreaElement>;
-    }) => {
+    } & TextareaHTMLAttributes<HTMLTextAreaElement>) => {
         const textareaRef = useRef<HTMLTextAreaElement>(null);
 
         const adjustHeight = () => {
@@ -41,6 +42,7 @@ const Textarea = memo(
                 )}
                 placeholder={placeholder}
                 onChange={handleChange}
+                {...props}
             />
         );
     },

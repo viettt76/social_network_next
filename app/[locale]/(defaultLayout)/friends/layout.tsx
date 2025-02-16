@@ -3,7 +3,7 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Link, usePathname } from '@/i18n/routing';
 import { useAppSelector } from '@/lib/hooks';
-import { selectUserInfo } from '@/lib/slices/usersSlice';
+import { selectUserInfo } from '@/lib/slices/userSlice';
 
 export default function FriendsLayout({ children }) {
     const pathname = usePathname();

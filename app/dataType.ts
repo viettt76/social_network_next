@@ -1,4 +1,5 @@
 import { LikeIcon, LoveIcon, LoveLoveIcon, HaHaIcon, WowIcon, SadIcon, AngryIcon } from '@/app/components/Icons';
+import { ConversationType } from '@/lib/slices/conversationSlice';
 
 export const ReactionTypeIcon = {
     LIKE: LikeIcon,
@@ -73,4 +74,31 @@ export type CommentType = {
     currentReactionType?: ReactionNameType;
     repliesCount: number;
     reactions: CommentReactionType[];
+};
+
+export enum MessageType {
+    TEXT = 'TEXT',
+    IMAGE = 'IMAGE',
+    FILE = 'FILE',
+    VIDEO = 'VIDEO',
+}
+
+export type MessageData = {
+    messageId: string;
+    conversationId: string;
+    content: string;
+    messageType: MessageType;
+    sender: UserInfoType;
+};
+
+export enum ConversationRole {
+    MEMBER = 'MEMBER',
+    ADMIN = 'ADMIN',
+}
+
+export type GroupConversationType = {
+    conversationId: string;
+    type: ConversationType;
+    name: string;
+    avatar?: string;
 };

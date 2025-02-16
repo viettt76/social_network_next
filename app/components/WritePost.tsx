@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Modal } from 'flowbite-react';
 import { Button } from '@/components/ui/button';
-import React, { ChangeEvent, useRef, useState, WheelEvent } from 'react';
+import { ChangeEvent, MouseEvent, useRef, useState, WheelEvent } from 'react';
 import { Images, X } from 'lucide-react';
 import { cn, uploadToCloudinary } from '@/lib/utils';
 import { createPostService } from '@/lib/services/postService';
@@ -54,13 +54,13 @@ export default function WritePost() {
     const handleSubmitPost = async () => {
         dispatch(startLoadingApp());
         try {
-            const imagesUrl = await Promise.all(
+            const imageUrls = await Promise.all(
                 imagesUpload.map(async (image) => {
                     return await uploadToCloudinary(image);
                 }),
             );
 
-            await createPostService({ content: postContent, images: imagesUrl });
+            await createPostService({ content: postContent, images: imageUrls });
             setOpenModal(false);
             setPostContent('');
             setImages([]);
@@ -72,7 +72,7 @@ export default function WritePost() {
         }
     };
 
-    // Scroll ngang
+    // Scroll horizontal
     const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
         if (e.shiftKey && imageWrapperRef.current) {
             e.preventDefault();
@@ -83,7 +83,7 @@ export default function WritePost() {
         }
     };
 
-    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseDown = (event: MouseEvent<HTMLDivElement>) => {
         if (!imageWrapperRef.current) return;
 
         setIsDragging(true);
@@ -91,7 +91,7 @@ export default function WritePost() {
         setScrollLeft(imageWrapperRef.current.scrollLeft);
     };
 
-    const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !imageWrapperRef.current) return;
 
         event.preventDefault();

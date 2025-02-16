@@ -23,7 +23,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { resetInfo } from '@/lib/slices/usersSlice';
+import { resetInfo } from '@/lib/slices/userSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 

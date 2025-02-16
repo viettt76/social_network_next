@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { BriefcaseBusiness, House, Images, Pencil } from 'lucide-react';
 import WritePost from '@/app/components/WritePost';
 import { useAppSelector } from '@/lib/hooks';
-import { selectUserInfo } from '@/lib/slices/usersSlice';
+import { selectUserInfo } from '@/lib/slices/userSlice';
 
 export default function Profile() {
     const userInfo = useAppSelector(selectUserInfo);
