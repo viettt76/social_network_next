@@ -30,7 +30,7 @@ export default function Profile() {
                 >
                     <div className="flex items-center absolute -bottom-6 left-6">
                         <Image
-                            className="w-32 h-32 rounded-full me-3"
+                            className="w-32 h-32 rounded-full me-3 border"
                             src="/images/default-avatar.png"
                             width={800}
                             height={800}

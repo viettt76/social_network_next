@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { getConversationWithFriendService, getGroupConversationsService } from '@/lib/services/conversationService';
 import {
     ConversationType,
+    focusConversationPopup,
     maximizeConversation,
     openConversation,
     selectOpenConversations,
@@ -44,7 +45,7 @@ export default function ConversationBubbles() {
                     })),
                 );
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         })();
     }, []);
@@ -58,17 +59,20 @@ export default function ConversationBubbles() {
     // Socket handle new message
     useEffect(() => {
         const handleNewMessage = (newMessage: any) => {
-            const { conversationId, type, sender } = newMessage;
+            const { conversationId, conversationName, conversationType, sender } = newMessage;
             if (sender.userId !== userInfo.id) {
                 dispatch(
                     openConversation({
                         conversationId,
-                        type,
+                        type: conversationType,
                         friendId: sender.userId,
-                        name: `${sender.lastName} ${sender.firstName}`,
+                        name:
+                            conversationType === ConversationType.PRIVATE
+                                ? `${sender.lastName} ${sender.firstName}`
+                                : conversationName,
                         avatar: sender.avatar,
                         unreadCount: 0,
-                        isMinimized: true,
+                        isMinimized: false,
                         isFocus: false,
                         messages: [],
                     }),
@@ -112,11 +116,12 @@ export default function ConversationBubbles() {
             );
             handleHideFriendList();
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 
     const handleOpenPopup = (conversationId: string) => {
+        dispatch(focusConversationPopup(conversationId));
         dispatch(maximizeConversation(conversationId));
     };
 
@@ -149,13 +154,13 @@ export default function ConversationBubbles() {
                                                 onClick={() => handleAddOpenConversation(friend)}
                                             >
                                                 <Image
-                                                    className="rounded-full border w-8 h-8 object-cover"
+                                                    className="rounded-full border w-8 h-8 object-cover border"
                                                     src={friend.avatar || '/images/default-avatar.png'}
                                                     alt="avatar"
                                                     width={800}
                                                     height={800}
                                                 />
-                                                <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1">
+                                                <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
                                                     {friend.lastName} {friend.firstName}
                                                 </div>
                                             </div>
@@ -177,13 +182,13 @@ export default function ConversationBubbles() {
                                                 // onClick={() => handleAddOpenConversation(group)}
                                             >
                                                 <Image
-                                                    className="rounded-full border w-8 h-8 object-cover"
+                                                    className="rounded-full border w-8 h-8 object-cover border"
                                                     src={group.avatar || '/images/default-avatar.png'}
                                                     alt="avatar"
                                                     width={800}
                                                     height={800}
                                                 />
-                                                <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1">
+                                                <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
                                                     {group.name}
                                                 </div>
                                             </div>
@@ -230,6 +235,8 @@ export default function ConversationBubbles() {
                         type={conversation.type}
                         friendId={conversation.friendId}
                         name={conversation.name}
+                        isMinimized={conversation.isMinimized}
+                        isFocus={conversation.isFocus}
                         className={`${!openConversationIndexs.includes(index) && 'hidden'}`}
                     />
                 );

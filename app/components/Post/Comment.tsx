@@ -101,7 +101,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                     setRepliesLoading(false);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         };
 
@@ -240,7 +240,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
             setShowListReactions(false);
             await reactToCommentService({ commentId: comment.commentId, postId, reactionType });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 
@@ -261,7 +261,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                 image: imageUrl,
             });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             setSendingReply(false);
         }

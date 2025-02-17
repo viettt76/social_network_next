@@ -66,7 +66,7 @@ export default function WritePost() {
             setImages([]);
             setImagesUpload([]);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             dispatch(stopLoadingApp());
         }
@@ -112,7 +112,7 @@ export default function WritePost() {
         <div>
             <div className="bg-background rounded-xl flex items-center" onClick={() => setOpenModal(true)}>
                 <Image
-                    className="rounded-full w-8 h-8 m-2 me-1"
+                    className="rounded-full w-8 h-8 m-2 me-1 border"
                     src="/images/default-avatar.png"
                     alt="avatar"
                     width={800}

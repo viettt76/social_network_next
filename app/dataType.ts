@@ -102,3 +102,13 @@ export type GroupConversationType = {
     name: string;
     avatar?: string;
 };
+
+export type MessengerType = {
+    conversationId: string;
+    conversationName: string;
+    conversationType: ConversationType;
+    conversationAvatar?: string;
+    lastMessage: MessageData;
+    lastUpdated: string;
+    friendId?: string;
+};

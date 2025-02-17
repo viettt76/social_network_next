@@ -43,7 +43,7 @@ export default function Login() {
                 type: 'manual',
                 message: error instanceof AxiosError && error.response?.data?.message,
             });
-            console.log(error);
+            console.error(error);
         }
     };
 

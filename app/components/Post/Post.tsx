@@ -168,7 +168,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                     setCommentLoading(false);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         };
 
@@ -265,7 +265,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
                 image: imageUrl,
             });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 

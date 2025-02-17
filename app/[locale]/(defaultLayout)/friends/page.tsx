@@ -26,7 +26,7 @@ export default function Friends() {
                 await unfriendService(friendInfoToUnfriend?.userId);
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 
@@ -41,7 +41,7 @@ export default function Friends() {
                                 key={`friend-request-${friend.userId}`}
                             >
                                 <Image
-                                    className="rounded-full w-10 h-10"
+                                    className="rounded-full w-10 h-10 border"
                                     src={friend.avatar || '/images/default-avatar.png'}
                                     alt="avatar"
                                     width={800}

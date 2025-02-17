@@ -7,6 +7,7 @@ const Textarea = memo(
         className,
         rows,
         placeholder,
+        isFocus,
         handleChange,
         ...props
     }: {
@@ -14,6 +15,7 @@ const Textarea = memo(
         className?: string;
         rows?: number;
         placeholder?: string;
+        isFocus?: boolean;
         handleChange: ChangeEventHandler<HTMLTextAreaElement>;
     } & TextareaHTMLAttributes<HTMLTextAreaElement>) => {
         const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -30,6 +32,14 @@ const Textarea = memo(
                 adjustHeight();
             }
         }, [text]);
+
+        useEffect(() => {
+            if (isFocus && textareaRef.current) {
+                setTimeout(() => {
+                    textareaRef.current?.focus();
+                }, 0);
+            }
+        }, [isFocus]);
 
         return (
             <textarea

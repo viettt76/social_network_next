@@ -57,7 +57,7 @@ export default function PostContent({
             setShowListReactions(false);
             await reactToPostService({ postId: postInfo.postId, posterId: postInfo.creatorInfo.userId, reactionType });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 
@@ -65,7 +65,7 @@ export default function PostContent({
         <div className="overflow-auto">
             <div className="flex items-center">
                 <Image
-                    className="rounded-full w-10 h-10 me-2"
+                    className="rounded-full w-10 h-10 me-2 border"
                     src="/images/default-avatar.png"
                     alt="avatar"
                     width={800}

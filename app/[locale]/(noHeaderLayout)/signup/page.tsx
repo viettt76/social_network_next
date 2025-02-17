@@ -81,7 +81,7 @@ export default function Signup() {
                     message: 'Username already exists',
                 });
             }
-            console.log(error);
+            console.error(error);
         } finally {
         }
     };

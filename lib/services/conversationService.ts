@@ -1,7 +1,6 @@
 import { ConversationType } from '@/lib/slices/conversationSlice';
-
 import axios from './api';
-import { ConversationRole, MessageType } from '@/app/dataType';
+import { MessageType } from '@/app/dataType';
 
 export const getConversationWithFriendService = (friendId: string) => {
     return axios.get(`/conversations/friends/${friendId}`);
@@ -20,7 +19,7 @@ export const createConversationService = ({
     type: ConversationType;
     name?: string;
     avatar?: string;
-    participants: { userId: string; role: ConversationRole | null }[];
+    participants: string[];
 }) => {
     return axios.post('/conversations', {
         type,
@@ -46,4 +45,12 @@ export const sendMessageService = ({
 
 export const getMessagesService = (conversationId: string) => {
     return axios.get(`/conversations/messages/${conversationId}`);
+};
+
+export const getRecentConversationsService = () => {
+    return axios.get('/conversations/recent');
+};
+
+export const getGroupMembersService = (conversationId: string) => {
+    return axios.get(`/conversations/groups/members/${conversationId}`);
 };

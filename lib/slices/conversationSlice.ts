@@ -43,11 +43,12 @@ export const conversationSlice = createSlice({
             state.openConversations.unshift({
                 ...action.payload,
                 ...(items &&
-                    items.length > 0 && {
-                        isMinimized: items[0].isMinimized,
-                        isFocus: items[0].isFocus,
-                        messages: items[0].messages,
-                    }),
+                    items.length > 0 &&
+                    (action.payload.type === ConversationType.PRIVATE
+                        ? {
+                              messages: items[0].messages,
+                          }
+                        : items[0])),
             });
         },
         closeConversation: (state, action: PayloadAction<string>) => {
@@ -88,15 +89,6 @@ export const conversationSlice = createSlice({
                 conversation.conversationId = action.payload.conversationId;
             }
         },
-        updateUnreadCount: (state, action: PayloadAction<{ conversationId: string; unreadCount: number }>) => {
-            const conversation = state.openConversations.find((c) => {
-                const { conversationId, isFocus } = c;
-                return !isFocus && conversationId === action.payload.conversationId;
-            });
-            if (conversation) {
-                conversation.unreadCount = action.payload.unreadCount;
-            }
-        },
         addMessage: (state, action: PayloadAction<MessageData | MessageData[]>) => {
             const conversation = state.openConversations.find((c) =>
                 Array.isArray(action.payload)
@@ -116,6 +108,12 @@ export const conversationSlice = createSlice({
                 }
             }
         },
+        focusConversationPopup: (state, action: PayloadAction<string | null>) => {
+            state.openConversations.forEach((c) => {
+                if (c.conversationId === action.payload || c.friendId === action.payload) c.isFocus = true;
+                else c.isFocus = false;
+            });
+        },
     },
 });
 
@@ -125,8 +123,8 @@ export const {
     maximizeConversation,
     minimizeConversation,
     assignConversationId,
-    updateUnreadCount,
     addMessage,
+    focusConversationPopup,
 } = conversationSlice.actions;
 
 export const selectOpenConversations = (state: RootState) => state.conversation.openConversations;

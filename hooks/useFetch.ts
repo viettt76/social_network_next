@@ -2,16 +2,15 @@ import { useEffect, useState } from 'react';
 
 const useFetch = <T>(fetchFunction: (() => Promise<{ data: T }>) | Promise<{ data: T }>) => {
     const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         (async () => {
             try {
-                setLoading(true);
                 const res = fetchFunction instanceof Promise ? await fetchFunction : await fetchFunction();
                 setData(res.data);
             } catch (error) {
-                console.log(error);
+                console.error(error);
             } finally {
                 setLoading(false);
             }

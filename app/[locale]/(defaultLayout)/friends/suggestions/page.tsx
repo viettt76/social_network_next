@@ -22,7 +22,7 @@ export default function FriendSuggestions() {
             setSuggestions((prev) => prev.filter((s) => s.userId != receiverId));
             await sendFriendRequestService(receiverId);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     };
 
@@ -44,7 +44,7 @@ export default function FriendSuggestions() {
                                     key={`suggestion-${suggestion.userId}`}
                                 >
                                     <Image
-                                        className="rounded-full w-10 h-10"
+                                        className="rounded-full w-10 h-10 border"
                                         src={suggestion.avatar || '/images/default-avatar.png'}
                                         alt="avatar"
                                         width={800}

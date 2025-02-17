@@ -1,6 +1,6 @@
 'use client';
 
-import { Images, Minus, SendHorizonal, X } from 'lucide-react';
+import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
 import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
@@ -9,17 +9,26 @@ import {
     assignConversationId,
     closeConversation,
     ConversationType,
+    focusConversationPopup,
     minimizeConversation,
     selectMessagesByConversationId,
     selectOpenConversations,
 } from '@/lib/slices/conversationSlice';
-import { createConversationService, getMessagesService, sendMessageService } from '@/lib/services/conversationService';
-import { MessageType } from '@/app/dataType';
+import {
+    createConversationService,
+    getGroupMembersService,
+    getMessagesService,
+    sendMessageService,
+} from '@/lib/services/conversationService';
+import { ConversationRole, MessageType, UserInfoType } from '@/app/dataType';
 import { uploadToCloudinary } from '@/lib/utils';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import { useSocket } from '@/app/components/SocketProvider';
+import useClickOutside from '@/hooks/useClickOutside';
+import React from 'react';
+import DrilldownMenu, { DrilldownMenuItem } from './DrilldownMenu';
 
 interface MessengerPopupProps {
     index: number;
@@ -28,8 +37,15 @@ interface MessengerPopupProps {
     friendId?: string;
     name: string;
     avatar?: string;
+    isMinimized: boolean;
+    isFocus: boolean;
     className?: string;
 }
+
+type GroupMemberType = UserInfoType & {
+    role: ConversationRole;
+    nickname?: string | null;
+};
 
 export default function MessengerPopup({
     index,
@@ -38,6 +54,8 @@ export default function MessengerPopup({
     friendId,
     name,
     avatar,
+    isMinimized,
+    isFocus,
     className,
 }: MessengerPopupProps) {
     const socket = useSocket();
@@ -47,7 +65,80 @@ export default function MessengerPopup({
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
 
+    const messengerPopupRef = useRef<HTMLDivElement>(null);
+    useClickOutside(messengerPopupRef, () => {
+        dispatch(focusConversationPopup(null));
+    });
+
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
+
+    const [groupMembers, setGroupMembers] = useState<GroupMemberType[]>([
+        {
+            userId: '1',
+            lastName: '2',
+            firstName: '2',
+            avatar: null,
+            role: ConversationRole.ADMIN,
+            nickname: '2',
+        },
+    ]);
+
+    const groupConversationSettings: DrilldownMenuItem[] = [
+        {
+            label: 'Thành viên nhóm',
+            children: [
+                {
+                    label: (
+                        <div className="flex flex-col gap-y-1">
+                            {groupMembers.map((m) => {
+                                return (
+                                    <div className="flex items-center" key={`group-member-${m.userId}`}>
+                                        <Image
+                                            className="rounded-full border w-8 h-8 object-cover border"
+                                            src={m.avatar || '/images/default-avatar.png'}
+                                            alt="avatar"
+                                            width={800}
+                                            height={800}
+                                        />
+                                        <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
+                                            {m.lastName} {m.firstName}
+                                        </div>
+                                        {m.role === ConversationRole.ADMIN && (
+                                            <ShieldCheck className="text-destructive" />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ),
+                },
+            ],
+        },
+    ];
+
+    useEffect(() => {
+        const getGroupMembers = async () => {
+            try {
+                const res = await getGroupMembersService(conversationId);
+                setGroupMembers(
+                    res.data.map((m) => ({
+                        userId: m.userId,
+                        firstName: m.userFirstName,
+                        lastName: m.userLastName,
+                        avatar: m.userAvatar,
+                        role: m.role,
+                        nickname: m.nickname,
+                    })),
+                );
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (conversationId) {
+            getGroupMembers();
+        }
+    }, [conversationId]);
 
     const [text, setText] = useState('');
     const [images, setImages] = useState<string[]>([]);
@@ -62,24 +153,26 @@ export default function MessengerPopup({
             (async () => {
                 try {
                     const res = await getMessagesService(conversationId);
-                    dispatch(
-                        addMessage(
-                            res.data.map((message: any) => ({
-                                messageId: message.id,
-                                conversationId: message.conversationId,
-                                content: message.content,
-                                messageType: message.messageType,
-                                sender: {
-                                    userId: message.sender.id,
-                                    firstName: message.sender.firstName,
-                                    lastName: message.sender.lastName,
-                                    avatar: message.sender.avatar,
-                                },
-                            })),
-                        ),
-                    );
+                    if (res.data.length > 0) {
+                        dispatch(
+                            addMessage(
+                                res.data.map((message: any) => ({
+                                    messageId: message.id,
+                                    conversationId: message.conversationId,
+                                    content: message.content,
+                                    messageType: message.messageType,
+                                    sender: {
+                                        userId: message.sender.id,
+                                        firstName: message.sender.firstName,
+                                        lastName: message.sender.lastName,
+                                        avatar: message.sender.avatar,
+                                    },
+                                })),
+                            ),
+                        );
+                    }
                 } catch (error) {
-                    console.log(error);
+                    console.error(error);
                 }
             })();
         }
@@ -88,7 +181,6 @@ export default function MessengerPopup({
     // Socket handle new message
     useEffect(() => {
         const handleNewMessage = (newMessage: any) => {
-            console.log(openConversations, conversationId, newMessage);
             if (conversationId === newMessage.conversationId) {
                 dispatch(
                     addMessage({
@@ -116,8 +208,16 @@ export default function MessengerPopup({
 
     // Scroll bottom of conversation
     useEffect(() => {
-        if (endOfMessagesRef.current) endOfMessagesRef.current.scrollTop = endOfMessagesRef.current.scrollHeight;
-    }, [messages]);
+        const timeoutId = setTimeout(() => {
+            if (endOfMessagesRef.current) {
+                endOfMessagesRef.current.scrollTop = endOfMessagesRef.current.scrollHeight;
+            }
+        }, 0);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [isMinimized, messages]);
 
     const handleChooseFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -165,7 +265,7 @@ export default function MessengerPopup({
                 const res = await createConversationService({
                     type,
                     avatar,
-                    participants: [{ userId: friendId, role: null }],
+                    participants: [friendId],
                 });
                 _conversationId = res.data.id;
                 dispatch(
@@ -198,7 +298,7 @@ export default function MessengerPopup({
                 );
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             setSendingMessage(false);
         }
@@ -221,19 +321,24 @@ export default function MessengerPopup({
 
     return (
         <div
+            ref={messengerPopupRef}
             className={`fixed flex flex-col bottom-0 bg-background w-[18rem] h-[26rem] rounded-t-xl border border-b-0 ${className}`}
             style={{ right: `${3.5 + index * 18.5}rem` }}
+            onClick={() => dispatch(focusConversationPopup(conversationId || friendId || ''))}
         >
             <div className="flex justify-between items-center bg-primary text-background rounded-t-xl py-1 px-2 shadow-md">
                 <div className="flex items-center gap-x-1">
                     <Image
-                        className="w-9 h-9 rounded-full"
+                        className="w-9 h-9 rounded-full border"
                         src={avatar || '/images/default-avatar.png'}
                         alt="avatar"
                         width={800}
                         height={800}
                     />
                     <span className="font-semibold">{name}</span>
+                    <DrilldownMenu items={groupConversationSettings} position="bottom-left">
+                        <ChevronDown />
+                    </DrilldownMenu>
                 </div>
                 <div className="flex items-center gap-x-1">
                     <Minus onClick={handleMinimizePopup} />
@@ -244,13 +349,14 @@ export default function MessengerPopup({
                 {messages.length > 0 ? (
                     messages.map((message, index) => {
                         const senderId = message.sender.userId;
+                        const isSender = senderId === userInfo.id;
                         let content;
                         switch (message.messageType) {
                             case MessageType.TEXT:
                                 content = (
                                     <div
                                         className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                                            senderId === userInfo.id
+                                            isSender
                                                 ? 'bg-blue-600 text-background ms-auto'
                                                 : 'bg-input/60 text-foreground'
                                         }`}
@@ -265,7 +371,7 @@ export default function MessengerPopup({
                                         <PhotoView src={message.content}>
                                             <Image
                                                 className={`object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer ${
-                                                    senderId === userInfo.id && 'ms-auto'
+                                                    isSender && 'ms-auto'
                                                 }`}
                                                 src={message.content}
                                                 width={800}
@@ -282,30 +388,40 @@ export default function MessengerPopup({
                         return (
                             <div
                                 key={`message-${message.messageId}`}
-                                className={`flex ${
-                                    index > 1 && senderId !== messages[index - 1].sender.userId && 'mt-2'
-                                }`}
+                                className={`${index > 1 && senderId !== messages[index - 1].sender.userId && 'mt-2'}`}
                             >
-                                <div className="w-10">
-                                    {senderId !== userInfo.id &&
-                                        (index === 0 || senderId !== messages[index - 1].sender.userId) && (
-                                            <Image
-                                                className="w-8 h-8 rounded-full"
-                                                src={message.sender.avatar || '/images/default-avatar.png'}
-                                                alt="avatar"
-                                                width={800}
-                                                height={800}
-                                            />
-                                        )}
+                                {type === ConversationType.GROUP &&
+                                    senderId !== userInfo.id &&
+                                    (index === 0 || senderId !== messages[index - 1].sender.userId) && (
+                                        <div className="flex">
+                                            <div className="w-10"></div>
+                                            <div className={'line-clamp-1 break-all text-xs'}>
+                                                {message.sender.lastName} {message.sender.firstName}
+                                            </div>
+                                        </div>
+                                    )}
+                                <div className={'flex'}>
+                                    <div className="w-10">
+                                        {senderId !== userInfo.id &&
+                                            (index === 0 || senderId !== messages[index - 1].sender.userId) && (
+                                                <Image
+                                                    className="w-8 h-8 rounded-full border"
+                                                    src={message.sender.avatar || '/images/default-avatar.png'}
+                                                    alt="avatar"
+                                                    width={800}
+                                                    height={800}
+                                                />
+                                            )}
+                                    </div>
+                                    {content}
                                 </div>
-                                {content}
                             </div>
                         );
                     })
                 ) : (
                     <div className="flex flex-col items-center mt-6">
                         <Image
-                            className="w-20 h-20 rounded-full"
+                            className="w-20 h-20 rounded-full border"
                             src={avatar || '/images/default-avatar.png'}
                             alt="avatar"
                             width={800}
@@ -345,6 +461,7 @@ export default function MessengerPopup({
                     <Textarea
                         className="border-none outline-none focus:shadow-none focus:ring-0 bg-input rounded-3xl px-2 py-2 min-h-9 max-h-40"
                         text={text}
+                        isFocus={isFocus}
                         placeholder="Aa"
                         handleChange={handleChangeText}
                         onKeyDown={handleEnterKeydown}

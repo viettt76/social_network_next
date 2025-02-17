@@ -16,7 +16,7 @@ export default function SuggestionsPanel() {
                     <div className="flex justify-between items-center mt-2 gap-4">
                         <Link tabIndex={-1} href="profile" className="flex">
                             <Image
-                                className="min-w-10 w-10 min-h-10 h-10 rounded-full me-2"
+                                className="min-w-10 w-10 min-h-10 h-10 rounded-full me-2 border"
                                 src="https://kynguyenlamdep.com/wp-content/uploads/2022/08/anh-anime-toc-hong-cute.jpg"
                                 width={800}
                                 height={800}

@@ -35,7 +35,7 @@ export default function SentRequests() {
                     duration: 2500,
                 });
             }
-            console.log(error);
+            console.error(error);
         }
     };
 
@@ -52,7 +52,7 @@ export default function SentRequests() {
                                 key={`friend-request-${friendRequest.userId}`}
                             >
                                 <Image
-                                    className="rounded-full w-10 h-10"
+                                    className="rounded-full w-10 h-10 border"
                                     src={friendRequest.avatar || '/images/default-avatar.png'}
                                     alt="avatar"
                                     width={800}

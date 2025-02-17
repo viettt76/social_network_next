@@ -52,7 +52,7 @@ export default function Home() {
                     setIsNoNewPost(true);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         })();
     }, [page]);
