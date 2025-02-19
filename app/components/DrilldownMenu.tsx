@@ -65,7 +65,7 @@ const DrilldownMenu = ({ items, className, position, children }: DrilldownMenuPr
                 <div
                     ref={menuRef}
                     className={cn(
-                        'w-64 absolute bg-white text-foreground shadow-[0_2px_4px_rgba(0,0,0,0.08),0_-2px_4px_rgba(0,0,0,0.08),2px_0_4px_rgba(0,0,0,0.08),-2px_0_4px_rgba(0,0,0,0.08)] overflow-x-hidden overflow-y-auto max-h-80 rounded-lg p-2 z-50',
+                        'w-64 absolute bg-white text-foreground shadow-all-sides overflow-x-hidden overflow-y-auto max-h-80 rounded-lg p-2 z-50',
                         position && positionClasses[position],
                         className,
                     )}

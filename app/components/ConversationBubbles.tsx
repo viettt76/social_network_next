@@ -128,7 +128,7 @@ export default function ConversationBubbles() {
     return (
         <div className="fixed top-20 right-2 z-10">
             <div
-                className="p-2 bg-background rounded-full cursor-pointer"
+                className="p-2 bg-white text-black rounded-full border cursor-pointer"
                 onClick={showFriendList ? handleHideFriendList : handleShowFriendList}
             >
                 {showFriendList ? <Minus /> : <Plus />}

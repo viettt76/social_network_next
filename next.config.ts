@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
             'bedental.vn',
             'demoda.vn',
             'res.cloudinary.com',
+            'img.ophim.live',
+            'files.vidstack.io',
         ],
     },
     reactStrictMode: false,

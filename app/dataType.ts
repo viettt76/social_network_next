@@ -112,3 +112,11 @@ export type MessengerType = {
     lastUpdated: string;
     friendId?: string;
 };
+
+export interface BaseMovieData {
+    movieId: string;
+    name: string;
+    slug: string;
+    thumbUrl: string;
+    type: 'movie' | 'tv';
+}

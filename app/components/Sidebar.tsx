@@ -52,7 +52,7 @@ export default function Sidebar() {
                 <div>Nhóm</div>
             </Link>
             <Link
-                href=""
+                href="/movie"
                 className="flex items-center py-2 px-4 hover:bg-secondary rounded-lg hover:text-primary cursor-pointer"
             >
                 <Newspaper className="me-3 w-6 h-6 text-primary" />

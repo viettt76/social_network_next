@@ -26,20 +26,27 @@ import { useToast } from '@/hooks/use-toast';
 import { resetInfo, selectUserInfo } from '@/lib/slices/userSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CircleCheck, Plus } from 'lucide-react';
+import { AlignJustify, ArrowLeft, ChevronRight, CircleCheck, Plus } from 'lucide-react';
 import { createConversationService, getRecentConversationsService } from '@/lib/services/conversationService';
 import { MessageType, MessengerType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
 import { ConversationType, openConversation } from '@/lib/slices/conversationSlice';
 import { selectFriends } from '@/lib/slices/relationshipSlice';
 import { useSocket } from './SocketProvider';
+import { Drawer } from 'flowbite-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export default function Header() {
+export default function MovieHeader() {
     const { theme, setTheme } = useTheme();
     const dispatch = useAppDispatch();
     const { toast } = useToast();
     const router = useRouter();
     const socket = useSocket();
+
+    const [isOpenSidebarModal, setIsOpenSidebarModal] = useState(false);
+
+    const handleShowSidebarModal = () => setIsOpenSidebarModal(true);
+    const handleCloseSidebarModal = () => setIsOpenSidebarModal(false);
 
     const friends = useAppSelector(selectFriends);
     const userInfo = useAppSelector(selectUserInfo);
@@ -250,30 +257,75 @@ export default function Header() {
 
     return (
         <div ref={parentRef} className="w-full">
-            <div ref={headerRef} className="h-16 bg-background shadow-sm fixed top-0 left-0 z-50" style={{ width }}>
+            <div ref={headerRef} className="h-16 bg-[#0a0a0a] shadow-sm fixed top-0 left-0 z-50" style={{ width }}>
+                <div className="absolute top-0 left-5 h-full flex items-center justify-center">
+                    <AlignJustify className="text-white" onClick={handleShowSidebarModal} />
+                </div>
+                <Drawer
+                    open={isOpenSidebarModal}
+                    onClose={handleCloseSidebarModal}
+                    className="bg-[#0a0a0a] border-r border-[#2d2d2d]"
+                >
+                    <Drawer.Items>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="text-white flex items-center w-fit">
+                                        Thể loại <ChevronRight />
+                                    </div>
+                                </TooltipTrigger>
+
+                                <TooltipContent
+                                    side="right"
+                                    align="start"
+                                    className="bg-[#2d2d2d] border-[#2d2d2d] border"
+                                >
+                                    <div className="px-2 py-1 grid grid-cols-6 gap-4">
+                                        {JSON.parse(sessionStorage.getItem('genreList') ?? '[]').map((g) => (
+                                            <Link
+                                                href={`/movie/genre/${g.slug}`}
+                                                className="text-white hover:text-orange-400"
+                                                key={`genre-${g.slug}`}
+                                                onClick={handleCloseSidebarModal}
+                                            >
+                                                {g.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </Drawer.Items>
+                </Drawer>
                 <div className="max-w-[1024px] h-full mx-auto flex items-center gap-x-6">
-                    <div className="w-64">
+                    <div className="w-64 flex items-center gap-x-4">
                         <Link href="/" className="block w-fit">
                             <Image src="/images/logo.png" width={50} height={50} alt="logo" />
                         </Link>
+                        <Link
+                            href="/movie"
+                            className="block w-fit px-2 text-white hover:text-orange-400 hover:underline"
+                        >
+                            Trang chủ
+                        </Link>
                     </div>
-                    <div className="flex-1 flex border rounded-3xl items-center pe-4 h-fit bg-input">
+                    <div className="flex-1 flex rounded-3xl items-center pe-4 h-fit bg-white">
                         <input
-                            className="w-full rounded-3xl px-4 py-2 border-none outline-none bg-transparent"
-                            placeholder="Tìm kiếm"
+                            className="w-full rounded-3xl px-4 py-2 border-none outline-none bg-transparent text-black"
+                            placeholder="Tìm kiếm phim"
                         />
-                        <MagnifyingGlass />
+                        <MagnifyingGlass className="text-black" />
                     </div>
                     <div className="flex items-center justify-around w-64">
                         <Link href="/friends/suggestions">
-                            <UserPlus className="text-ring" />
+                            <UserPlus className="text-white" />
                         </Link>
                         <div className="relative">
-                            <ChatCenteredDots className="text-ring" onClick={handleShowRecentConversations} />
+                            <ChatCenteredDots className="text-white" onClick={handleShowRecentConversations} />
                             {showRecentConversations && (
                                 <div
                                     ref={recentConversationsRef}
-                                    className="absolute top-6 left-0 w-80 bg-background border shadow-md rounded-xl p-2"
+                                    className="absolute top-6 left-0 w-96 bg-background border shadow-md rounded-xl p-2"
                                 >
                                     {showAddGroup ? (
                                         <>
@@ -411,18 +463,18 @@ export default function Header() {
                                 </div>
                             )}
                         </div>
-                        <BellRinging className="text-ring" />
+                        <BellRinging className="text-white" />
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center cursor-pointer">
                                     <Image
-                                        className="rounded-full w-7 h-7 border"
+                                        className="rounded-full w-7 h-7 border border-white"
                                         src="/images/default-avatar.png"
                                         alt="avatar"
                                         width={800}
                                         height={800}
                                     />
-                                    <CaretDown className="w-4 h-4 text-ring" />
+                                    <CaretDown className="w-4 h-4 text-white" />
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
