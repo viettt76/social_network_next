@@ -127,18 +127,21 @@ export default function Header() {
 
             setRecentConversations((prev) => {
                 const conversationIndex = prev.findIndex((c) => c.conversationId === conversationId);
+                const lastMessage = {
+                    messageId,
+                    conversationId,
+                    content,
+                    messageType,
+                    sender,
+                    currentReaction: null,
+                    reactions: [],
+                };
 
                 if (conversationIndex !== -1) {
                     const updatedConversations = [...prev];
                     updatedConversations[conversationIndex] = {
                         ...updatedConversations[conversationIndex],
-                        lastMessage: {
-                            messageId,
-                            conversationId,
-                            content,
-                            messageType,
-                            sender,
-                        },
+                        lastMessage,
                         lastUpdated,
                     };
                     return updatedConversations;
@@ -148,13 +151,7 @@ export default function Header() {
                             conversationId,
                             conversationName,
                             conversationType,
-                            lastMessage: {
-                                messageId,
-                                conversationId,
-                                content,
-                                messageType,
-                                sender,
-                            },
+                            lastMessage,
                             lastUpdated,
                             ...(conversationType === ConversationType.PRIVATE
                                 ? {
