@@ -40,12 +40,12 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     // Set most reactions when reactions of post change
     useEffect(() => {
         const _reactions = groupBy(postReactions, 'reactionType');
-        const mostReactions = sortBy(_reactions, 'length').reverse();
+        const _mostReactions = sortBy(_reactions, 'length').reverse();
 
-        if (mostReactions.length > 0) {
-            setMostReactions([mostReactions[0][0].reactionType]);
-            if (mostReactions.length > 1) {
-                setMostReactions((prev) => [...prev, mostReactions[1][0].reactionType]);
+        if (_mostReactions.length > 0) {
+            setMostReactions([_mostReactions[0][0].reactionType]);
+            if (_mostReactions.length > 1) {
+                setMostReactions((prev) => [_mostReactions[1][0].reactionType, ...prev]);
             }
         } else {
             setMostReactions([]);

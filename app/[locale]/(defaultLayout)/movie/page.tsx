@@ -73,7 +73,7 @@ export default function Movies() {
                     sessionStorage.setItem('moviesByGenres', JSON.stringify(moviesByGenresData));
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         };
         fetchMovites();

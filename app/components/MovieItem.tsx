@@ -44,7 +44,6 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                     setMovieInfo(storedMovieDetail[movieId]);
                 } else {
                     const { data } = await getMovieDetailById(movieId);
-                    console.log(data);
 
                     const movieDetail = {
                         trailerUrl: data.movie.trailer_url,

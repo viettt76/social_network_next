@@ -1,4 +1,4 @@
-import { MessageData } from '@/app/dataType';
+import { MessageData, ReactionNameType, UserInfoType } from '@/app/dataType';
 import { RootState } from '@/lib/store';
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
@@ -114,6 +114,30 @@ export const conversationSlice = createSlice({
                 else c.isFocus = false;
             });
         },
+        updateMessageReactions: (
+            state,
+            action: PayloadAction<{
+                conversationId: string;
+                messageId: string;
+                user: UserInfoType;
+                reactionType: ReactionNameType;
+            }>,
+        ) => {
+            const { conversationId, messageId, user, reactionType } = action.payload;
+            const message = state.openConversations
+                .find((c) => c.conversationId === conversationId)
+                ?.messages.find((m) => m.messageId === messageId);
+
+            if (!message) return;
+
+            message.reactions = message.reactions.filter((r) => r.user.userId !== user.userId);
+
+            if (reactionType)
+                message.reactions?.push({
+                    reactionType,
+                    user,
+                });
+        },
     },
 });
 
@@ -125,6 +149,7 @@ export const {
     assignConversationId,
     addMessage,
     focusConversationPopup,
+    updateMessageReactions,
 } = conversationSlice.actions;
 
 export const selectOpenConversations = (state: RootState) => state.conversation.openConversations;

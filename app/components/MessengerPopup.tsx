@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, Smile, X } from 'lucide-react';
+import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
 import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
@@ -13,6 +13,7 @@ import {
     minimizeConversation,
     selectMessagesByConversationId,
     selectOpenConversations,
+    updateMessageReactions,
 } from '@/lib/slices/conversationSlice';
 import {
     createConversationService,
@@ -20,17 +21,15 @@ import {
     getMessagesService,
     sendMessageService,
 } from '@/lib/services/conversationService';
-import { ConversationRole, MessageType, ReactionTypeIcon, UserInfoType } from '@/app/dataType';
+import { ConversationRole, MessageType, UserInfoType } from '@/app/dataType';
 import { uploadToCloudinary } from '@/lib/utils';
-import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import { useSocket } from '@/app/components/SocketProvider';
 import useClickOutside from '@/hooks/useClickOutside';
 import React from 'react';
 import DrilldownMenu, { DrilldownMenuItem } from './DrilldownMenu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
+import Message from '@/app/components/Message';
 
 interface MessengerPopupProps {
     index: number;
@@ -66,7 +65,6 @@ export default function MessengerPopup({
     const userInfo = useAppSelector(selectUserInfo);
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
-    const postReactionType = useAppSelector(selectPostReactionType);
 
     const messengerPopupRef = useRef<HTMLDivElement>(null);
     useClickOutside(messengerPopupRef, () => {
@@ -85,6 +83,13 @@ export default function MessengerPopup({
             nickname: '2',
         },
     ]);
+
+    const [text, setText] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+    const [imagesUpload, setImagesUpload] = useState<File[]>([]);
+    const [sendingMessage, setSendingMessage] = useState(false);
+
+    const imageWrapperRef = useRef<HTMLDivElement>(null);
 
     const groupConversationSettings: DrilldownMenuItem[] = [
         {
@@ -119,6 +124,7 @@ export default function MessengerPopup({
         },
     ];
 
+    // Get group members
     useEffect(() => {
         const getGroupMembers = async () => {
             try {
@@ -143,13 +149,6 @@ export default function MessengerPopup({
         }
     }, [conversationId]);
 
-    const [text, setText] = useState('');
-    const [images, setImages] = useState<string[]>([]);
-    const [imagesUpload, setImagesUpload] = useState<File[]>([]);
-    const [sendingMessage, setSendingMessage] = useState(false);
-
-    const imageWrapperRef = useRef<HTMLDivElement>(null);
-
     // Get messages
     useEffect(() => {
         if (conversationId) {
@@ -170,6 +169,16 @@ export default function MessengerPopup({
                                         lastName: message.sender.lastName,
                                         avatar: message.sender.avatar,
                                     },
+                                    currentReaction: message.currentReaction,
+                                    reactions: message.reactions.map((r) => ({
+                                        reactionType: r.reactionType,
+                                        user: {
+                                            userId: r.user.id,
+                                            firstName: r.user.firstName,
+                                            lastName: r.user.lastName,
+                                            avatar: r.user.avatar,
+                                        },
+                                    })),
                                 })),
                             ),
                         );
@@ -181,7 +190,7 @@ export default function MessengerPopup({
         }
     }, [conversationId, dispatch]);
 
-    // Socket handle new message
+    // Socket handle new message and react to message
     useEffect(() => {
         const handleNewMessage = (newMessage: any) => {
             if (conversationId === newMessage.conversationId) {
@@ -197,15 +206,41 @@ export default function MessengerPopup({
                             lastName: newMessage.sender.lastName,
                             avatar: newMessage.sender.avatar,
                         },
+                        currentReaction: null,
+                        reactions: [],
                     }),
                 );
             }
         };
 
+        const handleReactMessage = (messageReaction) => {
+            const {
+                messageId,
+                reactionType,
+                sender: { userId, firstName, lastName, avatar },
+            } = messageReaction;
+
+            dispatch(
+                updateMessageReactions({
+                    conversationId,
+                    messageId,
+                    user: {
+                        userId,
+                        firstName,
+                        lastName,
+                        avatar,
+                    },
+                    reactionType,
+                }),
+            );
+        };
+
         socket.on('newMessage', handleNewMessage);
+        socket.on('reactToMessage', handleReactMessage);
 
         return () => {
             socket.off('newMessage', handleNewMessage);
+            socket.off('reactToMessage', handleReactMessage);
         };
     }, [socket, messages, name, conversationId, dispatch, openConversations]);
 
@@ -220,7 +255,7 @@ export default function MessengerPopup({
         return () => {
             clearTimeout(timeoutId);
         };
-    }, [isMinimized, messages]);
+    }, [isMinimized, messages.length]);
 
     const handleChooseFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -338,7 +373,11 @@ export default function MessengerPopup({
                         width={800}
                         height={800}
                     />
-                    <span className="font-semibold">{name}</span>
+                    <span className="font-semibold">
+                        {(type === ConversationType.PRIVATE &&
+                            groupMembers.find((m) => m.userId !== userInfo.id)?.nickname) ||
+                            name}
+                    </span>
                     <DrilldownMenu items={groupConversationSettings} position="bottom-left">
                         <ChevronDown />
                     </DrilldownMenu>
@@ -351,103 +390,15 @@ export default function MessengerPopup({
             <div ref={endOfMessagesRef} className="flex-1 flex flex-col gap-y-1 overflow-y-auto py-2 px-2">
                 {messages.length > 0 ? (
                     messages.map((message, index) => {
-                        const senderId = message.sender.userId;
-                        const isSender = senderId === userInfo.id;
-                        let content;
-                        switch (message.messageType) {
-                            case MessageType.TEXT:
-                                content = (
-                                    <div
-                                        className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                                            isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
-                                        }`}
-                                    >
-                                        {message.content}
-                                    </div>
-                                );
-                                break;
-                            case MessageType.IMAGE:
-                                content = (
-                                    <PhotoProvider>
-                                        <PhotoView src={message.content}>
-                                            <Image
-                                                className="object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer"
-                                                src={message.content}
-                                                width={800}
-                                                height={800}
-                                                alt=""
-                                            />
-                                        </PhotoView>
-                                    </PhotoProvider>
-                                );
-                                break;
-                            default:
-                                content = (
-                                    <div
-                                        className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                                            isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
-                                        }`}
-                                    >
-                                        {message.content}
-                                    </div>
-                                );
-                        }
                         return (
-                            <div
+                            <Message
+                                message={message}
+                                conversationId={conversationId}
+                                conversationType={type}
+                                prevSenderId={messages[index - 1]?.sender.userId ?? ''}
+                                index={index}
                                 key={`message-${message.messageId}`}
-                                className={`${index > 1 && senderId !== messages[index - 1].sender.userId && 'mt-2'}`}
-                            >
-                                {type === ConversationType.GROUP &&
-                                    senderId !== userInfo.id &&
-                                    (index === 0 || senderId !== messages[index - 1].sender.userId) && (
-                                        <div className="flex">
-                                            <div className="w-10"></div>
-                                            <div className={'line-clamp-1 break-all text-xs'}>
-                                                {message.sender.lastName} {message.sender.firstName}
-                                            </div>
-                                        </div>
-                                    )}
-                                <div className={'flex'}>
-                                    <div className="w-10">
-                                        {senderId !== userInfo.id &&
-                                            (index === 0 || senderId !== messages[index - 1].sender.userId) && (
-                                                <Image
-                                                    className="w-8 h-8 rounded-full border"
-                                                    src={message.sender.avatar || '/images/default-avatar.png'}
-                                                    alt="avatar"
-                                                    width={800}
-                                                    height={800}
-                                                />
-                                            )}
-                                    </div>
-                                    <div className={`relative ${isSender && 'ms-auto'}`}>
-                                        {content}
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div
-                                                        className={`absolute cursor-pointer bottom-0 ${
-                                                            isSender ? '-left-5' : '-right-5'
-                                                        }`}
-                                                    >
-                                                        <Smile className="text-gray w-4 h-4" />
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="p-0 flex bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full">
-                                                    {Object.keys(postReactionType).map((reactionType) => {
-                                                        const Icon = ReactionTypeIcon[reactionType];
-                                                        return (
-                                                            <div className="w-7" key={reactionType}>
-                                                                <Icon width={28} height={28} />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                </div>
-                            </div>
+                            />
                         );
                     })
                 ) : (
