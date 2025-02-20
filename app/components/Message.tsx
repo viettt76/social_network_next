@@ -3,11 +3,11 @@
 import { Heart } from 'lucide-react';
 import { createElement, useState } from 'react';
 import Image from 'next/image';
-import { ConversationType } from '@/lib/slices/conversationSlice';
+import { ConversationType, updateCurrentMessageReaction } from '@/lib/slices/conversationSlice';
 import { reactToMessageService } from '@/lib/services/conversationService';
-import { MessageType, ReactionNameType, ReactionTypeIcon } from '@/app/dataType';
+import { MessageData, MessageType, ReactionNameType, ReactionTypeIcon } from '@/app/dataType';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
-import { useAppSelector } from '@/lib/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -15,14 +15,23 @@ import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { groupBy, sortBy } from 'lodash';
 
 interface MessageProps {
-    message;
+    message: MessageData;
     conversationId: string;
     conversationType: ConversationType;
+    currentReaction: ReactionNameType | null;
     prevSenderId?: string;
     index: number;
 }
 
-export default function Message({ message, conversationId, conversationType, prevSenderId, index }: MessageProps) {
+export default function Message({
+    message,
+    conversationId,
+    conversationType,
+    currentReaction,
+    prevSenderId,
+    index,
+}: MessageProps) {
+    const dispatch = useAppDispatch();
     const userInfo = useAppSelector(selectUserInfo);
     const postReactionType = useAppSelector(selectPostReactionType);
 
@@ -89,6 +98,14 @@ export default function Message({ message, conversationId, conversationType, pre
         reactionType: ReactionNameType | null;
     }) => {
         try {
+            setIsTooltipVisible(false);
+            dispatch(
+                updateCurrentMessageReaction({
+                    conversationId,
+                    messageId,
+                    currentReaction: reactionType,
+                }),
+            );
             await reactToMessageService({
                 messageId,
                 conversationId,
@@ -111,7 +128,7 @@ export default function Message({ message, conversationId, conversationType, pre
                         </div>
                     </div>
                 )}
-            <div className={'flex'}>
+            <div className="flex">
                 {senderId !== userInfo.id && (
                     <div className="w-10">
                         {(index === 0 || senderId !== prevSenderId) && (
@@ -130,7 +147,7 @@ export default function Message({ message, conversationId, conversationType, pre
                     onMouseEnter={() => setIsTooltipVisible(true)}
                     onMouseLeave={() => setIsTooltipVisible(false)}
                 >
-                    <div className={`relative `}>
+                    <div className="relative">
                         {content}
                         {mostReactions.length > 0 && (
                             <div
@@ -153,40 +170,43 @@ export default function Message({ message, conversationId, conversationType, pre
                                 )}
                             </div>
                         )}
-                        <span
-                            className={`absolute top-1/2 -translate-y-1/2 ${isSender ? '-left-8' : '-right-8'} ${
-                                isTooltipVisible ? 'block' : 'hidden'
-                            }`}
-                        >
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="cursor-pointer bg-white w-5 h-5 rounded-full border flex items-center justify-center">
-                                            <Heart className="text-gray w-3 h-3" />
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="p-0 flex bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full shadow-all-sides">
-                                        {Object.keys(postReactionType).map((reactionType) => {
-                                            const Icon = ReactionTypeIcon[reactionType];
-                                            return (
-                                                <div
-                                                    className="w-7 cursor-pointer"
-                                                    key={reactionType}
-                                                    onClick={() =>
-                                                        handleReactToMessage({
-                                                            messageId: message.messageId,
-                                                            reactionType: reactionType as ReactionNameType,
-                                                        })
-                                                    }
-                                                >
-                                                    <Icon width={28} height={28} />
-                                                </div>
-                                            );
-                                        })}
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </span>
+                        {isTooltipVisible && (
+                            <span className={`absolute top-1/2 -translate-y-1/2 ${isSender ? '-left-8' : '-right-8'}`}>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="cursor-pointer bg-white w-5 h-5 rounded-full border flex items-center justify-center">
+                                                <Heart className="text-gray w-3 h-3" />
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="p-0 flex bg-background px-1 border shadow-md rounded-full shadow-all-sides">
+                                            {Object.keys(postReactionType).map((reactionType) => {
+                                                const Icon = ReactionTypeIcon[reactionType];
+                                                return (
+                                                    <div
+                                                        className={`w-9 cursor-pointer py-1 px-1 rounded-full ${
+                                                            currentReaction === reactionType && 'bg-gray/50'
+                                                        }`}
+                                                        key={reactionType}
+                                                        onClick={() =>
+                                                            handleReactToMessage({
+                                                                messageId: message.messageId,
+                                                                reactionType:
+                                                                    currentReaction === reactionType
+                                                                        ? null
+                                                                        : (reactionType as ReactionNameType),
+                                                            })
+                                                        }
+                                                    >
+                                                        <Icon width={28} height={28} />
+                                                    </div>
+                                                );
+                                            })}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

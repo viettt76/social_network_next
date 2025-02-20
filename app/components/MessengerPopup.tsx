@@ -235,12 +235,30 @@ export default function MessengerPopup({
             );
         };
 
+        const handleRemoveReactMessage = ({ messageId, userId }: { messageId: string; userId: string }) => {
+            dispatch(
+                updateMessageReactions({
+                    conversationId,
+                    messageId,
+                    user: {
+                        userId,
+                        firstName: '',
+                        lastName: '',
+                        avatar: null,
+                    },
+                    reactionType: null,
+                }),
+            );
+        };
+
         socket.on('newMessage', handleNewMessage);
         socket.on('reactToMessage', handleReactMessage);
+        socket.on('removeReactToMessage', handleRemoveReactMessage);
 
         return () => {
             socket.off('newMessage', handleNewMessage);
             socket.off('reactToMessage', handleReactMessage);
+            socket.off('removeReactToMessage', handleRemoveReactMessage);
         };
     }, [socket, messages, name, conversationId, dispatch, openConversations]);
 
@@ -395,6 +413,7 @@ export default function MessengerPopup({
                                 message={message}
                                 conversationId={conversationId}
                                 conversationType={type}
+                                currentReaction={message.currentReaction}
                                 prevSenderId={messages[index - 1]?.sender.userId ?? ''}
                                 index={index}
                                 key={`message-${message.messageId}`}

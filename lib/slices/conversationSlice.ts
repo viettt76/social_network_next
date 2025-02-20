@@ -120,7 +120,7 @@ export const conversationSlice = createSlice({
                 conversationId: string;
                 messageId: string;
                 user: UserInfoType;
-                reactionType: ReactionNameType;
+                reactionType: ReactionNameType | null;
             }>,
         ) => {
             const { conversationId, messageId, user, reactionType } = action.payload;
@@ -138,6 +138,22 @@ export const conversationSlice = createSlice({
                     user,
                 });
         },
+        updateCurrentMessageReaction: (
+            state,
+            action: PayloadAction<{
+                conversationId: string;
+                messageId: string;
+                currentReaction: ReactionNameType | null;
+            }>,
+        ) => {
+            const { conversationId, messageId, currentReaction } = action.payload;
+            const message = state.openConversations
+                .find((c) => c.conversationId === conversationId)
+                ?.messages.find((m) => m.messageId === messageId);
+
+            if (!message) return;
+            message.currentReaction = currentReaction;
+        },
     },
 });
 
@@ -150,6 +166,7 @@ export const {
     addMessage,
     focusConversationPopup,
     updateMessageReactions,
+    updateCurrentMessageReaction,
 } = conversationSlice.actions;
 
 export const selectOpenConversations = (state: RootState) => state.conversation.openConversations;
