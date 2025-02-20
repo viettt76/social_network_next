@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, X } from 'lucide-react';
+import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, Smile, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
 import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
@@ -20,7 +20,7 @@ import {
     getMessagesService,
     sendMessageService,
 } from '@/lib/services/conversationService';
-import { ConversationRole, MessageType, UserInfoType } from '@/app/dataType';
+import { ConversationRole, MessageType, ReactionTypeIcon, UserInfoType } from '@/app/dataType';
 import { uploadToCloudinary } from '@/lib/utils';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
@@ -29,6 +29,8 @@ import { useSocket } from '@/app/components/SocketProvider';
 import useClickOutside from '@/hooks/useClickOutside';
 import React from 'react';
 import DrilldownMenu, { DrilldownMenuItem } from './DrilldownMenu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 
 interface MessengerPopupProps {
     index: number;
@@ -64,6 +66,7 @@ export default function MessengerPopup({
     const userInfo = useAppSelector(selectUserInfo);
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
+    const postReactionType = useAppSelector(selectPostReactionType);
 
     const messengerPopupRef = useRef<HTMLDivElement>(null);
     useClickOutside(messengerPopupRef, () => {
@@ -356,9 +359,7 @@ export default function MessengerPopup({
                                 content = (
                                     <div
                                         className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                                            isSender
-                                                ? 'bg-blue-600 text-background ms-auto'
-                                                : 'bg-input/60 text-foreground'
+                                            isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
                                         }`}
                                     >
                                         {message.content}
@@ -370,9 +371,7 @@ export default function MessengerPopup({
                                     <PhotoProvider>
                                         <PhotoView src={message.content}>
                                             <Image
-                                                className={`object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer ${
-                                                    isSender && 'ms-auto'
-                                                }`}
+                                                className="object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer"
                                                 src={message.content}
                                                 width={800}
                                                 height={800}
@@ -383,7 +382,15 @@ export default function MessengerPopup({
                                 );
                                 break;
                             default:
-                                content = <div>{message.content}</div>;
+                                content = (
+                                    <div
+                                        className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
+                                            isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
+                                        }`}
+                                    >
+                                        {message.content}
+                                    </div>
+                                );
                         }
                         return (
                             <div
@@ -413,7 +420,32 @@ export default function MessengerPopup({
                                                 />
                                             )}
                                     </div>
-                                    {content}
+                                    <div className={`relative ${isSender && 'ms-auto'}`}>
+                                        {content}
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div
+                                                        className={`absolute cursor-pointer bottom-0 ${
+                                                            isSender ? '-left-5' : '-right-5'
+                                                        }`}
+                                                    >
+                                                        <Smile className="text-gray w-4 h-4" />
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="p-0 flex bg-background py-1 px-2 gap-x-2 border shadow-md rounded-full">
+                                                    {Object.keys(postReactionType).map((reactionType) => {
+                                                        const Icon = ReactionTypeIcon[reactionType];
+                                                        return (
+                                                            <div className="w-7" key={reactionType}>
+                                                                <Icon width={28} height={28} />
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                 </div>
                             </div>
                         );
