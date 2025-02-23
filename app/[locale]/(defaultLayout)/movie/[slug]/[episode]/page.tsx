@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getMovieDetailBySlug } from '@/lib/services/movieService';
+import { getMovieDetailBySlugService } from '@/lib/services/movieService';
 import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ export default function WatchTVShow() {
         const getMovieDetail = async () => {
             try {
                 if (typeof slug === 'string') {
-                    const { data } = await getMovieDetailBySlug(slug);
+                    const { data } = await getMovieDetailBySlugService(slug);
                     setMovieInfo({
                         name: data.movie.name,
                         source: data.episodes[0].server_data[Number(episode) - 1].link_m3u8,
@@ -56,32 +56,27 @@ export default function WatchTVShow() {
                 <MediaProvider>
                     <Poster className="vds-poster" />
                 </MediaProvider>
-                <DefaultVideoLayout
-                    thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt"
-                    icons={defaultLayoutIcons}
-                />
+                <DefaultVideoLayout icons={defaultLayoutIcons} />
             </MediaPlayer>
-            {movieInfo?.type === 'tv' && (
-                <div className="text-white mt-6 mb-4">
-                    <div className="text-2xl text-orange-400">TẬP PHIM</div>
-                    <div className="grid grid-cols-10 gap-4 mt-3">
-                        {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
-                            return (
-                                <Link
-                                    href={`/movie/${slug}/${i + 1}`}
-                                    className={cn(
-                                        'bg-white text-black h-10 flex justify-center items-center rounded-md',
-                                        i === Number(episode) - 1 && 'bg-red-600 text-white',
-                                    )}
-                                    key={`${slug}-episode-${i}`}
-                                >
-                                    {i + 1}
-                                </Link>
-                            );
-                        })}
-                    </div>
+            <div className="text-white mt-6 mb-4">
+                <div className="text-2xl text-orange-400">TẬP PHIM</div>
+                <div className="grid grid-cols-10 gap-4 mt-3">
+                    {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
+                        return (
+                            <Link
+                                href={`/movie/${slug}/${i + 1}`}
+                                className={cn(
+                                    'bg-white text-black h-10 flex justify-center items-center rounded-md',
+                                    i === Number(episode) - 1 && 'bg-red-600 text-white',
+                                )}
+                                key={`${slug}-episode-${i}`}
+                            >
+                                {i + 1}
+                            </Link>
+                        );
+                    })}
                 </div>
-            )}
+            </div>
         </div>
     );
 }

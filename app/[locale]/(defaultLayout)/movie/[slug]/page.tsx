@@ -2,12 +2,9 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getMovieDetailBySlug } from '@/lib/services/movieService';
+import { getMovieDetailBySlugService } from '@/lib/services/movieService';
 import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-import { Button } from '@/components/ui/button';
 
 interface MovieInfoType {
     name: string;
@@ -23,7 +20,7 @@ export default function WatchMovie() {
         const getMovieDetail = async () => {
             try {
                 if (typeof slug === 'string') {
-                    const { data } = await getMovieDetailBySlug(slug);
+                    const { data } = await getMovieDetailBySlugService(slug);
                     setMovieInfo({
                         name: data.movie.name,
                         source: data.episodes[0].server_data[0].link_m3u8,
@@ -53,21 +50,8 @@ export default function WatchMovie() {
                 <MediaProvider>
                     <Poster className="vds-poster" />
                 </MediaProvider>
-                <DefaultVideoLayout
-                    thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt"
-                    icons={defaultLayoutIcons}
-                />
+                <DefaultVideoLayout icons={defaultLayoutIcons} />
             </MediaPlayer>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="outline">Hover</Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Add to library</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
         </div>
     );
 }

@@ -5,7 +5,7 @@ import { ChevronDown, Play, Plus, ThumbsDown, ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Modal } from 'flowbite-react';
-import { getMovieDetailById } from '@/lib/services/movieService';
+import { getMovieDetailByIdService } from '@/lib/services/movieService';
 import { cn } from '@/lib/utils';
 import { Link } from '@/i18n/routing';
 
@@ -43,7 +43,7 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                 if (storedMovieDetail[movieId]) {
                     setMovieInfo(storedMovieDetail[movieId]);
                 } else {
-                    const { data } = await getMovieDetailById(movieId);
+                    const { data } = await getMovieDetailByIdService(movieId);
 
                     const movieDetail = {
                         trailerUrl: data.movie.trailer_url,

@@ -1,19 +1,10 @@
 'use client';
 
-import {
-    BellRinging,
-    CaretDown,
-    Moon,
-    MagnifyingGlass,
-    Sun,
-    UserPlus,
-    ChatCenteredDots,
-    SignOut,
-} from '@phosphor-icons/react';
+import { BellRinging, CaretDown, Moon, MagnifyingGlass, Sun, UserPlus, SignOut } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { Link, useRouter } from '@/i18n/routing';
-import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { useAppDispatch } from '@/lib/hooks';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,45 +14,43 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { resetInfo, selectUserInfo } from '@/lib/slices/userSlice';
+import { resetInfo } from '@/lib/slices/userSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
-import { AlignJustify, ArrowLeft, ChevronRight, CircleCheck, Plus } from 'lucide-react';
-import { createConversationService, getRecentConversationsService } from '@/lib/services/conversationService';
-import { MessageType, MessengerType } from '@/app/dataType';
-import useClickOutside from '@/hooks/useClickOutside';
-import { ConversationType, openConversation } from '@/lib/slices/conversationSlice';
-import { selectFriends } from '@/lib/slices/relationshipSlice';
-import { useSocket } from './SocketProvider';
+import { AlignJustify, ChevronRight } from 'lucide-react';
 import { Drawer } from 'flowbite-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import RecentConversations from './RecentConversations';
+import useDebounce from '@/hooks/useDebounce';
+import { searchMovieService } from '@/lib/services/movieService';
+import { BaseMovieData } from '@/app/dataType';
+import useClickOutside from '@/hooks/useClickOutside';
 
 export default function MovieHeader() {
     const { theme, setTheme } = useTheme();
     const dispatch = useAppDispatch();
     const { toast } = useToast();
     const router = useRouter();
-    const socket = useSocket();
 
     const [isOpenSidebarModal, setIsOpenSidebarModal] = useState(false);
 
     const handleShowSidebarModal = () => setIsOpenSidebarModal(true);
     const handleCloseSidebarModal = () => setIsOpenSidebarModal(false);
 
-    const friends = useAppSelector(selectFriends);
-    const userInfo = useAppSelector(selectUserInfo);
-
     const [width, setWidth] = useState(0);
     const parentRef = useRef<HTMLDivElement | null>(null);
     const headerRef = useRef<HTMLDivElement | null>(null);
 
-    const recentConversationsRef = useRef<HTMLDivElement>(null);
-    const [showRecentConversations, setShowRecentConversations] = useState(false);
-    const [recentConversations, setRecentConversations] = useState<MessengerType[]>([]);
+    const [searchValue, setSearchValue] = useState('');
+    const [showSearchResult, setShowSearchResult] = useState(false);
+    const [searchResult, setSearchResult] = useState<{
+        movies: BaseMovieData[];
+        totalItems: number;
+    }>({ movies: [], totalItems: 0 });
 
-    const [showAddGroup, setShowAddGroup] = useState(false);
-    const [groupName, setGroupName] = useState('');
-    const [groupMembers, setGroupMembers] = useState<string[]>([]);
+    const keywordSearch = useDebounce(searchValue, 400);
+
+    const searchRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const updateWidth = () => {
@@ -78,113 +67,6 @@ export default function MovieHeader() {
         };
     }, []);
 
-    // Get recent conversations
-    useEffect(() => {
-        const getRecentConversations = async () => {
-            try {
-                const res = await getRecentConversationsService();
-
-                setRecentConversations(
-                    res.data.map((c) => ({
-                        conversationId: c.conversationId,
-                        conversationName: c.conversationName,
-                        conversationType: c.conversationType,
-                        conversationAvatar: c.conversationAvatar,
-                        lastMessage: {
-                            messageId: c.lastMessageId,
-                            conversationId: c.conversationId,
-                            content: c.lastMessageContent,
-                            messageType: c.lastMessageType,
-                            sender: {
-                                userId: c.senderId,
-                                firstName: c.senderFirstName,
-                                lastName: c.senderLastName,
-                                avatar: c.senderAvatar,
-                            },
-                        },
-                        lastUpdated: c.lastUpdated,
-                        ...(c.conversationType === ConversationType.PRIVATE && {
-                            friendId: c.friendId,
-                        }),
-                    })),
-                );
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        if (showRecentConversations) {
-            getRecentConversations();
-        }
-    }, [showRecentConversations]);
-
-    // Socket handle new message to update recent conversation
-    useEffect(() => {
-        const handleNewMessage = (newMessage: any) => {
-            const {
-                messageId,
-                conversationType,
-                conversationName,
-                conversationAvatar,
-                conversationId,
-                content,
-                messageType,
-                sender,
-                lastUpdated,
-            } = newMessage;
-
-            setRecentConversations((prev) => {
-                const conversationIndex = prev.findIndex((c) => c.conversationId === conversationId);
-
-                if (conversationIndex !== -1) {
-                    const updatedConversations = [...prev];
-                    updatedConversations[conversationIndex] = {
-                        ...updatedConversations[conversationIndex],
-                        lastMessage: {
-                            messageId,
-                            conversationId,
-                            content,
-                            messageType,
-                            sender,
-                        },
-                        lastUpdated,
-                    };
-                    return updatedConversations;
-                } else {
-                    return [
-                        {
-                            conversationId,
-                            conversationName,
-                            conversationType,
-                            lastMessage: {
-                                messageId,
-                                conversationId,
-                                content,
-                                messageType,
-                                sender,
-                            },
-                            lastUpdated,
-                            ...(conversationType === ConversationType.PRIVATE
-                                ? {
-                                      conversationAvatar: sender.avatar,
-                                      friendId: sender.userId,
-                                  }
-                                : {
-                                      conversationAvatar,
-                                  }),
-                        },
-                        ...prev,
-                    ];
-                }
-            });
-        };
-
-        socket.on('newMessage', handleNewMessage);
-
-        return () => {
-            socket.off('newMessage', handleNewMessage);
-        };
-    }, [socket]);
-
     const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
     const handleLogout = async () => {
@@ -200,60 +82,37 @@ export default function MovieHeader() {
         }
     };
 
-    const handleShowRecentConversations = () => setShowRecentConversations(true);
-    const handleHideRecentConversations = () => setShowRecentConversations(false);
+    const handleShowSearchResult = () => setShowSearchResult(true);
+    const handleHideSearchResult = () => setShowSearchResult(false);
 
-    useClickOutside(recentConversationsRef, handleHideRecentConversations);
+    useClickOutside(searchRef, handleHideSearchResult);
 
-    const handleOpenMessengerPopup = (conversationInfo: {
-        conversationId: string;
-        type: ConversationType;
-        friendId?: string;
-        name: string;
-        avatar?: string;
-    }) => {
-        const { conversationId, type, friendId, name, avatar } = conversationInfo;
-        handleHideRecentConversations();
-        dispatch(
-            openConversation({
-                conversationId,
-                type,
-                friendId,
-                name,
-                avatar,
-                unreadCount: 0,
-                messages: [],
-                isMinimized: false,
-                isFocus: true,
-            }),
-        );
-    };
-
-    const handleOpenAddGroup = () => setShowAddGroup(true);
-    const handleCloseAddGroup = () => setShowAddGroup(false);
-
-    const handleChangeGroupMembers = (friendId: string) => {
-        setGroupMembers((prev) => {
-            if (prev.some((m) => m === friendId)) {
-                return prev.filter((m) => m !== friendId);
-            } else {
-                return [...prev, friendId];
+    useEffect(() => {
+        (async () => {
+            try {
+                if (keywordSearch) {
+                    const { data } = await searchMovieService(keywordSearch);
+                    setSearchResult({
+                        movies: data.data.items.map((i) => ({
+                            movieId: i._id,
+                            name: i.name,
+                            slug: i.slug,
+                            thumbUrl: i.thumb_url,
+                            type: i.type === 'series' ? 'tv' : 'movie',
+                        })),
+                        totalItems: data.data.params.pagination.totalItems,
+                    });
+                } else {
+                    setSearchResult({
+                        movies: [],
+                        totalItems: 0,
+                    });
+                }
+            } catch (error) {
+                console.error(error);
             }
-        });
-    };
-
-    const handleCreateGroup = async () => {
-        try {
-            await createConversationService({
-                type: ConversationType.GROUP,
-                name: groupName,
-                participants: groupMembers,
-            });
-            handleCloseAddGroup();
-        } catch (error) {
-            console.error(error);
-        }
-    };
+        })();
+    }, [keywordSearch]);
 
     return (
         <div ref={parentRef} className="w-full">
@@ -261,42 +120,72 @@ export default function MovieHeader() {
                 <div className="absolute top-0 left-5 h-full flex items-center justify-center">
                     <AlignJustify className="text-white" onClick={handleShowSidebarModal} />
                 </div>
-                <Drawer
-                    open={isOpenSidebarModal}
-                    onClose={handleCloseSidebarModal}
-                    className="bg-[#0a0a0a] border-r border-[#2d2d2d]"
-                >
-                    <Drawer.Items>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="text-white flex items-center w-fit">
-                                        Thể loại <ChevronRight />
-                                    </div>
-                                </TooltipTrigger>
+                {isOpenSidebarModal && (
+                    <Drawer
+                        open={isOpenSidebarModal}
+                        onClose={handleCloseSidebarModal}
+                        className="bg-[#0a0a0a] border-r border-[#2d2d2d]"
+                    >
+                        <Drawer.Items>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="text-white flex items-center w-fit">
+                                            Thể loại <ChevronRight />
+                                        </div>
+                                    </TooltipTrigger>
 
-                                <TooltipContent
-                                    side="right"
-                                    align="start"
-                                    className="bg-[#2d2d2d] border-[#2d2d2d] border"
-                                >
-                                    <div className="px-2 py-1 grid grid-cols-6 gap-4">
-                                        {JSON.parse(sessionStorage.getItem('genreList') ?? '[]').map((g) => (
-                                            <Link
-                                                href={`/movie/genre/${g.slug}`}
-                                                className="text-white hover:text-orange-400"
-                                                key={`genre-${g.slug}`}
-                                                onClick={handleCloseSidebarModal}
-                                            >
-                                                {g.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </Drawer.Items>
-                </Drawer>
+                                    <TooltipContent
+                                        side="right"
+                                        align="start"
+                                        className="bg-[#2d2d2d] border-[#2d2d2d] border"
+                                    >
+                                        <div className="px-2 py-1 grid grid-cols-6 gap-4">
+                                            {JSON.parse(sessionStorage.getItem('genreList') ?? '[]').map((g) => (
+                                                <Link
+                                                    href={`/movie/genre/${g.slug}`}
+                                                    className="text-white hover:text-orange-400"
+                                                    key={`genre-${g.slug}`}
+                                                    onClick={handleCloseSidebarModal}
+                                                >
+                                                    {g.name}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="text-white flex items-center w-fit mt-3">
+                                            Quốc gia <ChevronRight />
+                                        </div>
+                                    </TooltipTrigger>
+
+                                    <TooltipContent
+                                        side="right"
+                                        align="start"
+                                        className="bg-[#2d2d2d] border-[#2d2d2d] border"
+                                    >
+                                        <div className="px-2 py-1 grid grid-cols-6 gap-4">
+                                            {JSON.parse(sessionStorage.getItem('countryList') ?? '[]').map((g) => (
+                                                <Link
+                                                    href={`/movie/country/${g.slug}`}
+                                                    className="text-white hover:text-orange-400"
+                                                    key={`country-${g.slug}`}
+                                                    onClick={handleCloseSidebarModal}
+                                                >
+                                                    {g.name}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </Drawer.Items>
+                    </Drawer>
+                )}
                 <div className="max-w-[1024px] h-full mx-auto flex items-center gap-x-6">
                     <div className="w-64 flex items-center gap-x-4">
                         <Link href="/" className="block w-fit">
@@ -309,160 +198,49 @@ export default function MovieHeader() {
                             Trang chủ
                         </Link>
                     </div>
-                    <div className="flex-1 flex rounded-3xl items-center pe-4 h-fit bg-white">
+                    <div ref={searchRef} className="flex-1 flex rounded-3xl items-center pe-4 h-fit bg-white relative">
                         <input
+                            value={searchValue}
                             className="w-full rounded-3xl px-4 py-2 border-none outline-none bg-transparent text-black"
                             placeholder="Tìm kiếm phim"
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') router.push(`/movie/search?keyword=${searchValue}`);
+                            }}
+                            onFocus={handleShowSearchResult}
                         />
                         <MagnifyingGlass className="text-black" />
+                        {searchResult.movies.length > 0 && showSearchResult && (
+                            <div className="absolute top-[calc(100%+0.3rem)] left-0 right-0 py-1 flex flex-col bg-white rounded-sm shadow-all-sides">
+                                {searchResult.totalItems > 10 && (
+                                    <Link
+                                        href={`/movie/search?keyword=${searchValue}`}
+                                        className="text-primary text-sm px-4 mb-1"
+                                    >
+                                        Xem tất cả
+                                    </Link>
+                                )}
+                                {searchResult.movies.slice(0, 10).map((r) => (
+                                    <Link
+                                        href={`/movie/${r.slug}`}
+                                        className="text-black px-4 line-clamp-1 break-all"
+                                        key={`result-${r.movieId}`}
+                                        onClick={() => {
+                                            handleHideSearchResult();
+                                            setSearchValue('');
+                                        }}
+                                    >
+                                        {r.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center justify-around w-64">
                         <Link href="/friends/suggestions">
                             <UserPlus className="text-white" />
                         </Link>
-                        <div className="relative">
-                            <ChatCenteredDots className="text-white" onClick={handleShowRecentConversations} />
-                            {showRecentConversations && (
-                                <div
-                                    ref={recentConversationsRef}
-                                    className="absolute top-6 left-0 w-96 bg-background border shadow-md rounded-xl p-2"
-                                >
-                                    {showAddGroup ? (
-                                        <>
-                                            <div className="flex justify-between">
-                                                <ArrowLeft />
-                                                <span
-                                                    className={`${
-                                                        groupName && groupMembers.length >= 2
-                                                            ? 'text-primary cursor-pointer'
-                                                            : 'text-gray cursor-not-allowed'
-                                                    }`}
-                                                    onClick={() =>
-                                                        groupName && groupMembers.length >= 2 && handleCreateGroup()
-                                                    }
-                                                >
-                                                    Tạo
-                                                </span>
-                                            </div>
-                                            <input
-                                                className="border px-2 py-1 rounded-3xl w-full mt-2"
-                                                placeholder="Tên nhóm"
-                                                onChange={(e) => setGroupName(e.target.value)}
-                                            />
-                                            <div className="mt-2">
-                                                <span className="font-semibold text-sm">Thành viên</span>
-                                                <input
-                                                    className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full mt-2"
-                                                    placeholder="Tìm kiếm thành viên"
-                                                />
-                                                <div className="mt-2 flex flex-col gap-y-2">
-                                                    {friends.map((friend) => {
-                                                        return (
-                                                            <div
-                                                                className="flex items-center gap-x-2"
-                                                                key={`friend-${friend.userId}`}
-                                                            >
-                                                                <Image
-                                                                    className="w-8 h-8 rounded-full"
-                                                                    src={friend.avatar || '/images/default-avatar.png'}
-                                                                    alt="avatar"
-                                                                    width={800}
-                                                                    height={800}
-                                                                />
-                                                                <span className="font-semibold flex-1 line-clamp-1 break-all">
-                                                                    {friend.lastName} {friend.firstName}
-                                                                </span>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    name="add-group-member"
-                                                                    onChange={() =>
-                                                                        handleChangeGroupMembers(friend.userId)
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="flex items-center gap-x-2 mb-4">
-                                                <input
-                                                    className="border px-2 py-1 rounded-3xl flex-1"
-                                                    placeholder="Tìm kiếm..."
-                                                />
-                                                <Plus onClick={handleOpenAddGroup} />
-                                            </div>
-                                            <div className="flex flex-col gap-y-2">
-                                                {recentConversations.map((conversation) => {
-                                                    return (
-                                                        <div
-                                                            className="flex items-center gap-x-2"
-                                                            key={`recent-conversation-${conversation.conversationId}`}
-                                                            onClick={() =>
-                                                                handleOpenMessengerPopup({
-                                                                    conversationId: conversation.conversationId,
-                                                                    type: conversation.conversationType,
-                                                                    friendId: conversation.friendId,
-                                                                    name: conversation.conversationName,
-                                                                    avatar: conversation.conversationAvatar,
-                                                                })
-                                                            }
-                                                        >
-                                                            <Image
-                                                                className="w-10 h-10 object-cover rounded-full border"
-                                                                src={
-                                                                    conversation.conversationAvatar ||
-                                                                    '/images/default-avatar.png'
-                                                                }
-                                                                alt="avatar"
-                                                                width={800}
-                                                                height={800}
-                                                            />
-                                                            <div className="flex-1">
-                                                                <div className="font-semibold text-sm">
-                                                                    {conversation.conversationName}
-                                                                </div>
-                                                                <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
-                                                                    {conversation.conversationType ===
-                                                                        ConversationType.GROUP &&
-                                                                        conversation.lastMessage.sender.userId !==
-                                                                            userInfo.id &&
-                                                                        `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: `}
-                                                                    {conversation.lastMessage.messageType ===
-                                                                    MessageType.TEXT
-                                                                        ? conversation.lastMessage.content
-                                                                        : `${
-                                                                              conversation.lastMessage.sender.userId ===
-                                                                              userInfo.id
-                                                                                  ? 'Bạn'
-                                                                                  : ''
-                                                                          } đã gửi 1 ảnh`}
-                                                                </div>
-                                                            </div>
-                                                            <div className="ms-6">
-                                                                <CircleCheck className="w-6 h-6 text-background fill-primary" />
-                                                                {/* <CircleCheck className="text-primary w-5 h-5" /> */}
-                                                                {/* <Image
-                                                    className="w-5 h-5 object-cover rounded-full border"
-                                                    src={
-                                                        conversation.conversationAvatar || '/images/default-avatar.png'
-                                                    }
-                                                    alt="avatar"
-                                                    width={800}
-                                                    height={800}
-                                                /> */}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                        <RecentConversations className="text-white" />
                         <BellRinging className="text-white" />
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>

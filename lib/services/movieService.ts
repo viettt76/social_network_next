@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_MOVIES_URL,
+    baseURL: process.env.NEXT_PUBLIC_OPHIM_API_URL,
 });
 
-export const getMovieDetailById = (movieId: string) => {
+export const getMovieDetailByIdService = (movieId: string) => {
     return instance.get(`/phim/id/${movieId}`);
 };
 
-export const getMovieDetailBySlug = (slug: string) => {
+export const getMovieDetailBySlugService = (slug: string) => {
     return instance.get(`/phim/${slug}`);
 };
 

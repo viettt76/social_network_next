@@ -2,10 +2,10 @@
 
 import { MovieItem } from '@/app/components/MovieItem';
 import { BaseMovieData } from '@/app/dataType';
-import { useRouter } from '@/i18n/routing';
-import { getMovieListByGenreService } from '@/lib/services/movieService';
+import { getMovieListByCountryService } from '@/lib/services/movieService';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useRouter } from '@/i18n/routing';
 import ReactPaginate from 'react-paginate';
 import { MOVIES_PER_SLIDE } from '@/lib/constants';
 
@@ -16,8 +16,8 @@ interface DataType {
     totalPages: number;
 }
 
-export default function MoviesByGenre() {
-    const { genre } = useParams();
+export default function MoviesByCountry() {
+    const { country } = useParams();
     const searchParams = useSearchParams();
     const page = Number(searchParams.get('page'));
     const router = useRouter();
@@ -32,8 +32,8 @@ export default function MoviesByGenre() {
     useEffect(() => {
         (async () => {
             try {
-                if (typeof genre === 'string') {
-                    const { data } = await getMovieListByGenreService(genre, page);
+                if (typeof country === 'string') {
+                    const { data } = await getMovieListByCountryService(country, page);
                     setData({
                         title: data.data.titlePage,
                         movies: data.data.items.map((m) => ({
@@ -53,11 +53,11 @@ export default function MoviesByGenre() {
                 console.error(error);
             }
         })();
-    }, [genre, page]);
+    }, [country, page]);
 
     return (
         <div className="px-10 pt-6">
-            <div className="text-orange-400 text-2xl">Phim thể loại {data.title}</div>
+            <div className="text-orange-400 text-2xl">Phim quốc gia {data.title}</div>
             <div className={`grid grid-cols-${MOVIES_PER_SLIDE} gap-x-2 gap-y-4 mt-2`}>
                 {data.movies.map((m, index) => {
                     return (
@@ -77,7 +77,7 @@ export default function MoviesByGenre() {
             <ReactPaginate
                 breakLabel="..."
                 nextLabel=">"
-                onPageChange={(p) => router.push(`/movie/genre/${genre}?page=${p.selected + 1}`)}
+                onPageChange={(p) => router.push(`/movie/country/${country}?page=${p.selected + 1}`)}
                 pageRangeDisplayed={5}
                 pageCount={data.totalPages}
                 previousLabel="<"
