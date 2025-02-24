@@ -40,7 +40,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
     const [sendingReply, setSendingReply] = useState(false);
 
     const [showReplies, setShowReplies] = useState(false);
-    const [pageReplies, setPageReplies] = useState(1);
+    const [repliesPage, setRepliesPage] = useState(1);
     const [replies, setReplies] = useState<CommentType[]>([]);
     const [repliesCount, setRepliesCount] = useState<number>(0);
     const [repliesLoading, setRepliesLoading] = useState(false);
@@ -75,7 +75,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
                 setRepliesLoading(true);
                 const res = await getCommentRepliesService({
                     commentId: comment.commentId,
-                    page: pageReplies,
+                    page: repliesPage,
                 });
                 if (res.data.length > 0) {
                     setReplies((prev) => [
@@ -108,7 +108,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
         if (showReplies) {
             handleGetCommentReplies();
         }
-    }, [showReplies, comment.commentId, pageReplies]);
+    }, [showReplies, comment.commentId, repliesPage]);
 
     // Socket handle new reply
     useEffect(() => {
@@ -205,7 +205,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
         socket.on('deleteReactToComment', handleDeleteCommentReaction);
     }, [socket, comment.commentId]);
 
-    const increasePage = () => setPageReplies((prev) => prev + 1);
+    const increasePage = () => setRepliesPage((prev) => prev + 1);
 
     // Hook for infinite scrolling: Calls `increasePage` when the user scrolls near the bottom
     const { observerTarget } = useInfiniteScroll({
@@ -272,7 +272,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
     const handleHideReplies = () => {
         setShowReplies(false);
         setReplies([]);
-        setPageReplies(1);
+        setRepliesPage(1);
     };
 
     return (

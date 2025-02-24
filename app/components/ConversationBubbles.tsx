@@ -71,7 +71,7 @@ export default function ConversationBubbles() {
                                 ? `${sender.lastName} ${sender.firstName}`
                                 : conversationName,
                         avatar: sender.avatar,
-                        unreadCount: 0,
+                        unreadCount: 1,
                         isMinimized: false,
                         isFocus: false,
                         messages: [],
@@ -208,16 +208,25 @@ export default function ConversationBubbles() {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Image
-                                        className="rounded-full border w-10 h-10 object-cover"
-                                        src={conversation.avatar || '/images/default-avatar.png'}
-                                        alt="avatar"
-                                        width={800}
-                                        height={800}
-                                        onClick={() =>
-                                            handleOpenPopup(conversation.conversationId || conversation.friendId || '')
-                                        }
-                                    />
+                                    <div className="relative">
+                                        <Image
+                                            className="rounded-full border w-10 h-10 object-cover"
+                                            src={conversation.avatar || '/images/default-avatar.png'}
+                                            alt="avatar"
+                                            width={800}
+                                            height={800}
+                                            onClick={() =>
+                                                handleOpenPopup(
+                                                    conversation.conversationId || conversation.friendId || '',
+                                                )
+                                            }
+                                        />
+                                        {conversation.unreadCount > 0 && (
+                                            <div className="absolute -bottom-1 right-0 text-white text-xs bg-red-400 rounded-full w-4 h-4 flex items-center justify-center">
+                                                {conversation.unreadCount}
+                                            </div>
+                                        )}
+                                    </div>
                                 </TooltipTrigger>
                                 <TooltipContent>{conversation.name}</TooltipContent>
                             </Tooltip>

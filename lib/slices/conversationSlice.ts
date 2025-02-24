@@ -36,20 +36,20 @@ export const conversationSlice = createSlice({
             const existingIndex = state.openConversations.findIndex(
                 (c) => (conversationId && c.conversationId === conversationId) || c.friendId === friendId,
             );
-            let items;
             if (existingIndex !== -1) {
-                items = state.openConversations.splice(existingIndex, 1);
-            }
-            state.openConversations.unshift({
-                ...action.payload,
-                ...(items &&
-                    items.length > 0 &&
-                    (action.payload.type === ConversationType.PRIVATE
+                const [item] = state.openConversations.splice(existingIndex, 1);
+                state.openConversations.unshift({
+                    ...action.payload,
+                    ...(action.payload.type === ConversationType.PRIVATE
                         ? {
-                              messages: items[0].messages,
+                              messages: item.messages,
+                              unreadCount: item.isFocus ? 0 : item.unreadCount + 1,
                           }
-                        : items[0])),
-            });
+                        : item),
+                });
+            } else {
+                state.openConversations.unshift(action.payload);
+            }
         },
         closeConversation: (state, action: PayloadAction<string>) => {
             state.openConversations = state.openConversations.filter(
@@ -89,29 +89,30 @@ export const conversationSlice = createSlice({
                 conversation.conversationId = action.payload.conversationId;
             }
         },
-        addMessage: (state, action: PayloadAction<MessageData | MessageData[]>) => {
-            const conversation = state.openConversations.find((c) =>
-                Array.isArray(action.payload)
-                    ? c.conversationId === action.payload[0].conversationId
-                    : c.conversationId === action.payload.conversationId,
+        addOldMessages: (state, action: PayloadAction<MessageData[]>) => {
+            const conversation = state.openConversations.find(
+                (c) => c.conversationId === action.payload[0].conversationId,
             );
 
             if (conversation) {
-                conversation.messages = [
-                    ...conversation.messages,
-                    ...(Array.isArray(action.payload) ? action.payload : [action.payload]),
-                ];
+                conversation.messages.unshift(...action.payload);
+            }
+        },
+        addNewMessage: (state, action: PayloadAction<MessageData>) => {
+            const conversation = state.openConversations.find(
+                (c) => c.conversationId === action.payload.conversationId,
+            );
 
-                // If the bubble is minimize, increasing unreading
-                if (conversation.isMinimized) {
-                    conversation.unreadCount += 1;
-                }
+            if (conversation) {
+                conversation.messages.push(action.payload);
             }
         },
         focusConversationPopup: (state, action: PayloadAction<string | null>) => {
             state.openConversations.forEach((c) => {
-                if (c.conversationId === action.payload || c.friendId === action.payload) c.isFocus = true;
-                else c.isFocus = false;
+                if (c.conversationId === action.payload || c.friendId === action.payload) {
+                    c.isFocus = true;
+                    c.unreadCount = 0;
+                } else c.isFocus = false;
             });
         },
         updateMessageReactions: (
@@ -163,7 +164,8 @@ export const {
     maximizeConversation,
     minimizeConversation,
     assignConversationId,
-    addMessage,
+    addOldMessages,
+    addNewMessage,
     focusConversationPopup,
     updateMessageReactions,
     updateCurrentMessageReaction,

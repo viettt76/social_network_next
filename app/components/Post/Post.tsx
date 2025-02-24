@@ -25,7 +25,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     const [isShowPostDialog, setIsShowPostDialog] = useState(false);
 
     const [comments, setComments] = useState<CommentType[]>([]);
-    const [pageComment, setPageComment] = useState(1);
+    const [commentsPage, setCommentsPage] = useState(1);
     const [commentLoading, setCommentLoading] = useState(false);
 
     const [contentWriteComment, setContentWriteComment] = useState('');
@@ -134,7 +134,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
             try {
                 const res = await getCommentsService({
                     postId: postInfo.postId,
-                    page: pageComment,
+                    page: commentsPage,
                 });
                 if (res.data.length > 0) {
                     setComments((prev) => [
@@ -175,7 +175,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         if (isShowPostDialog) {
             getComments();
         }
-    }, [isShowPostDialog, postInfo.postId, pageComment]);
+    }, [isShowPostDialog, postInfo.postId, commentsPage]);
 
     // Socket handle new comment and new comment reply
     useEffect(() => {
@@ -211,7 +211,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         };
     }, [comments, postInfo.postId, socket, userInfo]);
 
-    const increasePage = () => setPageComment((prev) => prev + 1);
+    const increasePage = () => setCommentsPage((prev) => prev + 1);
 
     // Hook for infinite scrolling: Calls `increasePage` when the user scrolls near the bottom
     const { observerTarget } = useInfiniteScroll({
@@ -227,7 +227,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
     const handleHideDialogPost = () => {
         socket.emit('leavePost', postInfo.postId);
         setIsShowPostDialog(false);
-        setPageComment(1);
+        setCommentsPage(1);
         setComments([]);
     };
 

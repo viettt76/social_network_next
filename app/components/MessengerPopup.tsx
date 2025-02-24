@@ -2,10 +2,11 @@
 
 import { ChevronDown, Images, Minus, SendHorizonal, ShieldCheck, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
-import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState, WheelEvent } from 'react';
+import { ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
 import {
-    addMessage,
+    addOldMessages,
+    addNewMessage,
     assignConversationId,
     closeConversation,
     ConversationType,
@@ -22,7 +23,7 @@ import {
     sendMessageService,
 } from '@/lib/services/conversationService';
 import { ConversationRole, MessageType, UserInfoType } from '@/app/dataType';
-import { uploadToCloudinary } from '@/lib/utils';
+import { cn, uploadToCloudinary } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import { useSocket } from '@/app/components/SocketProvider';
@@ -30,6 +31,7 @@ import useClickOutside from '@/hooks/useClickOutside';
 import React from 'react';
 import DrilldownMenu, { DrilldownMenuItem } from './DrilldownMenu';
 import Message from '@/app/components/Message';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 interface MessengerPopupProps {
     index: number;
@@ -66,23 +68,24 @@ export default function MessengerPopup({
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
 
+    const [messagesPage, setMessagesPage] = useState(1);
+    const [messageLoading, setMessageLoading] = useState(false);
+
+    const { observerTarget } = useInfiniteScroll({
+        callback: () => setMessagesPage((prev) => prev + 1),
+        threshold: 0.5,
+        loading: messageLoading,
+    });
+
     const messengerPopupRef = useRef<HTMLDivElement>(null);
     useClickOutside(messengerPopupRef, () => {
         dispatch(focusConversationPopup(null));
     });
 
-    const endOfMessagesRef = useRef<HTMLDivElement>(null);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [isAtBottom, setIsAtBottom] = useState(true);
 
-    const [groupMembers, setGroupMembers] = useState<GroupMemberType[]>([
-        {
-            userId: '1',
-            lastName: '2',
-            firstName: '2',
-            avatar: null,
-            role: ConversationRole.ADMIN,
-            nickname: '2',
-        },
-    ]);
+    const [groupMembers, setGroupMembers] = useState<GroupMemberType[]>([]);
 
     const [text, setText] = useState('');
     const [images, setImages] = useState<string[]>([]);
@@ -153,11 +156,15 @@ export default function MessengerPopup({
     useEffect(() => {
         if (conversationId) {
             (async () => {
+                setMessageLoading(true);
                 try {
-                    const res = await getMessagesService(conversationId);
+                    // Save the position before calling API
+                    const prevScrollHeight = chatContainerRef.current?.scrollHeight || 0;
+
+                    const res = await getMessagesService({ conversationId, page: messagesPage });
                     if (res.data.length > 0) {
                         dispatch(
-                            addMessage(
+                            addOldMessages(
                                 res.data.map((message: any) => ({
                                     messageId: message.id,
                                     conversationId: message.conversationId,
@@ -182,20 +189,29 @@ export default function MessengerPopup({
                                 })),
                             ),
                         );
+                        setMessageLoading(false);
+
+                        // Maintain the coil position after adding the message
+                        setTimeout(() => {
+                            if (chatContainerRef.current) {
+                                const newScrollHeight = chatContainerRef.current.scrollHeight;
+                                chatContainerRef.current.scrollTop = newScrollHeight - prevScrollHeight;
+                            }
+                        }, 0);
                     }
                 } catch (error) {
                     console.error(error);
                 }
             })();
         }
-    }, [conversationId, dispatch]);
+    }, [conversationId, dispatch, messagesPage]);
 
     // Socket handle new message and react to message
     useEffect(() => {
         const handleNewMessage = (newMessage: any) => {
             if (conversationId === newMessage.conversationId) {
                 dispatch(
-                    addMessage({
+                    addNewMessage({
                         messageId: newMessage.messageId,
                         conversationId: newMessage.conversationId,
                         content: newMessage.content,
@@ -265,15 +281,34 @@ export default function MessengerPopup({
     // Scroll bottom of conversation
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (endOfMessagesRef.current) {
-                endOfMessagesRef.current.scrollTop = endOfMessagesRef.current.scrollHeight;
+            if (chatContainerRef.current && isAtBottom) {
+                chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
             }
         }, 0);
 
         return () => {
             clearTimeout(timeoutId);
         };
-    }, [isMinimized, messages.length]);
+    }, [isMinimized, isAtBottom, messages.length]);
+
+    // Listens for the scroll event on the chat container
+    // Updates the `isAtBottom` state if the user is within 60px of the bottom.
+    useEffect(() => {
+        if (!chatContainerRef.current) return;
+
+        const handleScroll = () => {
+            const container = chatContainerRef.current!;
+            const isBottom = container.scrollTop + container.offsetHeight >= container.scrollHeight - 60;
+            setIsAtBottom(isBottom);
+        };
+
+        const chatContainer = chatContainerRef.current;
+        chatContainer?.addEventListener('scroll', handleScroll);
+
+        return () => {
+            chatContainer?.removeEventListener('scroll', handleScroll);
+        };
+    }, [messages.length]);
 
     const handleChooseFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -371,18 +406,40 @@ export default function MessengerPopup({
         dispatch(minimizeConversation(conversationId || friendId || ''));
     };
 
-    const handleClosePopup = () => {
+    const handleClosePopup = useCallback(() => {
         dispatch(closeConversation(conversationId || friendId || ''));
-    };
+    }, [conversationId, friendId, dispatch]);
+
+    // Close popup when press the 'Esc' key and popup is being focused
+    useEffect(() => {
+        const handleEscKeydown = (e: globalThis.KeyboardEvent) => {
+            if (e.key === 'Escape' && isFocus) {
+                handleClosePopup();
+            }
+        };
+
+        document.addEventListener('keydown', handleEscKeydown);
+
+        return () => {
+            document.removeEventListener('keydown', handleEscKeydown);
+        };
+    }, [isFocus, handleClosePopup]);
 
     return (
         <div
             ref={messengerPopupRef}
-            className={`fixed flex flex-col bottom-0 bg-background w-[18rem] h-[26rem] rounded-t-xl border border-b-0 ${className}`}
+            className={cn(
+                'fixed flex flex-col bottom-0 bg-background w-[18rem] h-[26rem] rounded-t-xl border border-b-0',
+                className,
+            )}
             style={{ right: `${3.5 + index * 18.5}rem` }}
             onClick={() => dispatch(focusConversationPopup(conversationId || friendId || ''))}
         >
-            <div className="flex justify-between items-center bg-primary text-background rounded-t-xl py-1 px-2 shadow-md">
+            <div
+                className={`flex justify-between items-center bg-primary text-background rounded-t-xl py-1 px-2 shadow-md ${
+                    isFocus ? 'bg-background' : 'bg-white'
+                }`}
+            >
                 <div className="flex items-center gap-x-1">
                     <Image
                         className="w-9 h-9 rounded-full border"
@@ -391,35 +448,41 @@ export default function MessengerPopup({
                         width={800}
                         height={800}
                     />
-                    <span className="font-semibold">
+                    <span className={`font-semibold ${isFocus ? 'text-background' : 'text-foreground'}`}>
                         {(type === ConversationType.PRIVATE &&
                             groupMembers.find((m) => m.userId !== userInfo.id)?.nickname) ||
                             name}
                     </span>
                     <DrilldownMenu items={groupConversationSettings} position="bottom-left">
-                        <ChevronDown />
+                        <ChevronDown className={`${isFocus ? 'text-background' : 'text-foreground'}`} />
                     </DrilldownMenu>
                 </div>
                 <div className="flex items-center gap-x-1">
-                    <Minus onClick={handleMinimizePopup} />
-                    <X onClick={handleClosePopup} />
+                    <Minus
+                        className={`${isFocus ? 'text-background' : 'text-foreground'}`}
+                        onClick={handleMinimizePopup}
+                    />
+                    <X className={`${isFocus ? 'text-background' : 'text-foreground'}`} onClick={handleClosePopup} />
                 </div>
             </div>
-            <div ref={endOfMessagesRef} className="flex-1 flex flex-col gap-y-1 overflow-y-auto py-2 px-2">
+            <div ref={chatContainerRef} className="flex-1 flex flex-col gap-y-1 overflow-y-auto py-2 px-2">
+                <div ref={observerTarget} className="h-1"></div>
                 {messages.length > 0 ? (
-                    messages.map((message, index) => {
-                        return (
-                            <Message
-                                message={message}
-                                conversationId={conversationId}
-                                conversationType={type}
-                                currentReaction={message.currentReaction}
-                                prevSenderId={messages[index - 1]?.sender.userId ?? ''}
-                                index={index}
-                                key={`message-${message.messageId}`}
-                            />
-                        );
-                    })
+                    <>
+                        {messages.map((message, index) => {
+                            return (
+                                <Message
+                                    message={message}
+                                    conversationId={conversationId}
+                                    conversationType={type}
+                                    currentReaction={message.currentReaction}
+                                    prevSenderId={messages[index - 1]?.sender.userId ?? ''}
+                                    index={index}
+                                    key={`message-${message.messageId}`}
+                                />
+                            );
+                        })}
+                    </>
                 ) : (
                     <div className="flex flex-col items-center mt-6">
                         <Image

@@ -43,8 +43,8 @@ export const sendMessageService = ({
     return axios.post('/conversations/messages', { conversationId, content, type, image });
 };
 
-export const getMessagesService = (conversationId: string) => {
-    return axios.get(`/conversations/messages/${conversationId}`);
+export const getMessagesService = ({ conversationId, page }: { conversationId: string; page: number }) => {
+    return axios.get(`/conversations/messages/${conversationId}?page=${[page]}`);
 };
 
 export const getRecentConversationsService = () => {
