@@ -12,6 +12,10 @@ export const getPostsService = (page: number) => {
     return axios.get(`/posts?page=${page}`);
 };
 
+export const getMyPostsService = (page: number) => {
+    return axios.get(`/posts/me?page=${page}`);
+};
+
 export const getPostReactionTypesService = () => {
     return axios.get('/posts/reactionTypes');
 };

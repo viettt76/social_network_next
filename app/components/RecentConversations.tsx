@@ -167,7 +167,7 @@ export default function RecentConversations({ className }: { className?: string 
 
     const handleChangeGroupMembers = (friendId: string) => {
         setGroupMembers((prev) => {
-            if (prev.some((m) => m === friendId)) {
+            if (prev.find((m) => m === friendId)) {
                 return prev.filter((m) => m !== friendId);
             } else {
                 return [...prev, friendId];

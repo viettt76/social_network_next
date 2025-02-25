@@ -4,15 +4,61 @@ import Image from 'next/image';
 import { ImageSquare, Newspaper, Student, Users } from '@phosphor-icons/react';
 import Post from '@/app/components/Post';
 import { PostInfoType } from '@/app/dataType';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BriefcaseBusiness, House, Images, Pencil } from 'lucide-react';
 import WritePost from '@/app/components/WritePost';
 import { useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
+import { getMyPostsService } from '@/lib/services/postService';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 export default function Profile() {
     const userInfo = useAppSelector(selectUserInfo);
     const [posts, setPosts] = useState<PostInfoType[]>([]);
+    const [postsPage, setPostsPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+
+    const { observerTarget } = useInfiniteScroll({
+        callback: () => setPostsPage((prev) => prev + 1),
+        threshold: 0.5,
+        loading,
+    });
+
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            try {
+                const { data } = await getMyPostsService(postsPage);
+                if (data.length > 0) {
+                    setPosts((prev) => [
+                        ...prev,
+                        ...data.map((post: any) => ({
+                            postId: post.postId,
+                            creatorInfo: post.posterInfo,
+                            content: post.content,
+                            currentReactionType: post.currentReactionType,
+                            images: post.images.map((image: any) => image.imageUrl),
+                            reactions: post.reactions.map((reaction: any) => ({
+                                postReactionId: reaction.id,
+                                reactionType: reaction.reactionType,
+                                userInfo: {
+                                    userId: reaction.user.id,
+                                    firstName: reaction.user.firstName,
+                                    lastName: reaction.user.lastName,
+                                    avatar: reaction.user.avatar,
+                                },
+                            })),
+                            commentsCount: Number(post.commentsCount),
+                            createdAt: post.createdAt,
+                        })),
+                    ]);
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        })();
+    }, [postsPage]);
 
     return (
         <div
@@ -61,7 +107,7 @@ export default function Profile() {
             </div>
 
             <div className="max-w-[1024px] mx-auto flex gap-10 mt-6">
-                <div className="w-80 bg-background py-2 px-4 h-fit rounded-xl">
+                <div className="w-[26rem] bg-background py-2 px-4 h-fit rounded-xl">
                     <div className="font-semibold text-xl">Giới thiệu</div>
                     <div className="flex items-center mt-3">
                         <Newspaper className="text-primary w-6 h-6 me-2" />6 Bài viết
@@ -89,6 +135,7 @@ export default function Profile() {
                             <Post key={`post-${post.postId}`} postInfo={post} />
                         ))}
                     </div>
+                    <div ref={observerTarget} className="h-10"></div>
                 </div>
             </div>
         </div>

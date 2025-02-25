@@ -29,6 +29,8 @@ export default function Header() {
     const parentRef = useRef<HTMLDivElement | null>(null);
     const headerRef = useRef<HTMLDivElement | null>(null);
 
+    const [showUserDashboard, setShowUserDashboard] = useState(false);
+
     useEffect(() => {
         const updateWidth = () => {
             if (parentRef.current && headerRef.current) {
@@ -81,7 +83,7 @@ export default function Header() {
                         </Link>
                         <RecentConversations />
                         <BellRinging className="text-ring" />
-                        <DropdownMenu modal={false}>
+                        <DropdownMenu modal={false} open={showUserDashboard} onOpenChange={setShowUserDashboard}>
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center cursor-pointer">
                                     <Image
@@ -95,7 +97,7 @@ export default function Header() {
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
-                                <DropdownMenuLabel>
+                                <DropdownMenuLabel onClick={() => setShowUserDashboard(false)}>
                                     <Link href="/profile">My Account</Link>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />

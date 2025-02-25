@@ -41,6 +41,8 @@ export default function MovieHeader() {
     const parentRef = useRef<HTMLDivElement | null>(null);
     const headerRef = useRef<HTMLDivElement | null>(null);
 
+    const [showUserDashboard, setShowUserDashboard] = useState(false);
+
     const [searchValue, setSearchValue] = useState('');
     const [showSearchResult, setShowSearchResult] = useState(false);
     const [searchResult, setSearchResult] = useState<{
@@ -242,7 +244,7 @@ export default function MovieHeader() {
                         </Link>
                         <RecentConversations className="text-white" />
                         <BellRinging className="text-white" />
-                        <DropdownMenu modal={false}>
+                        <DropdownMenu modal={false} open={showUserDashboard} onOpenChange={setShowUserDashboard}>
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center cursor-pointer">
                                     <Image
@@ -256,7 +258,7 @@ export default function MovieHeader() {
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
-                                <DropdownMenuLabel>
+                                <DropdownMenuLabel onClick={() => setShowUserDashboard(false)}>
                                     <Link href="/profile">My Account</Link>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />

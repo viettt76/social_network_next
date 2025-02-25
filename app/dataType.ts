@@ -57,7 +57,7 @@ export type PostInfoType = {
     postId: string;
     creatorInfo: UserInfoType;
     content?: string;
-    currentReactionType?: ReactionNameType;
+    currentReactionType?: ReactionNameType | null;
     images?: string[];
     reactions: PostReactionType[];
     commentsCount: number;
