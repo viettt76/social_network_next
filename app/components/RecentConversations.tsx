@@ -99,10 +99,12 @@ export default function RecentConversations({ className }: { className?: string 
                 messageType,
                 sender,
                 lastUpdated,
+                friend,
             } = newMessage;
 
             setRecentConversations((prev) => {
-                const conversationIndex = prev.findIndex((c) => c.conversationId === conversationId);
+                const existingIndex = prev.findIndex((c) => c.conversationId === conversationId);
+
                 const lastMessage = {
                     messageId,
                     conversationId,
@@ -113,19 +115,28 @@ export default function RecentConversations({ className }: { className?: string 
                     reactions: [],
                 };
 
-                if (conversationIndex !== -1) {
-                    const updatedConversations = [...prev];
-                    updatedConversations[conversationIndex] = {
-                        ...updatedConversations[conversationIndex],
-                        lastMessage,
-                        lastUpdated,
-                    };
-                    return updatedConversations;
+                if (existingIndex !== -1) {
+                    return prev
+                        .map((conversation, index) =>
+                            index === existingIndex
+                                ? {
+                                      ...conversation,
+                                      lastMessage,
+                                      lastUpdated,
+                                  }
+                                : conversation,
+                        )
+                        .sort((a, b) => b.lastUpdated - a.lastUpdated);
                 } else {
                     return [
                         {
                             conversationId,
-                            conversationName,
+                            conversationName:
+                                conversationType === ConversationType.PRIVATE
+                                    ? userInfo.id === sender.userId
+                                        ? `${friend.lastName} ${friend.firstName}`
+                                        : `${sender.lastName} ${sender.firstName}`
+                                    : conversationName,
                             conversationType,
                             lastMessage,
                             lastUpdated,
@@ -148,6 +159,46 @@ export default function RecentConversations({ className }: { className?: string 
 
         return () => {
             socket.off('newMessage', handleNewMessage);
+        };
+    }, [socket, userInfo.id]);
+
+    // Socket handle new message to update recent conversation
+    useEffect(() => {
+        const handleNewConversationGroup = (newConversationGroup: any) => {
+            const { conversationId, conversationName, conversationAvatar, creator, lastUpdated } = newConversationGroup;
+
+            setRecentConversations((prev) => {
+                return [
+                    {
+                        conversationId,
+                        conversationName,
+                        conversationType: ConversationType.GROUP,
+                        conversationAvatar,
+                        lastMessage: {
+                            messageId: '',
+                            conversationId,
+                            content: `${creator.lastName} ${creator.firstName} đã tạo nhóm`,
+                            messageType: MessageType.TEXT,
+                            sender: {
+                                userId: creator.userId,
+                                firstName: creator.firstName,
+                                lastName: creator.lastName,
+                                avatar: creator.avatar,
+                            },
+                            currentReaction: null,
+                            reactions: [],
+                        },
+                        lastUpdated,
+                    },
+                    ...prev,
+                ];
+            });
+        };
+
+        socket.on('newConversationGroup', handleNewConversationGroup);
+
+        return () => {
+            socket.off('newConversationGroup', handleNewConversationGroup);
         };
     }, [socket]);
 
