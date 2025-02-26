@@ -34,21 +34,38 @@ export const conversationSlice = createSlice({
         openConversation(state, action: PayloadAction<ConversationBubble>) {
             const { conversationId, friendId } = action.payload;
             const existingIndex = state.openConversations.findIndex(
-                (c) => (conversationId && c.conversationId === conversationId) || c.friendId === friendId,
+                (c) => (conversationId && c.conversationId === conversationId) || (friendId && c.friendId === friendId),
             );
             if (existingIndex !== -1) {
                 const [item] = state.openConversations.splice(existingIndex, 1);
                 state.openConversations.unshift({
                     ...action.payload,
-                    ...(action.payload.type === ConversationType.PRIVATE
-                        ? {
-                              messages: item.messages,
-                              unreadCount: item.isFocus ? 0 : item.unreadCount + 1,
-                          }
-                        : item),
+                    messages: item.messages,
                 });
             } else {
                 state.openConversations.unshift(action.payload);
+            }
+        },
+        openChatWithMessage: (state, action: PayloadAction<ConversationBubble>) => {
+            const { conversationId, friendId } = action.payload;
+            const existingIndex = state.openConversations.findIndex(
+                (c) => (conversationId && c.conversationId === conversationId) || (friendId && c.friendId === friendId),
+            );
+            if (existingIndex !== -1) {
+                const [item] = state.openConversations.splice(existingIndex, 1);
+                state.openConversations.unshift({
+                    ...action.payload,
+                    messages: item.messages,
+                    isMinimized: item.isMinimized,
+                    unreadCount: item.unreadCount + 1,
+                });
+            } else {
+                state.openConversations.unshift({
+                    ...action.payload,
+                    isMinimized: false,
+                    isFocus: false,
+                    unreadCount: 1,
+                });
             }
         },
         closeConversation: (state, action: PayloadAction<string>) => {
@@ -160,6 +177,7 @@ export const conversationSlice = createSlice({
 
 export const {
     openConversation,
+    openChatWithMessage,
     closeConversation,
     maximizeConversation,
     minimizeConversation,

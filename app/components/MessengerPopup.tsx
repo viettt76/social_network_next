@@ -53,84 +53,6 @@ type GroupMemberType = UserInfoType & {
     nickname?: string | null;
 };
 
-// const getGroupConversationSettings = (groupMembers: any[], friends: any[], userInfo: any): DrilldownMenuItem[] => [
-//     {
-//         label: 'Thành viên nhóm',
-//         children: [
-//             {
-//                 label: (
-//                     <div className="max-h-64 overflow-y-auto">
-//                         {groupMembers.map((m) => (
-//                             <div className="flex items-center" key={`group-member-${m.userId}`}>
-//                                 <Image
-//                                     className="rounded-full border w-8 h-8 object-cover"
-//                                     src={m.avatar || '/images/default-avatar.png'}
-//                                     alt="avatar"
-//                                     width={800}
-//                                     height={800}
-//                                 />
-//                                 <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
-//                                     {m.lastName} {m.firstName}
-//                                 </div>
-//                                 {m.role === 'ADMIN' && <ShieldCheck className="text-destructive" />}
-//                             </div>
-//                         ))}
-//                     </div>
-//                 ),
-//             },
-//         ],
-//     },
-//     ...(groupMembers.find((m) => m.userId === userInfo.id)?.role === 'ADMIN'
-//         ? [
-//               {
-//                   label: 'Thêm thành viên',
-//                   children: [
-//                       {
-//                           label: (
-//                               <div>
-//                                   <input
-//                                       className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full"
-//                                       placeholder="Tìm kiếm thành viên"
-//                                   />
-//                                   <div className="mt-2 flex flex-col gap-y-2">
-//                                       {friends
-//                                           .filter((f) => !groupMembers.some((m) => m.userId === f.userId))
-//                                           .map((friend) => (
-//                                               <div className="flex items-center gap-x-2" key={friend.userId}>
-//                                                   <Image
-//                                                       className="w-8 h-8 rounded-full"
-//                                                       src={friend.avatar || '/images/default-avatar.png'}
-//                                                       alt="avatar"
-//                                                       width={800}
-//                                                       height={800}
-//                                                   />
-//                                                   <span className="font-semibold flex-1 line-clamp-1 break-all">
-//                                                       {friend.lastName} {friend.firstName}
-//                                                   </span>
-//                                                   <Checkbox
-//                                                       className="focus:ring-0"
-//                                                       checked={groupMembersToAdd.includes(friend.userId)}
-//                                                       onCheckedChange={() =>
-//                                                           handleChangeGroupMembersToAdd(friend.userId)
-//                                                       }
-//                                                   />
-//                                               </div>
-//                                           ))}
-//                                   </div>
-//                               </div>
-//                           ),
-//                           extraHeaderContent: (
-//                               <div className={`${groupMembersToAdd.length > 0 ? 'text-primary' : 'text-gray'}`}>
-//                                   Thêm
-//                               </div>
-//                           ),
-//                       },
-//                   ],
-//               },
-//           ]
-//         : []),
-// ];
-
 export default function MessengerPopup({
     index,
     conversationId,
@@ -731,7 +653,10 @@ export default function MessengerPopup({
                 <div className="flex items-center gap-x-1">
                     <Minus
                         className={`${isFocus ? 'text-background' : 'text-foreground'}`}
-                        onClick={handleMinimizePopup}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleMinimizePopup();
+                        }}
                     />
                     <X className={`${isFocus ? 'text-background' : 'text-foreground'}`} onClick={handleClosePopup} />
                 </div>

@@ -6,6 +6,7 @@ import {
     ConversationType,
     focusConversationPopup,
     maximizeConversation,
+    openChatWithMessage,
     openConversation,
     selectOpenConversations,
 } from '@/lib/slices/conversationSlice';
@@ -62,7 +63,7 @@ export default function ConversationBubbles() {
             const { conversationId, conversationName, conversationType, sender } = newMessage;
             if (sender.userId !== userInfo.id) {
                 dispatch(
-                    openConversation({
+                    openChatWithMessage({
                         conversationId,
                         type: conversationType,
                         friendId: sender.userId,
@@ -239,7 +240,7 @@ export default function ConversationBubbles() {
                 return (
                     <MessengerPopup
                         key={key}
-                        index={index}
+                        index={openConversationIndexs.findIndex((c) => c === index)}
                         conversationId={conversation.conversationId}
                         type={conversation.type}
                         friendId={conversation.friendId}
