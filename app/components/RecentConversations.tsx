@@ -13,6 +13,8 @@ import { ConversationType, openConversation } from '@/lib/slices/conversationSli
 import { selectFriends } from '@/lib/slices/relationshipSlice';
 import { useSocket } from './SocketProvider';
 import { cn } from '@/lib/utils';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function RecentConversations({ className }: { className?: string }) {
     const dispatch = useAppDispatch();
@@ -24,6 +26,14 @@ export default function RecentConversations({ className }: { className?: string 
     const recentConversationsRef = useRef<HTMLDivElement>(null);
     const [showRecentConversations, setShowRecentConversations] = useState(false);
     const [recentConversations, setRecentConversations] = useState<MessengerType[]>([]);
+    const [recentConversationsPage, setRecentConversationsPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+
+    const { observerTarget } = useInfiniteScroll({
+        callback: () => setRecentConversationsPage((prev) => prev + 1),
+        threshold: 0.5,
+        loading,
+    });
 
     const [showAddGroup, setShowAddGroup] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -32,33 +42,41 @@ export default function RecentConversations({ className }: { className?: string 
     // Get recent conversations
     useEffect(() => {
         const getRecentConversations = async () => {
+            setLoading(true);
             try {
-                const res = await getRecentConversationsService();
+                const { data } = await getRecentConversationsService(recentConversationsPage);
 
-                setRecentConversations(
-                    res.data.map((c) => ({
-                        conversationId: c.conversationId,
-                        conversationName: c.conversationName,
-                        conversationType: c.conversationType,
-                        conversationAvatar: c.conversationAvatar,
-                        lastMessage: {
-                            messageId: c.lastMessageId,
-                            conversationId: c.conversationId,
-                            content: c.lastMessageContent,
-                            messageType: c.lastMessageType,
-                            sender: {
-                                userId: c.senderId,
-                                firstName: c.senderFirstName,
-                                lastName: c.senderLastName,
-                                avatar: c.senderAvatar,
-                            },
-                        },
-                        lastUpdated: c.lastUpdated,
-                        ...(c.conversationType === ConversationType.PRIVATE && {
-                            friendId: c.friendId,
-                        }),
-                    })),
-                );
+                if (data.length > 0) {
+                    setRecentConversations((prev) => [
+                        ...prev,
+                        ...data
+                            .filter((c) => !prev.find((p) => p.conversationId === c.conversationId))
+                            .map((c) => ({
+                                conversationId: c.conversationId,
+                                conversationName: c.conversationName,
+                                conversationType: c.conversationType,
+                                conversationAvatar: c.conversationAvatar,
+                                lastMessage: {
+                                    messageId: c.lastMessageId,
+                                    conversationId: c.conversationId,
+                                    content: c.lastMessageContent,
+                                    messageType: c.lastMessageType,
+                                    sender: {
+                                        userId: c.senderId,
+                                        firstName: c.senderFirstName,
+                                        lastName: c.senderLastName,
+                                        avatar: c.senderAvatar,
+                                    },
+                                },
+                                lastUpdated: c.lastUpdated,
+                                ...(c.conversationType === ConversationType.PRIVATE && {
+                                    friendId: c.friendId,
+                                }),
+                            })),
+                    ]);
+
+                    setLoading(false);
+                }
             } catch (error) {
                 console.error(error);
             }
@@ -66,7 +84,7 @@ export default function RecentConversations({ className }: { className?: string 
         if (showRecentConversations) {
             getRecentConversations();
         }
-    }, [showRecentConversations]);
+    }, [showRecentConversations, recentConversationsPage]);
 
     // Socket handle new message to update recent conversation
     useEffect(() => {
@@ -134,7 +152,10 @@ export default function RecentConversations({ className }: { className?: string 
     }, [socket]);
 
     const handleShowRecentConversations = () => setShowRecentConversations(true);
-    const handleHideRecentConversations = () => setShowRecentConversations(false);
+    const handleHideRecentConversations = () => {
+        setShowRecentConversations(false);
+        handleCloseAddGroup();
+    };
 
     useClickOutside(recentConversationsRef, handleHideRecentConversations);
 
@@ -197,12 +218,12 @@ export default function RecentConversations({ className }: { className?: string 
             {showRecentConversations && (
                 <div
                     ref={recentConversationsRef}
-                    className="absolute top-6 left-0 w-80 bg-background border shadow-md rounded-xl p-2"
+                    className="absolute top-6 left-0 w-80 bg-background border shadow-all-sides rounded-xl px-2 pt-2"
                 >
                     {showAddGroup ? (
                         <>
                             <div className="flex justify-between">
-                                <ArrowLeft />
+                                <ArrowLeft onClick={handleCloseAddGroup} />
                                 <span
                                     className={`${
                                         groupName && groupMembers.length >= 2
@@ -239,10 +260,10 @@ export default function RecentConversations({ className }: { className?: string 
                                                 <span className="font-semibold flex-1 line-clamp-1 break-all">
                                                     {friend.lastName} {friend.firstName}
                                                 </span>
-                                                <input
-                                                    type="checkbox"
+                                                <Checkbox
                                                     name="add-group-member"
-                                                    onChange={() => handleChangeGroupMembers(friend.userId)}
+                                                    className="focus:ring-0"
+                                                    onCheckedChange={() => handleChangeGroupMembers(friend.userId)}
                                                 />
                                             </div>
                                         );
@@ -256,62 +277,68 @@ export default function RecentConversations({ className }: { className?: string 
                                 <input className="border px-2 py-1 rounded-3xl flex-1" placeholder="Tìm kiếm..." />
                                 <Plus onClick={handleOpenAddGroup} />
                             </div>
-                            <div className="flex flex-col gap-y-2">
-                                {recentConversations.map((conversation) => {
-                                    return (
-                                        <div
-                                            className="flex items-center gap-x-2"
-                                            key={`recent-conversation-${conversation.conversationId}`}
-                                            onClick={() =>
-                                                handleOpenMessengerPopup({
-                                                    conversationId: conversation.conversationId,
-                                                    type: conversation.conversationType,
-                                                    friendId: conversation.friendId,
-                                                    name: conversation.conversationName,
-                                                    avatar: conversation.conversationAvatar,
-                                                })
-                                            }
-                                        >
-                                            <Image
-                                                className="w-10 h-10 object-cover rounded-full border"
-                                                src={conversation.conversationAvatar || '/images/default-avatar.png'}
-                                                alt="avatar"
-                                                width={800}
-                                                height={800}
-                                            />
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-sm">
-                                                    {conversation.conversationName}
+                            <div className="max-h-[22rem] overflow-y-auto">
+                                <div className="flex flex-col gap-y-2">
+                                    {recentConversations.map((conversation) => {
+                                        return (
+                                            <div
+                                                className="flex items-center gap-x-2"
+                                                key={`recent-conversation-${conversation.conversationId}`}
+                                                onClick={() =>
+                                                    handleOpenMessengerPopup({
+                                                        conversationId: conversation.conversationId,
+                                                        type: conversation.conversationType,
+                                                        friendId: conversation.friendId,
+                                                        name: conversation.conversationName,
+                                                        avatar: conversation.conversationAvatar,
+                                                    })
+                                                }
+                                            >
+                                                <Image
+                                                    className="w-10 h-10 object-cover rounded-full border"
+                                                    src={
+                                                        conversation.conversationAvatar || '/images/default-avatar.png'
+                                                    }
+                                                    alt="avatar"
+                                                    width={800}
+                                                    height={800}
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="font-semibold text-sm">
+                                                        {conversation.conversationName}
+                                                    </div>
+                                                    <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
+                                                        {conversation.conversationType === ConversationType.GROUP &&
+                                                            conversation.lastMessage.sender.userId !== userInfo.id &&
+                                                            `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: `}
+                                                        {conversation.lastMessage.messageType === MessageType.TEXT
+                                                            ? conversation.lastMessage.content
+                                                            : `${
+                                                                  conversation.lastMessage.sender.userId === userInfo.id
+                                                                      ? 'Bạn'
+                                                                      : ''
+                                                              } đã gửi 1 ảnh`}
+                                                    </div>
                                                 </div>
-                                                <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
-                                                    {conversation.conversationType === ConversationType.GROUP &&
-                                                        conversation.lastMessage.sender.userId !== userInfo.id &&
-                                                        `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: `}
-                                                    {conversation.lastMessage.messageType === MessageType.TEXT
-                                                        ? conversation.lastMessage.content
-                                                        : `${
-                                                              conversation.lastMessage.sender.userId === userInfo.id
-                                                                  ? 'Bạn'
-                                                                  : ''
-                                                          } đã gửi 1 ảnh`}
+                                                <div className="ms-6">
+                                                    <CircleCheck className="w-6 h-6 text-background fill-primary" />
+                                                    {/* <CircleCheck className="text-primary w-5 h-5" />
+                                                    <Image
+                                                        className="w-5 h-5 object-cover rounded-full border"
+                                                        src={
+                                                            conversation.conversationAvatar ||
+                                                            '/images/default-avatar.png'
+                                                        }
+                                                        alt="avatar"
+                                                        width={800}
+                                                        height={800}
+                                                    /> */}
                                                 </div>
                                             </div>
-                                            <div className="ms-6">
-                                                <CircleCheck className="w-6 h-6 text-background fill-primary" />
-                                                {/* <CircleCheck className="text-primary w-5 h-5" /> */}
-                                                {/* <Image
-                                className="w-5 h-5 object-cover rounded-full border"
-                                src={
-                                    conversation.conversationAvatar || '/images/default-avatar.png'
-                                }
-                                alt="avatar"
-                                width={800}
-                                height={800}
-                            /> */}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
+                                <div ref={observerTarget} className="h-2"></div>
                             </div>
                         </>
                     )}

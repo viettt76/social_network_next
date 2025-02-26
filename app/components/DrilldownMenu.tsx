@@ -16,6 +16,7 @@ type Position =
 export interface DrilldownMenuItem {
     label?: string | ReactNode;
     children?: DrilldownMenuItem[];
+    extraHeaderContent?: string | ReactNode;
 }
 
 interface DrilldownMenuProps {
@@ -71,9 +72,14 @@ const DrilldownMenu = ({ items, className, position, children }: DrilldownMenuPr
                     )}
                 >
                     {history.length > 1 && (
-                        <button onClick={handleBack} className="mb-1 text-blue-500">
-                            ←
-                        </button>
+                        <div className="flex justify-between items-center mb-1">
+                            <button onClick={handleBack} className="mb-1 text-blue-500">
+                                ←
+                            </button>
+                            {history[history.length - 1][0]?.extraHeaderContent && (
+                                <div>{history[history.length - 1][0].extraHeaderContent}</div>
+                            )}
+                        </div>
                     )}
                     <AnimatePresence mode="wait">
                         <motion.ul

@@ -17,6 +17,7 @@ import {
     updateMessageReactions,
 } from '@/lib/slices/conversationSlice';
 import {
+    addGroupMembersService,
     createConversationService,
     getGroupMembersService,
     getMessagesService,
@@ -32,6 +33,8 @@ import React from 'react';
 import DrilldownMenu, { DrilldownMenuItem } from './DrilldownMenu';
 import Message from '@/app/components/Message';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
+import { selectFriends } from '@/lib/slices/relationshipSlice';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface MessengerPopupProps {
     index: number;
@@ -50,6 +53,84 @@ type GroupMemberType = UserInfoType & {
     nickname?: string | null;
 };
 
+// const getGroupConversationSettings = (groupMembers: any[], friends: any[], userInfo: any): DrilldownMenuItem[] => [
+//     {
+//         label: 'Thành viên nhóm',
+//         children: [
+//             {
+//                 label: (
+//                     <div className="max-h-64 overflow-y-auto">
+//                         {groupMembers.map((m) => (
+//                             <div className="flex items-center" key={`group-member-${m.userId}`}>
+//                                 <Image
+//                                     className="rounded-full border w-8 h-8 object-cover"
+//                                     src={m.avatar || '/images/default-avatar.png'}
+//                                     alt="avatar"
+//                                     width={800}
+//                                     height={800}
+//                                 />
+//                                 <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
+//                                     {m.lastName} {m.firstName}
+//                                 </div>
+//                                 {m.role === 'ADMIN' && <ShieldCheck className="text-destructive" />}
+//                             </div>
+//                         ))}
+//                     </div>
+//                 ),
+//             },
+//         ],
+//     },
+//     ...(groupMembers.find((m) => m.userId === userInfo.id)?.role === 'ADMIN'
+//         ? [
+//               {
+//                   label: 'Thêm thành viên',
+//                   children: [
+//                       {
+//                           label: (
+//                               <div>
+//                                   <input
+//                                       className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full"
+//                                       placeholder="Tìm kiếm thành viên"
+//                                   />
+//                                   <div className="mt-2 flex flex-col gap-y-2">
+//                                       {friends
+//                                           .filter((f) => !groupMembers.some((m) => m.userId === f.userId))
+//                                           .map((friend) => (
+//                                               <div className="flex items-center gap-x-2" key={friend.userId}>
+//                                                   <Image
+//                                                       className="w-8 h-8 rounded-full"
+//                                                       src={friend.avatar || '/images/default-avatar.png'}
+//                                                       alt="avatar"
+//                                                       width={800}
+//                                                       height={800}
+//                                                   />
+//                                                   <span className="font-semibold flex-1 line-clamp-1 break-all">
+//                                                       {friend.lastName} {friend.firstName}
+//                                                   </span>
+//                                                   <Checkbox
+//                                                       className="focus:ring-0"
+//                                                       checked={groupMembersToAdd.includes(friend.userId)}
+//                                                       onCheckedChange={() =>
+//                                                           handleChangeGroupMembersToAdd(friend.userId)
+//                                                       }
+//                                                   />
+//                                               </div>
+//                                           ))}
+//                                   </div>
+//                               </div>
+//                           ),
+//                           extraHeaderContent: (
+//                               <div className={`${groupMembersToAdd.length > 0 ? 'text-primary' : 'text-gray'}`}>
+//                                   Thêm
+//                               </div>
+//                           ),
+//                       },
+//                   ],
+//               },
+//           ]
+//         : []),
+// ];
+
 export default function MessengerPopup({
     index,
     conversationId,
@@ -67,11 +148,12 @@ export default function MessengerPopup({
     const userInfo = useAppSelector(selectUserInfo);
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
+    const friends = useAppSelector(selectFriends);
 
     const [messagesPage, setMessagesPage] = useState(1);
     const [messageLoading, setMessageLoading] = useState(false);
 
-    const { observerTarget } = useInfiniteScroll({
+    const { observerTarget: observerMessagesTarget } = useInfiniteScroll({
         callback: () => setMessagesPage((prev) => prev + 1),
         threshold: 0.5,
         loading: messageLoading,
@@ -86,6 +168,16 @@ export default function MessengerPopup({
     const [isAtBottom, setIsAtBottom] = useState(true);
 
     const [groupMembers, setGroupMembers] = useState<GroupMemberType[]>([]);
+    const [groupMembersPage, setGroupMembersonsPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+
+    const [groupMembersToAdd, setGroupMembersToAdd] = useState<string[]>([]);
+
+    const { observerTarget: observerGroupMembersTarget } = useInfiniteScroll({
+        callback: () => setGroupMembersonsPage((prev) => prev + 1),
+        threshold: 0.5,
+        loading,
+    });
 
     const [text, setText] = useState('');
     const [images, setImages] = useState<string[]>([]);
@@ -94,54 +186,220 @@ export default function MessengerPopup({
 
     const imageWrapperRef = useRef<HTMLDivElement>(null);
 
-    const groupConversationSettings: DrilldownMenuItem[] = [
+    const handleChangeGroupMembersToAdd = useCallback((friendId: string) => {
+        setGroupMembersToAdd((prev) => {
+            if (prev.find((m) => m === friendId)) {
+                return prev.filter((m) => m !== friendId);
+            } else {
+                return [...prev, friendId];
+            }
+        });
+    }, []);
+
+    const [groupConversationSettings, setGroupConversationSettings] = useState<DrilldownMenuItem[]>([
         {
             label: 'Thành viên nhóm',
             children: [
                 {
                     label: (
-                        <div className="flex flex-col gap-y-1">
-                            {groupMembers.map((m) => {
-                                return (
-                                    <div className="flex items-center" key={`group-member-${m.userId}`}>
-                                        <Image
-                                            className="rounded-full border w-8 h-8 object-cover border"
-                                            src={m.avatar || '/images/default-avatar.png'}
-                                            alt="avatar"
-                                            width={800}
-                                            height={800}
-                                        />
-                                        <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
-                                            {m.lastName} {m.firstName}
+                        <div className="max-h-64 overflow-y-auto">
+                            <div className="flex flex-col gap-y-1">
+                                {groupMembers.map((m) => {
+                                    return (
+                                        <div className="flex items-center" key={`group-member-${m.userId}`}>
+                                            <Image
+                                                className="rounded-full border w-8 h-8 object-cover border"
+                                                src={m.avatar || '/images/default-avatar.png'}
+                                                alt="avatar"
+                                                width={800}
+                                                height={800}
+                                            />
+                                            <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
+                                                {m.lastName} {m.firstName}
+                                            </div>
+                                            {m.role === ConversationRole.ADMIN && (
+                                                <ShieldCheck className="text-destructive" />
+                                            )}
                                         </div>
-                                        {m.role === ConversationRole.ADMIN && (
-                                            <ShieldCheck className="text-destructive" />
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
+                            <div ref={observerGroupMembersTarget} className="h-1 -mt-1"></div>
                         </div>
                     ),
                 },
             ],
         },
-    ];
+        ...(groupMembers.find((m) => m.userId === userInfo.id)?.role === 'ADMIN'
+            ? [
+                  {
+                      label: 'Thêm thành viên',
+                      children: [
+                          {
+                              label: (
+                                  <div>
+                                      <input
+                                          className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full"
+                                          placeholder="Tìm kiếm thành viên"
+                                      />
+                                      <div className="mt-2 flex flex-col gap-y-2">
+                                          {friends
+                                              .filter((f) => !groupMembers.find((m) => m.userId === f.userId))
+                                              .map((friend) => {
+                                                  return (
+                                                      <div
+                                                          className="flex items-center gap-x-2"
+                                                          key={`friend-${friend.userId}`}
+                                                      >
+                                                          <Image
+                                                              className="w-8 h-8 rounded-full"
+                                                              src={friend.avatar || '/images/default-avatar.png'}
+                                                              alt="avatar"
+                                                              width={800}
+                                                              height={800}
+                                                          />
+                                                          <span className="font-semibold flex-1 line-clamp-1 break-all">
+                                                              {friend.lastName} {friend.firstName}
+                                                          </span>
+                                                          <Checkbox
+                                                              name="add-group-member"
+                                                              className="focus:ring-0"
+                                                              onCheckedChange={() =>
+                                                                  handleChangeGroupMembersToAdd(friend.userId)
+                                                              }
+                                                          />
+                                                      </div>
+                                                  );
+                                              })}
+                                      </div>
+                                  </div>
+                              ),
+                              extraHeaderContent: (
+                                  <div className={`${groupMembersToAdd.length > 0 ? 'text-primary' : 'text-gray'}`}>
+                                      Thêm
+                                  </div>
+                              ),
+                          },
+                      ],
+                  },
+              ]
+            : []),
+    ]);
+
+    useEffect(() => {
+        setGroupConversationSettings([
+            {
+                label: 'Thành viên nhóm',
+                children: [
+                    {
+                        label: (
+                            <div className="max-h-64 overflow-y-auto">
+                                <div className="flex flex-col gap-y-1">
+                                    {groupMembers.map((m) => {
+                                        return (
+                                            <div className="flex items-center" key={`group-member-${m.userId}`}>
+                                                <Image
+                                                    className="rounded-full border w-8 h-8 object-cover border"
+                                                    src={m.avatar || '/images/default-avatar.png'}
+                                                    alt="avatar"
+                                                    width={800}
+                                                    height={800}
+                                                />
+                                                <div className="ms-1 text-sm font-semibold flex-1 line-clamp-1 break-all">
+                                                    {m.lastName} {m.firstName}
+                                                </div>
+                                                {m.role === ConversationRole.ADMIN && (
+                                                    <ShieldCheck className="text-destructive" />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div ref={observerGroupMembersTarget} className="h-1 -mt-1"></div>
+                            </div>
+                        ),
+                    },
+                ],
+            },
+            ...(groupMembers.find((m) => m.userId === userInfo.id)?.role === 'ADMIN'
+                ? [
+                      {
+                          label: 'Thêm thành viên',
+                          children: [
+                              {
+                                  label: (
+                                      <div>
+                                          <input
+                                              className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full"
+                                              placeholder="Tìm kiếm thành viên"
+                                          />
+                                          <div className="mt-2 flex flex-col gap-y-2">
+                                              {friends
+                                                  .filter((f) => !groupMembers.find((m) => m.userId === f.userId))
+                                                  .map((friend) => {
+                                                      return (
+                                                          <div
+                                                              className="flex items-center gap-x-2"
+                                                              key={`friend-${friend.userId}`}
+                                                          >
+                                                              <Image
+                                                                  className="w-8 h-8 rounded-full"
+                                                                  src={friend.avatar || '/images/default-avatar.png'}
+                                                                  alt="avatar"
+                                                                  width={800}
+                                                                  height={800}
+                                                              />
+                                                              <span className="font-semibold flex-1 line-clamp-1 break-all">
+                                                                  {friend.lastName} {friend.firstName}
+                                                              </span>
+                                                              <input
+                                                                  type="checkbox"
+                                                                  name="add-group-member"
+                                                                  className="focus:ring-0"
+                                                                  onChange={() =>
+                                                                      handleChangeGroupMembersToAdd(friend.userId)
+                                                                  }
+                                                              />
+                                                          </div>
+                                                      );
+                                                  })}
+                                          </div>
+                                      </div>
+                                  ),
+                                  extraHeaderContent: (
+                                      <div className="text-primary" onClick={handleAddGroupMembers}>
+                                          Thêm
+                                      </div>
+                                  ),
+                              },
+                          ],
+                      },
+                  ]
+                : []),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [friends, groupMembers, handleChangeGroupMembersToAdd, observerGroupMembersTarget, userInfo.id]);
 
     // Get group members
     useEffect(() => {
         const getGroupMembers = async () => {
+            setLoading(true);
             try {
-                const res = await getGroupMembersService(conversationId);
-                setGroupMembers(
-                    res.data.map((m) => ({
-                        userId: m.userId,
-                        firstName: m.userFirstName,
-                        lastName: m.userLastName,
-                        avatar: m.userAvatar,
-                        role: m.role,
-                        nickname: m.nickname,
-                    })),
-                );
+                const { data } = await getGroupMembersService({ conversationId, page: groupMembersPage });
+                if (data.length > 0) {
+                    setGroupMembers(
+                        data.map((m) => ({
+                            userId: m.userId,
+                            firstName: m.userFirstName,
+                            lastName: m.userLastName,
+                            avatar: m.userAvatar,
+                            role: m.role,
+                            nickname: m.nickname,
+                        })),
+                    );
+
+                    setLoading(false);
+                }
             } catch (error) {
                 console.error(error);
             }
@@ -150,7 +408,7 @@ export default function MessengerPopup({
         if (conversationId) {
             getGroupMembers();
         }
-    }, [conversationId]);
+    }, [conversationId, groupMembersPage]);
 
     // Get messages
     useEffect(() => {
@@ -425,6 +683,19 @@ export default function MessengerPopup({
         };
     }, [isFocus, handleClosePopup]);
 
+    const handleAddGroupMembers = async () => {
+        try {
+            if (groupMembersToAdd.length > 0) {
+                await addGroupMembersService({
+                    conversationId,
+                    participants: groupMembersToAdd,
+                });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <div
             ref={messengerPopupRef}
@@ -466,7 +737,7 @@ export default function MessengerPopup({
                 </div>
             </div>
             <div ref={chatContainerRef} className="flex-1 flex flex-col gap-y-1 overflow-y-auto py-2 px-2">
-                <div ref={observerTarget} className="h-1"></div>
+                <div ref={observerMessagesTarget} className="h-1"></div>
                 {messages.length > 0 ? (
                     <>
                         {messages.map((message, index) => {

@@ -47,12 +47,12 @@ export const getMessagesService = ({ conversationId, page }: { conversationId: s
     return axios.get(`/conversations/messages/${conversationId}?page=${[page]}`);
 };
 
-export const getRecentConversationsService = () => {
-    return axios.get('/conversations/recent');
+export const getRecentConversationsService = (page: number) => {
+    return axios.get(`/conversations/recent?page=${page}`);
 };
 
-export const getGroupMembersService = (conversationId: string) => {
-    return axios.get(`/conversations/groups/members/${conversationId}`);
+export const getGroupMembersService = ({ conversationId, page }: { conversationId: string; page: number }) => {
+    return axios.get(`/conversations/groups/members/${conversationId}?page=${page}`);
 };
 
 export const reactToMessageService = ({
@@ -67,5 +67,17 @@ export const reactToMessageService = ({
     return axios.put(`/conversations/reactions/${messageId}`, {
         conversationId,
         reactionType,
+    });
+};
+
+export const addGroupMembersService = ({
+    conversationId,
+    participants,
+}: {
+    conversationId: string;
+    participants: string[];
+}) => {
+    return axios.post(`/conversations/members/${conversationId}`, {
+        participants,
     });
 };
