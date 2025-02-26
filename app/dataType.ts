@@ -115,10 +115,15 @@ export type MessengerType = {
     friendId?: string;
 };
 
+export enum MovieType {
+    MOVIE = 'MOVIE',
+    TV = 'TV',
+}
+
 export interface BaseMovieData {
     movieId: string;
     name: string;
     slug: string;
     thumbUrl: string;
-    type: 'movie' | 'tv';
+    type: MovieType;
 }

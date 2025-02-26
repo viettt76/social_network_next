@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import RecentConversations from './RecentConversations';
 import useDebounce from '@/hooks/useDebounce';
 import { searchMovieService } from '@/lib/services/movieService';
-import { BaseMovieData } from '@/app/dataType';
+import { BaseMovieData, MovieType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
 
 export default function MovieHeader() {
@@ -100,7 +100,7 @@ export default function MovieHeader() {
                             name: i.name,
                             slug: i.slug,
                             thumbUrl: i.thumb_url,
-                            type: i.type === 'series' ? 'tv' : 'movie',
+                            type: i.type === 'series' ? MovieType.TV : MovieType.MOVIE,
                         })),
                         totalItems: data.data.params.pagination.totalItems,
                     });
@@ -129,6 +129,13 @@ export default function MovieHeader() {
                         className="bg-[#0a0a0a] border-r border-[#2d2d2d]"
                     >
                         <Drawer.Items>
+                            <Link
+                                href="/movie/favorites"
+                                className="text-white mb-3 block"
+                                onClick={handleCloseSidebarModal}
+                            >
+                                Phim yêu thích
+                            </Link>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -214,7 +221,7 @@ export default function MovieHeader() {
                         <MagnifyingGlass className="text-black" />
                         {searchResult.movies.length > 0 && showSearchResult && (
                             <div className="absolute top-[calc(100%+0.3rem)] left-0 right-0 py-1 flex flex-col bg-white rounded-sm shadow-all-sides">
-                                {searchResult.totalItems > 10 && (
+                                {searchResult.totalItems > 0 && (
                                     <Link
                                         href={`/movie/search?keyword=${searchValue}`}
                                         className="text-primary text-sm px-4 mb-1"

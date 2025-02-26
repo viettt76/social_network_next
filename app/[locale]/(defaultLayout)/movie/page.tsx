@@ -7,7 +7,7 @@ import {
     getMovieListByGenreService,
     getNewlyUpdatedMovieListService,
 } from '@/lib/services/movieService';
-import { BaseMovieData } from '@/app/dataType';
+import { BaseMovieData, MovieType } from '@/app/dataType';
 
 export default function Movies() {
     const [newlyUpdateMovies, setNewlyUpdatedMovies] = useState<BaseMovieData[]>([]);
@@ -31,7 +31,7 @@ export default function Movies() {
                         name: m.name,
                         slug: m.slug,
                         thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${m.thumb_url}`,
-                        type: m.tmdb.type,
+                        type: m.tmdb.type === 'movie' ? MovieType.MOVIE : MovieType.TV,
                     }));
                     setNewlyUpdatedMovies(newlyUpdatedData);
 
@@ -65,7 +65,7 @@ export default function Movies() {
                                 name: item.name,
                                 slug: item.slug,
                                 thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${item.thumb_url}`,
-                                type: item.tmdb.type,
+                                type: item.tmdb.type === 'movie' ? MovieType.MOVIE : MovieType.TV,
                             })),
                         };
                     });

@@ -1,4 +1,6 @@
+import { MovieType } from '@/app/dataType';
 import axios from 'axios';
+import axiosBackend from './api';
 
 const instance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_OPHIM_API_URL,
@@ -48,4 +50,30 @@ export const searchMovieService = (keyword: string, pageNumber?: number) => {
     return instance.get('/v1/api/tim-kiem', {
         params: { keyword, page: pageNumber },
     });
+};
+
+export const addFavoriteMovieService = ({
+    movieId,
+    name,
+    slug,
+    thumbUrl,
+    type,
+}: {
+    movieId: string;
+    name: string;
+    slug: string;
+    thumbUrl: string;
+    type: MovieType;
+}) => {
+    return axiosBackend.post('/movies/favorites', {
+        movieId,
+        name,
+        slug,
+        thumbUrl,
+        type,
+    });
+};
+
+export const getFavoriteMoviesService = () => {
+    return axiosBackend.get('/movies/favorites');
 };

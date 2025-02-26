@@ -1,7 +1,7 @@
 'use client';
 
 import { MovieItem } from '@/app/components/MovieItem';
-import { BaseMovieData } from '@/app/dataType';
+import { BaseMovieData, MovieType } from '@/app/dataType';
 import { searchMovieService } from '@/lib/services/movieService';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -34,7 +34,7 @@ export default function SearchMovie() {
                             name: i.name,
                             slug: i.slug,
                             thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${i.thumb_url}`,
-                            type: i.type === 'series' ? 'tv' : 'movie',
+                            type: i.type === 'series' ? MovieType.TV : MovieType.MOVIE,
                         })),
                         totalPages: Math.ceil(
                             data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage,

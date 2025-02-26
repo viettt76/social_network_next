@@ -5,9 +5,11 @@ import { ChevronDown, Play, Plus, ThumbsDown, ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Modal } from 'flowbite-react';
-import { getMovieDetailByIdService } from '@/lib/services/movieService';
+import { addFavoriteMovieService, getMovieDetailByIdService } from '@/lib/services/movieService';
 import { cn } from '@/lib/utils';
 import { Link } from '@/i18n/routing';
+import { MovieType } from '@/app/dataType';
+import { toast } from 'sonner';
 
 interface MovieInfo {
     trailerUrl: string;
@@ -25,7 +27,7 @@ interface MovieItemProps {
     name: string;
     slug: string;
     thumbUrl: string;
-    type: 'movie' | 'tv';
+    type: MovieType;
     isFirst: boolean;
     isLast: boolean;
 }
@@ -68,12 +70,30 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
         }
     }, [movieId, showTrailer]);
 
+    const handleAddFavoriteMovie = async () => {
+        try {
+            await addFavoriteMovieService({ movieId, name, slug, thumbUrl, type });
+            toast.success('Thêm vào phim yêu thích thành công');
+        } catch (error) {
+            console.error(error);
+            toast.error('Thêm vào phim yêu thích thất bại');
+        }
+    };
+
     return (
         <>
             <TooltipProvider>
                 <Tooltip open={showTrailer} onOpenChange={setShowTrailer}>
                     <TooltipTrigger asChild>
-                        <Link href={type === 'movie' ? `/movie/${slug}` : type === 'tv' ? `/movie/${slug}/1` : ''}>
+                        <Link
+                            href={
+                                type === MovieType.MOVIE
+                                    ? `/movie/${slug}`
+                                    : type === MovieType.TV
+                                    ? `/movie/${slug}/1`
+                                    : ''
+                            }
+                        >
                             <Image
                                 className="w-full h-full object-cover cursor-pointer rounded-sm"
                                 src={thumbUrl}
@@ -105,18 +125,24 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                             <div className="text-lg text-white">{name}</div>
                             <div className="flex justify-between items-center w-full mt-1">
                                 <div className="flex gap-x-2">
-                                    <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
+                                    <Link
+                                        href={`/movie/${slug}${type === MovieType.MOVIE ? '' : '/1'}`}
+                                        className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
+                                    >
                                         <Play className="w-8 h-8 text-white" />
-                                    </div>
-                                    <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
+                                    </Link>
+                                    <div
+                                        className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
+                                        onClick={handleAddFavoriteMovie}
+                                    >
                                         <Plus className="w-8 h-8 text-white" />
                                     </div>
-                                    <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
+                                    {/* <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
                                         <ThumbsUp className="w-8 h-8 text-white" />
                                     </div>
                                     <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
                                         <ThumbsDown className="w-8 h-8 text-white" />
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div
                                     className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
