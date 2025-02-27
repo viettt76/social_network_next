@@ -132,6 +132,13 @@ export const conversationSlice = createSlice({
                 } else c.isFocus = false;
             });
         },
+        unfocusConversationPopup: (state, action: PayloadAction<string | null>) => {
+            state.openConversations.forEach((c) => {
+                if (c.conversationId === action.payload || c.friendId === action.payload) {
+                    c.isFocus = false;
+                }
+            });
+        },
         updateMessageReactions: (
             state,
             action: PayloadAction<{
@@ -185,6 +192,7 @@ export const {
     addOldMessages,
     addNewMessage,
     focusConversationPopup,
+    unfocusConversationPopup,
     updateMessageReactions,
     updateCurrentMessageReaction,
 } = conversationSlice.actions;

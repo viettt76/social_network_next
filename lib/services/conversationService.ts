@@ -1,6 +1,6 @@
 import { ConversationType } from '@/lib/slices/conversationSlice';
 import axios from './api';
-import { MessageType, ReactionNameType } from '@/app/dataType';
+import { MessageType, ReactionNameType, UserInfoType } from '@/app/dataType';
 
 export const getConversationWithFriendService = (friendId: string) => {
     return axios.get(`/conversations/friends/${friendId}`);
@@ -75,7 +75,7 @@ export const addGroupMembersService = ({
     participants,
 }: {
     conversationId: string;
-    participants: string[];
+    participants: UserInfoType[];
 }) => {
     return axios.post(`/conversations/members/${conversationId}`, {
         participants,

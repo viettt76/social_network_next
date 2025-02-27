@@ -113,6 +113,7 @@ export default function RecentConversations({ className }: { className?: string 
                     sender,
                     currentReaction: null,
                     reactions: [],
+                    createdAt: lastUpdated,
                 };
 
                 if (existingIndex !== -1) {
@@ -162,7 +163,7 @@ export default function RecentConversations({ className }: { className?: string 
         };
     }, [socket, userInfo.id]);
 
-    // Socket handle new message to update recent conversation
+    // Socket handle a conversation group created to update recent conversation
     useEffect(() => {
         const handleNewConversationGroup = (newConversationGroup: any) => {
             const { conversationId, conversationName, conversationAvatar, creator, lastUpdated } = newConversationGroup;
@@ -187,6 +188,7 @@ export default function RecentConversations({ className }: { className?: string 
                             },
                             currentReaction: null,
                             reactions: [],
+                            createdAt: lastUpdated,
                         },
                         lastUpdated,
                     },
@@ -199,6 +201,19 @@ export default function RecentConversations({ className }: { className?: string 
 
         return () => {
             socket.off('newConversationGroup', handleNewConversationGroup);
+        };
+    }, [socket]);
+
+    // Socket handle added to the group
+    useEffect(() => {
+        const handleAddedToGroup = () => {
+            setRecentConversationsPage(1);
+        };
+
+        socket.on('addedToGroup', handleAddedToGroup);
+
+        return () => {
+            socket.off('addedToGroup', handleAddedToGroup);
         };
     }, [socket]);
 

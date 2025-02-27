@@ -91,6 +91,7 @@ export type MessageData = {
     sender: UserInfoType;
     currentReaction: ReactionNameType | null;
     reactions: ReactionTypeBase[];
+    createdAt: Date | string;
 };
 
 export enum ConversationRole {

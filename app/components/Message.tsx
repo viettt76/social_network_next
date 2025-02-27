@@ -13,6 +13,7 @@ import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { groupBy, sortBy } from 'lodash';
+import { getTimeFromISO, padNumber } from '@/lib/utils';
 
 interface MessageProps {
     message: MessageData;
@@ -37,45 +38,8 @@ export default function Message({
 
     const senderId = message.sender.userId;
     const isSender = senderId === userInfo.id;
-    let content;
-    switch (message.messageType) {
-        case MessageType.TEXT:
-            content = (
-                <div
-                    className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                        isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
-                    }`}
-                >
-                    {message.content}
-                </div>
-            );
-            break;
-        case MessageType.IMAGE:
-            content = (
-                <PhotoProvider>
-                    <PhotoView src={message.content}>
-                        <Image
-                            className="object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer"
-                            src={message.content}
-                            width={800}
-                            height={800}
-                            alt=""
-                        />
-                    </PhotoView>
-                </PhotoProvider>
-            );
-            break;
-        default:
-            content = (
-                <div
-                    className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
-                        isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
-                    }`}
-                >
-                    {message.content}
-                </div>
-            );
-    }
+
+    const time = getTimeFromISO(message.createdAt);
 
     const _reactions = groupBy(message.reactions, 'reactionType');
     const _mostReactions = sortBy(_reactions, 'length').reverse();
@@ -116,6 +80,70 @@ export default function Message({
         }
     };
 
+    const formatTimeDisplay = (time: any) => {
+        const now = new Date();
+        if (time.day === now.getDate() && time.month === now.getMonth() + 1) {
+            return `${padNumber(time.hours)}:${padNumber(time.minutes)}`;
+        }
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (time.day === yesterday.getDate() && time.month === yesterday.getMonth() + 1) {
+            return `Hôm qua ${padNumber(time.hours)}:${padNumber(time.minutes)}`;
+        }
+        return `${padNumber(time.day)}/${padNumber(time.month)}${
+            time.year !== now.getFullYear() ? `/${time.year}` : ''
+        } ${padNumber(time.hours)}:${padNumber(time.minutes)}`;
+    };
+
+    let content;
+    switch (message.messageType) {
+        case MessageType.TEXT:
+            content = (
+                <div
+                    className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
+                        isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
+                    }`}
+                >
+                    {message.content}
+                </div>
+            );
+            break;
+        case MessageType.IMAGE:
+            content = (
+                <PhotoProvider>
+                    <PhotoView src={message.content}>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Image
+                                        className="object-cover h-64 w-40 rounded-md border mt-1 cursor-pointer"
+                                        src={message.content}
+                                        width={800}
+                                        height={800}
+                                        alt=""
+                                    />
+                                </TooltipTrigger>
+                                <TooltipContent align="center" side="left">
+                                    <span>{formatTimeDisplay(time)}</span>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </PhotoView>
+                </PhotoProvider>
+            );
+            break;
+        default:
+            content = (
+                <div
+                    className={`px-2 py-1 rounded-2xl whitespace-pre-line ${
+                        isSender ? 'bg-blue-600 text-background' : 'bg-input/60 text-foreground'
+                    }`}
+                >
+                    {message.content}
+                </div>
+            );
+    }
+
     return (
         <div key={`message-${message.messageId}`} className={`${index > 1 && senderId !== prevSenderId && 'mt-2'}`}>
             {conversationType === ConversationType.GROUP &&
@@ -148,7 +176,14 @@ export default function Message({
                     onMouseLeave={() => setIsTooltipVisible(false)}
                 >
                     <div className="relative">
-                        {content}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>{content}</TooltipTrigger>
+                                <TooltipContent align="center" side="left">
+                                    <span>{formatTimeDisplay(time)}</span>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         {mostReactions.length > 0 && (
                             <div
                                 className={`absolute cursor-pointer bg-white w-fit px-0.5 py-[2px] rounded-full border flex items-center justify-center -bottom-2 ${

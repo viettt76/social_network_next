@@ -31,3 +31,21 @@ export const convertSecondsToTime = (seconds: number): string => {
     const formattedHours = hours > 0 ? `${String(hours).padStart(2, '0')}:` : '';
     return `${formattedHours}${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 };
+
+export const getTimeFromISO = (isoString: string | Date) => {
+    const date = new Date(isoString);
+
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    const day = date.getUTCDate();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const seconds = date.getUTCSeconds();
+    const milliseconds = date.getUTCMilliseconds();
+
+    return { year, month, day, hours, minutes, seconds, milliseconds };
+};
+
+export const padNumber = (number: number | string, length = 2) => {
+    return number.toString().padStart(length, '0');
+};
