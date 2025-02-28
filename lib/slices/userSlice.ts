@@ -12,17 +12,20 @@ export enum Role {
     ADMIN = 'ADMIN',
 }
 
-export interface UserState {
-    id: string;
+export interface BasicUserInformation {
     firstName: string;
     lastName: string;
-    birthday: Date | null;
+    birthday: Date | string | null;
     gender: Gender | null;
-    homeTown: string;
+    hometown: string;
     school: string;
     workplace: string;
-    avatar: string;
+    avatar: string | null;
     isPrivate: boolean | null;
+}
+
+export interface UserState extends BasicUserInformation {
+    id: string;
     role: Role | null;
     friendRequestCount: number | null;
 }
@@ -33,7 +36,7 @@ const initialState: UserState = {
     lastName: '',
     birthday: null,
     gender: null,
-    homeTown: '',
+    hometown: '',
     school: '',
     workplace: '',
     avatar: '',

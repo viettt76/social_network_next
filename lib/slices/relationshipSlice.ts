@@ -22,7 +22,8 @@ export const relationshipSlice = createSlice({
             }
         },
         removeFriend: (state, action: PayloadAction<string>) => {
-            state.friends.filter((friend) => friend.userId !== action.payload);
+            const index = state.friends.findIndex((friend) => friend.userId === action.payload);
+            if (index !== -1) state.friends.splice(index, 1);
         },
     },
 });

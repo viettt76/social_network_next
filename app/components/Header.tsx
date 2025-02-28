@@ -1,10 +1,10 @@
 'use client';
 
-import { BellRinging, CaretDown, Moon, MagnifyingGlass, Sun, UserPlus, SignOut } from '@phosphor-icons/react';
+import { BellRinging, CaretDown, Moon, MagnifyingGlass, Sun, UserPlus, SignOut, Gear } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { Link, useRouter } from '@/i18n/routing';
-import { useAppDispatch } from '@/lib/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { resetInfo } from '@/lib/slices/userSlice';
+import { resetInfo, selectUserInfo } from '@/lib/slices/userSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 import RecentConversations from './RecentConversations';
@@ -24,6 +24,8 @@ export default function Header() {
     const dispatch = useAppDispatch();
     const { toast } = useToast();
     const router = useRouter();
+
+    const userInfo = useAppSelector(selectUserInfo);
 
     const [width, setWidth] = useState(0);
     const parentRef = useRef<HTMLDivElement | null>(null);
@@ -98,12 +100,34 @@ export default function Header() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
                                 <DropdownMenuLabel onClick={() => setShowUserDashboard(false)}>
-                                    <Link href="/profile">My Account</Link>
+                                    <Link className="flex items-center" href="/profile">
+                                        <Image
+                                            className="w-8 h-8 rounded-full border me-2"
+                                            src={userInfo.avatar || '/images/default-avatar.png'}
+                                            alt="avatar"
+                                            width={800}
+                                            height={800}
+                                        />
+                                        Trang cá nhân
+                                    </Link>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+
+                                <DropdownMenuItem>
+                                    <Link href="/settings/profile" className="flex items-center">
+                                        <div className="w-6">
+                                            <Gear className="w-5 h-5" />
+                                        </div>
+                                        Cài đặt
+                                    </Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
-                                    <SignOut />
-                                    Log out
+                                    <div className="flex items-center">
+                                        <div className="w-6">
+                                            <SignOut className="w-5 h-5" />
+                                        </div>
+                                        Log out
+                                    </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
