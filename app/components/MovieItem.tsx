@@ -1,7 +1,7 @@
 'use client';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronDown, Play, Plus, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ChevronDown, Play, Plus, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Modal } from 'flowbite-react';
@@ -205,6 +205,9 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
             >
                 <Modal.Body className="p-2 movie-item-detail-body bg-white">
                     <div className="relative">
+                        <div className="absolute top-2 right-2 rounded-full w-7 h-7 bg-white/80 flex items-center justify-center cursor-pointer" onClick={() => setShowDetail(false)}>
+                            <X className="text-black" />
+                        </div>
                         <div className="absolute left-0 right-0 top-0 w-full h-[28rem] bg-gradient-to-t from-[#181818] to-transparent opacity-60 bg-repeat-x bg-[0_top] bg-[length:100%_100%]"></div>
                         {movieInfo?.posterUrl && (
                             <Image
