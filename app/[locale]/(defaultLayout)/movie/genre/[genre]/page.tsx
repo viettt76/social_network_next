@@ -7,7 +7,7 @@ import { getMovieListByGenreService } from '@/lib/services/movieService';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ReactPaginate from 'react-paginate';
-import { MOVIES_PER_SLIDE } from '@/lib/constants';
+import useMoviesPerSlide from '@/hooks/useMoviesPerSlide';
 
 interface DataType {
     title: string;
@@ -21,6 +21,8 @@ export default function MoviesByGenre() {
     const searchParams = useSearchParams();
     const page = Number(searchParams.get('page'));
     const router = useRouter();
+
+    const moviesPerSlide = useMoviesPerSlide();
 
     const [data, setData] = useState<DataType>({
         title: '',
@@ -58,7 +60,7 @@ export default function MoviesByGenre() {
     return (
         <div className="px-10 pt-6">
             <div className="text-orange-400 text-2xl">Phim thể loại {data.title}</div>
-            <div className={`grid grid-cols-${MOVIES_PER_SLIDE} gap-x-2 gap-y-4 mt-2`}>
+            <div className={`grid grid-cols-${moviesPerSlide} gap-x-2 gap-y-4 mt-2`}>
                 {data.movies.map((m, index) => {
                     return (
                         <MovieItem
@@ -67,8 +69,8 @@ export default function MoviesByGenre() {
                             slug={m.slug}
                             thumbUrl={m.thumbUrl}
                             type={m.type}
-                            isFirst={index % MOVIES_PER_SLIDE === 0}
-                            isLast={(index + 1) % MOVIES_PER_SLIDE === 0}
+                            isFirst={index % moviesPerSlide === 0}
+                            isLast={(index + 1) % moviesPerSlide === 0}
                             key={`movie-${m.movieId}`}
                         />
                     );

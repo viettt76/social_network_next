@@ -6,14 +6,16 @@ import { searchMovieService } from '@/lib/services/movieService';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ReactPaginate from 'react-paginate';
-import { MOVIES_PER_SLIDE } from '@/lib/constants';
 import { useRouter } from '@/i18n/routing';
+import useMoviesPerSlide from '@/hooks/useMoviesPerSlide';
 
 export default function SearchMovie() {
     const searchParams = useSearchParams();
     const keyword = searchParams.get('keyword');
     const page = Number(searchParams.get('page'));
     const router = useRouter();
+
+    const moviesPerSlide = useMoviesPerSlide();
 
     const [results, setResults] = useState<{
         movies: BaseMovieData[];
@@ -55,7 +57,7 @@ export default function SearchMovie() {
     return (
         <div className="px-10 pt-6">
             <div className="text-orange-400 text-2xl">Tìm kiếm &quot;{keyword}&quot;</div>
-            <div className={`grid grid-cols-${MOVIES_PER_SLIDE} gap-x-2 gap-y-4 mt-2`}>
+            <div className={`grid grid-cols-${moviesPerSlide} gap-x-2 gap-y-4 mt-2`}>
                 {results.movies.map((m, index) => {
                     return (
                         <MovieItem
@@ -64,8 +66,8 @@ export default function SearchMovie() {
                             slug={m.slug}
                             thumbUrl={m.thumbUrl}
                             type={m.type}
-                            isFirst={index % MOVIES_PER_SLIDE === 0}
-                            isLast={(index + 1) % MOVIES_PER_SLIDE === 0}
+                            isFirst={index % moviesPerSlide === 0}
+                            isLast={(index + 1) % moviesPerSlide === 0}
                             key={`movie-${m.movieId}`}
                         />
                     );
