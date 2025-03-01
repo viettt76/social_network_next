@@ -19,12 +19,12 @@ import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 import { AlignJustify, ChevronRight } from 'lucide-react';
 import { Drawer } from 'flowbite-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import RecentConversations from './RecentConversations';
 import useDebounce from '@/hooks/useDebounce';
 import { searchMovieService } from '@/lib/services/movieService';
 import { BaseMovieData, MovieType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function MovieHeader() {
     const { theme, setTheme } = useTheme();
@@ -54,18 +54,21 @@ export default function MovieHeader() {
 
     const searchRef = useRef<HTMLDivElement | null>(null);
 
+    const [isMobile, setIsMobile] = useState(false);
+
     useEffect(() => {
-        const updateWidth = () => {
+        const updateSide = () => {
             if (parentRef.current && headerRef.current) {
                 setWidth(parentRef.current.offsetWidth);
             }
+            setIsMobile(window.innerWidth < 576 ? true : false);
         };
 
-        window.addEventListener('resize', updateWidth);
-        updateWidth();
+        updateSide();
+        window.addEventListener('resize', updateSide);
 
         return () => {
-            window.removeEventListener('resize', updateWidth);
+            window.removeEventListener('resize', updateSide);
         };
     }, []);
 
@@ -128,70 +131,60 @@ export default function MovieHeader() {
                         onClose={handleCloseSidebarModal}
                         className="bg-[#0a0a0a] border-r border-[#2d2d2d]"
                     >
-                        <Drawer.Items>
+                        <Drawer.Items className="flex flex-col gap-y-3">
                             <Link
                                 href="/movie/favorites"
-                                className="text-white mb-3 block"
+                                className="text-white block"
                                 onClick={handleCloseSidebarModal}
                             >
                                 Phim yêu thích
                             </Link>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="text-white flex items-center w-fit">
-                                            Thể loại <ChevronRight />
-                                        </div>
-                                    </TooltipTrigger>
-
-                                    <TooltipContent
-                                        side="right"
-                                        align="start"
-                                        className="bg-[#2d2d2d] border-[#2d2d2d] border"
-                                    >
-                                        <div className="px-2 py-1 grid grid-cols-6 gap-4">
-                                            {JSON.parse(sessionStorage.getItem('genreList') ?? '[]').map((g) => (
-                                                <Link
-                                                    href={`/movie/genre/${g.slug}`}
-                                                    className="text-white hover:text-orange-400"
-                                                    key={`genre-${g.slug}`}
-                                                    onClick={handleCloseSidebarModal}
-                                                >
-                                                    {g.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="text-white flex items-center w-fit mt-3">
-                                            Quốc gia <ChevronRight />
-                                        </div>
-                                    </TooltipTrigger>
-
-                                    <TooltipContent
-                                        side="right"
-                                        align="start"
-                                        className="bg-[#2d2d2d] border-[#2d2d2d] border"
-                                    >
-                                        <div className="px-2 py-1 grid grid-cols-6 gap-4">
-                                            {JSON.parse(sessionStorage.getItem('countryList') ?? '[]').map((g) => (
-                                                <Link
-                                                    href={`/movie/country/${g.slug}`}
-                                                    className="text-white hover:text-orange-400"
-                                                    key={`country-${g.slug}`}
-                                                    onClick={handleCloseSidebarModal}
-                                                >
-                                                    {g.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className="text-white flex items-center w-fit">
+                                        Thể loại <ChevronRight />
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                    side={isMobile ? 'bottom' : 'right'}
+                                    align="start"
+                                    className="bg-[#2d2d2d] border-[#2d2d2d] border w-fit px-4 py-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"
+                                >
+                                    {JSON.parse(sessionStorage.getItem('genreList') ?? '[]').map((g: any) => (
+                                        <Link
+                                            href={`/movie/genre/${g.slug}`}
+                                            className="text-white hover:text-orange-400 text-sm"
+                                            key={`genre-${g.slug}`}
+                                            onClick={handleCloseSidebarModal}
+                                        >
+                                            {g.name}
+                                        </Link>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className="text-white flex items-center w-fit">
+                                        Quốc gia <ChevronRight />
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                    side={isMobile ? 'bottom' : 'right'}
+                                    align="start"
+                                    className="bg-[#2d2d2d] border-[#2d2d2d] border w-fit px-4 py-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"
+                                >
+                                    {JSON.parse(sessionStorage.getItem('countryList') ?? '[]').map((g: any) => (
+                                        <Link
+                                            href={`/movie/country/${g.slug}`}
+                                            className="text-white hover:text-orange-400 text-sm"
+                                            key={`country-${g.slug}`}
+                                            onClick={handleCloseSidebarModal}
+                                        >
+                                            {g.name}
+                                        </Link>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
                         </Drawer.Items>
                     </Drawer>
                 )}
@@ -220,7 +213,13 @@ export default function MovieHeader() {
                         />
                         <MagnifyingGlass className="text-black" />
                         {searchResult.movies.length > 0 && showSearchResult && (
-                            <div className="absolute top-[calc(100%+0.3rem)] left-0 right-0 py-1 flex flex-col bg-white rounded-sm shadow-all-sides">
+                            <div
+                                className={`py-1 flex flex-col bg-white rounded-sm shadow-all-sides ${
+                                    isMobile
+                                        ? 'fixed top-[calc(3.8rem)] left-2 right-2 '
+                                        : 'absolute top-[calc(100%+0.3rem)] left-0 right-0'
+                                }`}
+                            >
                                 {searchResult.totalItems > 0 && (
                                     <Link
                                         href={`/movie/search?keyword=${searchValue}`}

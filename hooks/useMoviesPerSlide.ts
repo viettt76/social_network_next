@@ -5,15 +5,15 @@ const useMoviesPerSlide = () => {
 
     useEffect(() => {
         const updateMoviesPerSlide = () => {
-            if (window.innerWidth >= 1536) {
+            if (window.innerWidth >= 1400) {
                 setMoviesPerSlide(6);
-            } else if (window.innerWidth >= 1280) {
+            } else if (window.innerWidth >= 1200) {
                 setMoviesPerSlide(6);
-            } else if (window.innerWidth >= 1024) {
+            } else if (window.innerWidth >= 992) {
                 setMoviesPerSlide(5);
-            } else if (window.innerWidth >= 640) {
+            } else if (window.innerWidth >= 768) {
                 setMoviesPerSlide(4);
-            } else if (window.innerWidth >= 480) {
+            } else if (window.innerWidth >= 576) {
                 setMoviesPerSlide(3);
             } else {
                 setMoviesPerSlide(2);

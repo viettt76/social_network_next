@@ -25,6 +25,17 @@ export default function SearchMovie() {
         totalPages: 0,
     });
 
+    const [pageRange, setPageRange] = useState(5);
+
+    useEffect(() => {
+        const updatePageRange = () => {
+            setPageRange(window.innerWidth < 640 ? 2 : 5);
+        };
+        updatePageRange();
+        window.addEventListener('resize', updatePageRange);
+        return () => window.removeEventListener('resize', updatePageRange);
+    }, []);
+
     useEffect(() => {
         (async () => {
             try {
@@ -77,10 +88,11 @@ export default function SearchMovie() {
                 breakLabel="..."
                 nextLabel=">"
                 onPageChange={(p) => router.push(`/movie/search?keyword=${keyword}&page=${p.selected + 1}`)}
-                pageRangeDisplayed={5}
+                pageRangeDisplayed={pageRange}
                 pageCount={results.totalPages}
                 previousLabel="<"
                 renderOnZeroPageCount={null}
+                forcePage={page ? page - 1 : 0}
                 containerClassName="mt-4 mb-4 flex justify-center text-white gap-x-2"
                 breakClassName="w-8 h-8 flex items-center justify-center bg-gray/40"
                 pageClassName="w-8 h-8 flex items-center justify-center bg-gray/40"

@@ -145,7 +145,7 @@ export default function WatchMovie() {
     };
 
     return (
-        <div className="max-w-[1024px] mx-auto">
+        <div className="max-w-[1024px] mx-auto px-2 sm:px-4">
             {movieInfo && (
                 <>
                     {showContinueModal && (
@@ -173,7 +173,7 @@ export default function WatchMovie() {
                     )}
                     <MediaPlayer
                         ref={playerRef}
-                        className="mt-2 h-[calc(100vh-6rem)] !w-[1024px]"
+                        className="mt-2 max-w-full w-full aspect-video"
                         src={movieInfo.source}
                         viewType="video"
                         streamType="on-demand"

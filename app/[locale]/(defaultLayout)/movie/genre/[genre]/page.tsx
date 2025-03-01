@@ -31,6 +31,17 @@ export default function MoviesByGenre() {
         totalPages: 0,
     });
 
+    const [pageRange, setPageRange] = useState(5);
+
+    useEffect(() => {
+        const updatePageRange = () => {
+            setPageRange(window.innerWidth < 640 ? 2 : 5);
+        };
+        updatePageRange();
+        window.addEventListener('resize', updatePageRange);
+        return () => window.removeEventListener('resize', updatePageRange);
+    }, []);
+
     useEffect(() => {
         (async () => {
             try {
@@ -80,10 +91,11 @@ export default function MoviesByGenre() {
                 breakLabel="..."
                 nextLabel=">"
                 onPageChange={(p) => router.push(`/movie/genre/${genre}?page=${p.selected + 1}`)}
-                pageRangeDisplayed={5}
+                pageRangeDisplayed={pageRange}
                 pageCount={data.totalPages}
                 previousLabel="<"
                 renderOnZeroPageCount={null}
+                forcePage={page ? page - 1 : 0}
                 containerClassName="mt-4 mb-4 flex justify-center text-white gap-x-2"
                 breakClassName="w-8 h-8 flex items-center justify-center bg-gray/40"
                 pageClassName="w-8 h-8 flex items-center justify-center bg-gray/40"

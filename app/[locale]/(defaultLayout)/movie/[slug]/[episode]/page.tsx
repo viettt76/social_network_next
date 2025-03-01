@@ -103,7 +103,7 @@ export default function WatchTVShow() {
     };
 
     return (
-        <div className="max-w-[1024px] mx-auto">
+        <div className="max-w-[1024px] mx-auto px-2 sm:px-4">
             {movieInfo && (
                 <>
                     {showContinueModal && (
@@ -134,7 +134,7 @@ export default function WatchTVShow() {
                     )}
                     <MediaPlayer
                         ref={playerRef}
-                        className="mt-2 h-[calc(100vh-6rem)] !w-[1024px]"
+                        className="mt-2 max-w-full w-full aspect-video"
                         src={movieInfo?.source}
                         viewType="video"
                         streamType="on-demand"
@@ -150,7 +150,7 @@ export default function WatchTVShow() {
                     </MediaPlayer>
                     <div className="text-white mt-6 mb-4">
                         <div className="text-2xl text-orange-400">TẬP PHIM</div>
-                        <div className="grid grid-cols-10 gap-4 mt-3">
+                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 mt-3">
                             {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
                                 return (
                                     <Link
