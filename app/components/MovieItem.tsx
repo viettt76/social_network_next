@@ -37,6 +37,17 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
     const [showTrailer, setShowTrailer] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkIsMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        checkIsMobile();
+        window.addEventListener('resize', checkIsMobile);
+        return () => window.removeEventListener('resize', checkIsMobile);
+    }, []);
+
     useEffect(() => {
         const getMovieInfo = async () => {
             try {
@@ -80,10 +91,24 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
         }
     };
 
+    const handleLongPress = () => {
+        let timer;
+
+        const startPress = () => {
+            timer = setTimeout(() => setShowTrailer(true), 1000); // 1 giây
+        };
+
+        const endPress = () => {
+            clearTimeout(timer);
+        };
+
+        return { onMouseDown: startPress, onMouseUp: endPress, onTouchStart: startPress, onTouchEnd: endPress };
+    };
+
     return (
         <>
             <TooltipProvider>
-                <Tooltip open={showTrailer} onOpenChange={setShowTrailer}>
+                <Tooltip open={isMobile ? showTrailer : undefined} onOpenChange={setShowTrailer}>
                     <TooltipTrigger asChild>
                         <Link
                             href={
@@ -93,6 +118,7 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                                     ? `/movie/${slug}/1`
                                     : ''
                             }
+                            {...(isMobile ? handleLongPress() : {})}
                         >
                             <Image
                                 className="w-full h-full object-cover cursor-pointer rounded-sm"
