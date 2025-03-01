@@ -18,6 +18,7 @@ import { reactToPostService } from '@/lib/services/postService';
 import { useAppSelector } from '@/lib/hooks';
 import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { createElement, Dispatch, SetStateAction, useState } from 'react';
+import { Link } from '@/i18n/routing';
 
 export default function PostContent({
     postInfo,
@@ -64,17 +65,19 @@ export default function PostContent({
     return (
         <div className="overflow-auto">
             <div className="flex items-center">
-                <Image
-                    className="rounded-full w-10 h-10 me-2 border"
-                    src="/images/default-avatar.png"
-                    alt="avatar"
-                    width={800}
-                    height={800}
-                />
+                <Link href={`/profile/${postInfo.creatorInfo.userId}`}>
+                    <Image
+                        className="rounded-full w-10 h-10 me-2 border"
+                        src="/images/default-avatar.png"
+                        alt="avatar"
+                        width={800}
+                        height={800}
+                    />
+                </Link>
                 <div>
-                    <div className="text-foreground">
+                    <Link className="text-foreground" href={`/profile/${postInfo.creatorInfo.userId}`}>
                         {postInfo.creatorInfo.lastName} {postInfo.creatorInfo.firstName}
-                    </div>
+                    </Link>
                     <div className="text-gray text-xs">6 ngày trước</div>
                 </div>
             </div>

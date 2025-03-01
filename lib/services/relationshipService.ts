@@ -36,8 +36,8 @@ export const deleteFriendRequestService = (friendRequestId: string) => {
     return axios.delete(`/relationships/friend-requests/${friendRequestId}`);
 };
 
-export const getFriendsService = () => {
-    return axios.get('/relationships/friends');
+export const getFriendsService = (userId?: string) => {
+    return axios.get('/relationships/friends', { params: { userId } });
 };
 
 export const unfriendService = (friendId: string) => {

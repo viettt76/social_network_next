@@ -5,19 +5,17 @@ import Post from '@/app/components/Post';
 import { PostInfoType } from '@/app/dataType';
 import { useEffect, useState } from 'react';
 import { BriefcaseBusiness, Cake, House } from 'lucide-react';
-import WritePost from '@/app/components/WritePost';
-import { useAppSelector } from '@/lib/hooks';
-import { selectUserInfo } from '@/lib/slices/userSlice';
+import { BasicUserInformation } from '@/lib/slices/userSlice';
 import { getPostsByUserIdService } from '@/lib/services/postService';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { format } from 'date-fns';
-import { useSocket } from '@/app/components/SocketProvider';
+import { useParams } from 'next/navigation';
+import { getUserInfoService } from '@/lib/services/userService';
 
-export default function Profile() {
-    const userInfo = useAppSelector(selectUserInfo);
+export default function ProfileOther() {
+    const { userId } = useParams<{ userId: string }>();
 
-    const socket = useSocket();
-
+    const [userInfo, setUserInfo] = useState<BasicUserInformation>();
     const [posts, setPosts] = useState<PostInfoType[]>([]);
     const [postsPage, setPostsPage] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -28,12 +26,12 @@ export default function Profile() {
     };
 
     const userOverview = [
-        { icon: House, value: userInfo.hometown },
-        { icon: BriefcaseBusiness, value: userInfo.workplace },
-        { icon: Student, value: userInfo.school },
+        { icon: House, value: userInfo?.hometown },
+        { icon: BriefcaseBusiness, value: userInfo?.workplace },
+        { icon: Student, value: userInfo?.school },
         {
             icon: Cake,
-            value: formatDate(userInfo.birthday),
+            value: formatDate(userInfo?.birthday || null),
         },
     ];
 
@@ -43,12 +41,36 @@ export default function Profile() {
         loading,
     });
 
-    // Get my posts
+    // Get user information
     useEffect(() => {
-        const getMyPosts = async () => {
+        const getUserInformation = async () => {
+            try {
+                const { data } = await getUserInfoService(userId);
+                setUserInfo({
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    birthday: data.birthday,
+                    gender: data.gender,
+                    hometown: data.hometown,
+                    school: data.school,
+                    workplace: data.workplace,
+                    avatar: data.avatar,
+                    isPrivate: data.isPrivate,
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (userId) getUserInformation();
+    }, [userId]);
+
+    // Get user posts
+    useEffect(() => {
+        const getPosts = async () => {
             setLoading(true);
             try {
-                const { data } = await getPostsByUserIdService({ userId: userInfo.id, page: postsPage });
+                const { data } = await getPostsByUserIdService({ userId, page: postsPage });
                 if (data.length > 0) {
                     setPosts((prev) => [
                         ...prev,
@@ -78,47 +100,10 @@ export default function Profile() {
                 console.error(error);
             }
         };
-        if (userInfo.id) {
-            getMyPosts();
+        if (userId) {
+            getPosts();
         }
-    }, [postsPage, userInfo.id]);
-
-    // Socket handle new post
-    useEffect(() => {
-        const handleNewPost = (newPost) => {
-            const { postId, creatorId, creatorFirstName, creatorLastName, creatorAvatar, content, images, createdAt } =
-                newPost;
-
-            setPosts((prev) => {
-                if (prev.find((p) => p.postId === postId)) return prev;
-
-                return [
-                    {
-                        postId,
-                        creatorInfo: {
-                            userId: creatorId,
-                            firstName: creatorFirstName,
-                            lastName: creatorLastName,
-                            avatar: creatorAvatar,
-                        },
-                        content,
-                        currentReactionType: null,
-                        images,
-                        reactions: [],
-                        commentsCount: 0,
-                        createdAt,
-                    },
-                    ...prev,
-                ];
-            });
-        };
-
-        socket.on('newPost', handleNewPost);
-
-        return () => {
-            socket.off('newPost', handleNewPost);
-        };
-    }, [socket]);
+    }, [postsPage, userId]);
 
     return (
         <div className="flex gap-10 mt-6">
@@ -139,7 +124,6 @@ export default function Profile() {
                 )}
             </div>
             <div className="flex-1 justify-end">
-                <WritePost />
                 {posts.length > 0 && (
                     <>
                         <div className="mt-4">

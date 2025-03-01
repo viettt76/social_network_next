@@ -120,7 +120,7 @@ export default function ProfileSettings() {
                 <Label className="font-semibold block mb-2">Quê quán</Label>
                 <Input
                     className="flex-1"
-                    value={basicInformation.hometown}
+                    value={basicInformation.hometown ?? ''}
                     name="hometown"
                     onChange={handleChangeBasicInformation}
                 />
@@ -129,7 +129,7 @@ export default function ProfileSettings() {
                 <Label className="font-semibold block mb-2">Nơi làm việc</Label>
                 <Input
                     className="flex-1"
-                    value={basicInformation.workplace}
+                    value={basicInformation.workplace ?? ''}
                     name="workplace"
                     onChange={handleChangeBasicInformation}
                 />
@@ -138,7 +138,7 @@ export default function ProfileSettings() {
                 <Label className="font-semibold block mb-2">Trường học</Label>
                 <Input
                     className="flex-1"
-                    value={basicInformation.school}
+                    value={basicInformation.school ?? ''}
                     name="school"
                     onChange={handleChangeBasicInformation}
                 />

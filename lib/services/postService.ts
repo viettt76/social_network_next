@@ -12,8 +12,13 @@ export const getPostsService = (page: number) => {
     return axios.get(`/posts?page=${page}`);
 };
 
-export const getMyPostsService = (page: number) => {
-    return axios.get(`/posts/me?page=${page}`);
+export const getPostsByUserIdService = ({ userId, page }: { userId: string; page: number }) => {
+    return axios.get('/posts/user', {
+        params: {
+            userId,
+            page,
+        },
+    });
 };
 
 export const getPostReactionTypesService = () => {
