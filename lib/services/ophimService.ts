@@ -29,7 +29,7 @@ export const getMovieDetailBySlugService = async (slug: string): Promise<MovieSo
         source: data.episodes[0].server_data[0].link_m3u8,
         posterUrl: data.movie.poster_url,
         numberOfEpisodes: data.episodes[0].server_data.length,
-        type: data.movie.tmdb.type,
+        type: data.movie.tmdb.type === 'tv' ? MovieType.TV : MovieType.MOVIE,
     };
 };
 
@@ -76,7 +76,7 @@ export const getMovieListByGenreService = async (genre: string, pageNumber?: num
             originName: m.origin_name,
             slug: m.slug,
             thumbUrl: `${process.env.NEXT_PUBLIC_BASE_OPHIM_MOVIE_IMAGE}${m.thumb_url}`,
-            type: m.tmdb.type,
+            type: m.tmdb.type === 'tv' ? MovieType.TV : MovieType.MOVIE,
         })),
         totalMovies: data.data.params.pagination.totalItems,
         totalPages: Math.ceil(data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage),
@@ -106,7 +106,7 @@ export const getMovieListByCountryService = async (country: string, pageNumber?:
             originName: m.origin_name,
             slug: m.slug,
             thumbUrl: `${process.env.NEXT_PUBLIC_BASE_OPHIM_MOVIE_IMAGE}${m.thumb_url}`,
-            type: m.tmdb.type,
+            type: m.tmdb.type === 'tv' ? MovieType.TV : MovieType.MOVIE,
         })),
         totalMovies: data.data.params.pagination.totalItems,
         totalPages: Math.ceil(data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage),

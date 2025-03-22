@@ -22,8 +22,8 @@ interface MovieItemProps {
     type: MovieType;
     isFirst: boolean;
     isLast: boolean;
-    favouriteSource?: number;
-    handleRemoveFavoriteMovie?: ({ movieId, favouriteSource }: { movieId: string; favouriteSource: Source }) => void;
+    favoriteSource?: number;
+    handleRemoveFavoriteMovie?: ({ movieId, favoriteSource }: { movieId: string; favoriteSource: Source }) => void;
 }
 
 export function MovieItem({
@@ -35,7 +35,7 @@ export function MovieItem({
     type,
     isFirst,
     isLast,
-    favouriteSource,
+    favoriteSource,
     handleRemoveFavoriteMovie,
 }: MovieItemProps) {
     const searchParams = useSearchParams();
@@ -65,7 +65,7 @@ export function MovieItem({
                     setMovieInfo(storedMovieDetail[movieId]);
                 } else {
                     const movieDetail = await getMovieDetailByIdService({
-                        source: favouriteSource || source,
+                        source: favoriteSource || source,
                         movieId,
                         slug,
                     });
@@ -81,7 +81,7 @@ export function MovieItem({
         if (showTrailer) {
             getMovieInfo();
         }
-    }, [movieId, showTrailer, source, slug, favouriteSource]);
+    }, [movieId, showTrailer, source, slug, favoriteSource]);
 
     const handleAddFavoriteMovie = async () => {
         try {
@@ -126,9 +126,9 @@ export function MovieItem({
                             className="relative h-64"
                             href={
                                 type === MovieType.MOVIE
-                                    ? `/movie/${slug}?source=${favouriteSource || source}`
+                                    ? `/movie/${slug}?source=${favoriteSource || source}`
                                     : type === MovieType.TV
-                                    ? `/movie/${slug}/1?source=${favouriteSource || source}`
+                                    ? `/movie/${slug}/1?source=${favoriteSource || source}`
                                     : ''
                             }
                             {...(isMobile ? handleLongPress() : {})}
@@ -178,13 +178,13 @@ export function MovieItem({
                                     <div
                                         className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
                                         onClick={() =>
-                                            favouriteSource
+                                            favoriteSource
                                                 ? handleRemoveFavoriteMovie &&
-                                                  handleRemoveFavoriteMovie({ movieId, favouriteSource })
+                                                  handleRemoveFavoriteMovie({ movieId, favoriteSource })
                                                 : handleAddFavoriteMovie()
                                         }
                                     >
-                                        {favouriteSource ? (
+                                        {favoriteSource ? (
                                             <Minus className="w-8 h-8 text-white" />
                                         ) : (
                                             <Plus className="w-8 h-8 text-white" />
