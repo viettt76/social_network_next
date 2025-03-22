@@ -3,13 +3,18 @@
 import { MovieItem } from '@/app/components/MovieItem';
 import { BaseMovieData } from '@/app/dataType';
 import useMoviesPerSlide from '@/hooks/useMoviesPerSlide';
-import { getFavoriteMoviesService } from '@/lib/services/movieService';
+import { getFavoriteMoviesService, removeFavoriteMovieService, Source } from '@/lib/services/movieService';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+interface FavoriteMovieType extends BaseMovieData {
+    source: Source;
+}
 
 export default function FavoriteMovies() {
     const moviesPerSlide = useMoviesPerSlide();
 
-    const [favoriteMovies, setFavoriteMovies] = useState<BaseMovieData[]>([]);
+    const [favoriteMovies, setFavoriteMovies] = useState<FavoriteMovieType[]>([]);
 
     useEffect(() => {
         (async () => {
@@ -22,6 +27,7 @@ export default function FavoriteMovies() {
                         slug: m.slug,
                         thumbUrl: m.thumbUrl,
                         type: m.type,
+                        source: m.source,
                     })),
                 );
             } catch (error) {
@@ -29,6 +35,17 @@ export default function FavoriteMovies() {
             }
         })();
     }, []);
+
+    const handleRemoveFavoriteMovie = async ({ movieId, favouriteSource }) => {
+        try {
+            await removeFavoriteMovieService({ movieId, source: favouriteSource });
+            setFavoriteMovies((prev) => prev.filter((m) => !(m.movieId === movieId && m.source === favouriteSource)));
+            toast.success('Xoá khỏi phim yêu thích thành công');
+        } catch (error) {
+            console.error(error);
+            toast.error('Xoá khỏi phim yêu thích thất bại');
+        }
+    };
 
     return (
         <div className="px-10 pt-6">
@@ -40,12 +57,15 @@ export default function FavoriteMovies() {
                             <MovieItem
                                 movieId={m.movieId}
                                 name={m.name}
+                                originName={m.originName}
                                 slug={m.slug}
                                 thumbUrl={m.thumbUrl}
                                 type={m.type}
                                 isFirst={index % moviesPerSlide === 0}
                                 isLast={(index + 1) % moviesPerSlide === 0}
+                                favouriteSource={m.source}
                                 key={`movie-${m.movieId}`}
+                                handleRemoveFavoriteMovie={handleRemoveFavoriteMovie}
                             />
                         );
                     })}

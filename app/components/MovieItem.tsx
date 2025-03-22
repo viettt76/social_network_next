@@ -1,39 +1,47 @@
 'use client';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronDown, Play, Plus, ThumbsDown, ThumbsUp, X } from 'lucide-react';
+import { ChevronDown, Minus, Play, Plus, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Modal } from 'flowbite-react';
-import { addFavoriteMovieService, getMovieDetailByIdService } from '@/lib/services/movieService';
+import { addFavoriteMovieService, getMovieDetailByIdService, Source } from '@/lib/services/movieService';
 import { cn } from '@/lib/utils';
-import { Link } from '@/i18n/routing';
-import { MovieType } from '@/app/dataType';
+import AutoLink from '@/app/components/AutoLink';
+import { MovieDetails, MovieType } from '@/app/dataType';
 import { toast } from 'sonner';
-
-interface MovieInfo {
-    trailerUrl: string;
-    posterUrl: string;
-    content: string;
-    time: string;
-    voteAverage: number;
-    actors: string[];
-    genres: string[];
-    releaseYear: number | string;
-}
+import { useSearchParams } from 'next/navigation';
+import { Link } from '@/i18n/routing';
 
 interface MovieItemProps {
     movieId: string;
     name: string;
+    originName: string;
     slug: string;
     thumbUrl: string;
     type: MovieType;
     isFirst: boolean;
     isLast: boolean;
+    favouriteSource?: number;
+    handleRemoveFavoriteMovie?: ({ movieId, favouriteSource }: { movieId: string; favouriteSource: Source }) => void;
 }
 
-export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast }: MovieItemProps) {
-    const [movieInfo, setMovieInfo] = useState<MovieInfo | null>(null);
+export function MovieItem({
+    movieId,
+    name,
+    originName,
+    slug,
+    thumbUrl,
+    type,
+    isFirst,
+    isLast,
+    favouriteSource,
+    handleRemoveFavoriteMovie,
+}: MovieItemProps) {
+    const searchParams = useSearchParams();
+    const source = Number(searchParams.get('source'));
+
+    const [movieInfo, setMovieInfo] = useState<MovieDetails | null>(null);
     const [showTrailer, setShowTrailer] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
 
@@ -56,18 +64,12 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                 if (storedMovieDetail[movieId]) {
                     setMovieInfo(storedMovieDetail[movieId]);
                 } else {
-                    const { data } = await getMovieDetailByIdService(movieId);
+                    const movieDetail = await getMovieDetailByIdService({
+                        source: favouriteSource || source,
+                        movieId,
+                        slug,
+                    });
 
-                    const movieDetail = {
-                        trailerUrl: data.movie.trailer_url,
-                        posterUrl: data.movie.poster_url,
-                        content: data.movie.content,
-                        time: data.movie.time,
-                        voteAverage: data.movie.tmdb.vote_average,
-                        actors: data.movie.actor,
-                        genres: data.movie.category.map((c) => c.name),
-                        releaseYear: data.movie.year,
-                    };
                     setMovieInfo(movieDetail);
                     storedMovieDetail[movieId] = movieDetail;
                     sessionStorage.setItem('movieDetail', JSON.stringify(storedMovieDetail));
@@ -79,11 +81,11 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
         if (showTrailer) {
             getMovieInfo();
         }
-    }, [movieId, showTrailer]);
+    }, [movieId, showTrailer, source, slug, favouriteSource]);
 
     const handleAddFavoriteMovie = async () => {
         try {
-            await addFavoriteMovieService({ movieId, name, slug, thumbUrl, type });
+            await addFavoriteMovieService({ movieId, name, slug, thumbUrl, type, source });
             toast.success('Thêm vào phim yêu thích thành công');
         } catch (error) {
             console.error(error);
@@ -121,22 +123,28 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                 <Tooltip open={isMobile ? showTrailer : undefined} onOpenChange={setShowTrailer}>
                     <TooltipTrigger asChild>
                         <Link
+                            className="relative h-64"
                             href={
                                 type === MovieType.MOVIE
-                                    ? `/movie/${slug}`
+                                    ? `/movie/${slug}?source=${favouriteSource || source}`
                                     : type === MovieType.TV
-                                    ? `/movie/${slug}/1`
+                                    ? `/movie/${slug}/1?source=${favouriteSource || source}`
                                     : ''
                             }
                             {...(isMobile ? handleLongPress() : {})}
                         >
                             <Image
+                                loading="eager"
                                 className="w-full h-full object-cover cursor-pointer rounded-sm"
                                 src={thumbUrl}
                                 alt="thumb"
                                 width={2000}
                                 height={2000}
                             />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-center px-2 py-1 rounded-b-sm">
+                                <div className="font-semibold text-white line-clamp-1 break-all">{name}</div>
+                                <div className="text-gray text-sm line-clamp-1 break-all">{originName}</div>
+                            </div>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent
@@ -161,17 +169,26 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
                             <div className="text-lg text-white">{name}</div>
                             <div className="flex justify-between items-center w-full mt-1">
                                 <div className="flex gap-x-2">
-                                    <Link
+                                    <AutoLink
                                         href={`/movie/${slug}${type === MovieType.MOVIE ? '' : '/1'}`}
                                         className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
                                     >
                                         <Play className="w-8 h-8 text-white" />
-                                    </Link>
+                                    </AutoLink>
                                     <div
                                         className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full"
-                                        onClick={handleAddFavoriteMovie}
+                                        onClick={() =>
+                                            favouriteSource
+                                                ? handleRemoveFavoriteMovie &&
+                                                  handleRemoveFavoriteMovie({ movieId, favouriteSource })
+                                                : handleAddFavoriteMovie()
+                                        }
                                     >
-                                        <Plus className="w-8 h-8 text-white" />
+                                        {favouriteSource ? (
+                                            <Minus className="w-8 h-8 text-white" />
+                                        ) : (
+                                            <Plus className="w-8 h-8 text-white" />
+                                        )}
                                     </div>
                                     {/* <div className="w-12 h-12 border-2 border-white flex items-center justify-center rounded-full">
                                         <ThumbsUp className="w-8 h-8 text-white" />
@@ -205,7 +222,10 @@ export function MovieItem({ movieId, name, slug, thumbUrl, type, isFirst, isLast
             >
                 <Modal.Body className="p-2 movie-item-detail-body bg-white">
                     <div className="relative">
-                        <div className="absolute top-2 right-2 rounded-full w-7 h-7 bg-white/80 flex items-center justify-center cursor-pointer" onClick={() => setShowDetail(false)}>
+                        <div
+                            className="absolute top-2 right-2 rounded-full w-7 h-7 bg-white/80 flex items-center justify-center cursor-pointer"
+                            onClick={() => setShowDetail(false)}
+                        >
                             <X className="text-black" />
                         </div>
                         <div className="absolute left-0 right-0 top-0 w-full h-[28rem] bg-gradient-to-t from-[#181818] to-transparent opacity-60 bg-repeat-x bg-[0_top] bg-[length:100%_100%]"></div>

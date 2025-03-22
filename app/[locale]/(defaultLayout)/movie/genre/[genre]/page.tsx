@@ -1,7 +1,7 @@
 'use client';
 
 import { MovieItem } from '@/app/components/MovieItem';
-import { BaseMovieData } from '@/app/dataType';
+import { MovieCollection } from '@/app/dataType';
 import { useRouter } from '@/i18n/routing';
 import { getMovieListByGenreService } from '@/lib/services/movieService';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -9,22 +9,16 @@ import { useEffect, useState } from 'react';
 import ReactPaginate from 'react-paginate';
 import useMoviesPerSlide from '@/hooks/useMoviesPerSlide';
 
-interface DataType {
-    title: string;
-    movies: BaseMovieData[];
-    totalMovies: number;
-    totalPages: number;
-}
-
 export default function MoviesByGenre() {
     const { genre } = useParams();
     const searchParams = useSearchParams();
+    const source = Number(searchParams.get('source'));
     const page = Number(searchParams.get('page'));
     const router = useRouter();
 
     const moviesPerSlide = useMoviesPerSlide();
 
-    const [data, setData] = useState<DataType>({
+    const [data, setData] = useState<MovieCollection>({
         title: '',
         movies: [],
         totalMovies: 0,
@@ -46,27 +40,14 @@ export default function MoviesByGenre() {
         (async () => {
             try {
                 if (typeof genre === 'string') {
-                    const { data } = await getMovieListByGenreService(genre, page);
-                    setData({
-                        title: data.data.titlePage,
-                        movies: data.data.items.map((m) => ({
-                            movieId: m._id,
-                            name: m.name,
-                            slug: m.slug,
-                            thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${m.thumb_url}`,
-                            type: m.tmdb.type,
-                        })),
-                        totalMovies: data.data.params.pagination.totalItems,
-                        totalPages: Math.ceil(
-                            data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage,
-                        ),
-                    });
+                    const movies = await getMovieListByGenreService(source, genre, page);
+                    setData(movies);
                 }
             } catch (error) {
                 console.error(error);
             }
         })();
-    }, [genre, page]);
+    }, [genre, page, source]);
 
     return (
         <div className="px-10 pt-6">
@@ -77,6 +58,7 @@ export default function MoviesByGenre() {
                         <MovieItem
                             movieId={m.movieId}
                             name={m.name}
+                            originName={m.originName}
                             slug={m.slug}
                             thumbUrl={m.thumbUrl}
                             type={m.type}

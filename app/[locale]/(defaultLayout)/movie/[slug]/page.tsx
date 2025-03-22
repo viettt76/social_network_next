@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { getMovieDetailBySlugService } from '@/lib/services/movieService';
 import { MediaPlayer, MediaPlayerInstance, MediaProvider, Poster } from '@vidstack/react';
@@ -14,13 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { convertSecondsToTime } from '@/lib/utils';
-import { MovieType } from '@/app/dataType';
-
-interface MovieInfoType {
-    name: string;
-    source: string;
-    posterUrl: string;
-}
+import { MovieSource, MovieType } from '@/app/dataType';
 
 interface WatchHistory {
     slug: string;
@@ -88,8 +82,11 @@ export const removeWatchProgress = (slug: string, episode?: number) => {
 };
 
 export default function WatchMovie() {
+    const searchParams = useSearchParams();
+    const source = Number(searchParams.get('source'));
+
     const { slug } = useParams<{ slug: string }>();
-    const [movieInfo, setMovieInfo] = useState<MovieInfoType | null>(null);
+    const [movieInfo, setMovieInfo] = useState<MovieSource | null>(null);
     const playerRef = useRef<MediaPlayerInstance | null>(null);
     const watchHistory = getShowHistory(slug);
     const [showContinueModal, setShowContinueModal] = useState(
@@ -101,12 +98,8 @@ export default function WatchMovie() {
         const getMovieDetail = async () => {
             try {
                 if (typeof slug === 'string') {
-                    const { data } = await getMovieDetailBySlugService(slug);
-                    setMovieInfo({
-                        name: data.movie.name,
-                        source: data.episodes[0].server_data[0].link_m3u8,
-                        posterUrl: data.movie.poster_url,
-                    });
+                    const data = await getMovieDetailBySlugService(source, slug);
+                    setMovieInfo(data);
                 }
             } catch (error) {
                 console.error('Error fetching movie details:', error);
@@ -114,7 +107,7 @@ export default function WatchMovie() {
         };
 
         getMovieDetail();
-    }, [slug]);
+    }, [slug, source]);
 
     // Save the time to see Localstorage
     useEffect(() => {

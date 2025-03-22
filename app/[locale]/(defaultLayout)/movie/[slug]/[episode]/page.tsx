@@ -1,12 +1,11 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { getMovieDetailBySlugService } from '@/lib/services/movieService';
 import { MediaPlayer, MediaPlayerInstance, MediaProvider, Poster } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import { cn } from '@/lib/utils';
-import { Link } from '@/i18n/routing';
 import { getShowHistory, removeWatchProgress, updateWatchHistory } from '../page';
 import {
     AlertDialog,
@@ -17,19 +16,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { convertSecondsToTime } from '@/lib/utils';
-import { MovieType } from '@/app/dataType';
-
-interface MovieInfoType {
-    name: string;
-    source: string;
-    posterUrl: string;
-    numberOfEpisodes: number;
-    type: MovieType;
-}
+import { MovieSource, MovieType } from '@/app/dataType';
+import AutoLink from '@/app/components/AutoLink';
 
 export default function WatchTVShow() {
+    const searchParams = useSearchParams();
+    const source = Number(searchParams.get('source'));
+
     const { slug, episode } = useParams<{ slug: string; episode: string }>();
-    const [movieInfo, setMovieInfo] = useState<MovieInfoType | null>(null);
+    const [movieInfo, setMovieInfo] = useState<MovieSource | null>(null);
     const playerRef = useRef<MediaPlayerInstance | null>(null);
 
     const currentEpisode = Number(episode);
@@ -41,21 +36,9 @@ export default function WatchTVShow() {
         const getMovieDetail = async () => {
             try {
                 if (typeof slug === 'string') {
-                    const { data } = await getMovieDetailBySlugService(slug);
+                    const data = await getMovieDetailBySlugService(source, slug);
 
-                    const episodeIndex = currentEpisode - 1;
-                    if (!data.episodes[0].server_data[episodeIndex]) {
-                        console.error('Tập không tồn tại!');
-                        return;
-                    }
-
-                    setMovieInfo({
-                        name: data.movie.name,
-                        source: data.episodes[0].server_data[currentEpisode - 1].link_m3u8,
-                        posterUrl: data.movie.poster_url,
-                        numberOfEpisodes: data.episodes[0].server_data.length,
-                        type: data.movie.tmdb.type,
-                    });
+                    setMovieInfo(data);
 
                     if (
                         watchHistory?.type === MovieType.TV &&
@@ -72,7 +55,7 @@ export default function WatchTVShow() {
 
         getMovieDetail();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slug, currentEpisode]);
+    }, [slug, currentEpisode, source]);
 
     // Save the time to see Localstorage
     useEffect(() => {
@@ -153,7 +136,7 @@ export default function WatchTVShow() {
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 mt-3">
                             {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
                                 return (
-                                    <Link
+                                    <AutoLink
                                         href={`/movie/${slug}/${i + 1}`}
                                         className={cn(
                                             'bg-white text-black h-10 flex justify-center items-center rounded-md',
@@ -162,7 +145,7 @@ export default function WatchTVShow() {
                                         key={`${slug}-episode-${i}`}
                                     >
                                         {i + 1}
-                                    </Link>
+                                    </AutoLink>
                                 );
                             })}
                         </div>

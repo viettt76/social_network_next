@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
             'res.cloudinary.com',
             'img.ophim.live',
             'files.vidstack.io',
+            'image.tmdb.org',
+            'phimimg.com',
         ],
     },
     reactStrictMode: false,

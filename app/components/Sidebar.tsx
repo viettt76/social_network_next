@@ -2,6 +2,7 @@
 
 import { Film, Newspaper } from 'lucide-react';
 import { Link } from '@/i18n/routing';
+import { Source } from '@/lib/services/movieService';
 
 const MENU_ITEMS = [
     { href: '', icon: Newspaper, label: 'Bản tin' },
@@ -13,7 +14,7 @@ const EXPLORE_ITEMS = [
     { href: '', icon: Newspaper, label: 'Người dùng' },
     { href: '', icon: Newspaper, label: 'Trang' },
     { href: '', icon: Newspaper, label: 'Nhóm' },
-    { href: '/movie', icon: Film, label: 'Phim' },
+    { href: `/movie?source=${Source.OPHIM}`, icon: Film, label: 'Phim' },
 ];
 
 export default function Sidebar() {

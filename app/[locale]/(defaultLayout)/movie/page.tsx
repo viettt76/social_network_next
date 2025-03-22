@@ -7,16 +7,16 @@ import {
     getMovieListByGenreService,
     getNewlyUpdatedMovieListService,
 } from '@/lib/services/movieService';
-import { BaseMovieData, MovieType } from '@/app/dataType';
+import { BaseMovieData, MovieCollection } from '@/app/dataType';
+import { useSearchParams } from 'next/navigation';
+import { HOME_GENRE_DISPLAY_LIMIT } from '@/lib/constants';
 
 export default function Movies() {
+    const searchParams = useSearchParams();
+    const source = Number(searchParams.get('source'));
+
     const [newlyUpdateMovies, setNewlyUpdatedMovies] = useState<BaseMovieData[]>([]);
-    const [moviesByGenres, setMoviesByGenres] = useState<
-        {
-            genre: string;
-            movies: BaseMovieData[];
-        }[]
-    >([]);
+    const [moviesByGenres, setMoviesByGenres] = useState<MovieCollection[]>([]);
 
     useEffect(() => {
         const fetchMovites = async () => {
@@ -25,50 +25,35 @@ export default function Movies() {
                 if (storedNewlyUpdatedMovies) {
                     setNewlyUpdatedMovies(JSON.parse(storedNewlyUpdatedMovies));
                 } else {
-                    const newlyUpdatedRes = await getNewlyUpdatedMovieListService();
-                    const newlyUpdatedData = newlyUpdatedRes.data.items.map((m) => ({
-                        movieId: m._id,
-                        name: m.name,
-                        slug: m.slug,
-                        thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${m.thumb_url}`,
-                        type: m.tmdb.type === 'movie' ? MovieType.MOVIE : MovieType.TV,
-                    }));
+                    const newlyUpdatedData = await getNewlyUpdatedMovieListService(source);
                     setNewlyUpdatedMovies(newlyUpdatedData);
-
                     sessionStorage.setItem('newlyUpdatedMovies', JSON.stringify(newlyUpdatedData));
-                }
-
-                let storedGenreList = JSON.parse(sessionStorage.getItem('genreList') || '[]');
-                if (storedGenreList.length <= 0) {
-                    const genreListRes = await getGenreListService();
-                    storedGenreList = genreListRes.data.data.items.map((g) => ({
-                        name: g.name,
-                        slug: g.slug,
-                    }));
-                    sessionStorage.setItem('genreList', JSON.stringify(storedGenreList));
                 }
 
                 const storedMoviesByGenres = sessionStorage.getItem('moviesByGenres');
                 if (storedMoviesByGenres) {
                     setMoviesByGenres(JSON.parse(storedMoviesByGenres));
-                } else if (storedGenreList.length > 0) {
-                    const moviesByGenresRes = await Promise.all(
-                        storedGenreList.slice(0, 3).map(async (g) => {
-                            return await getMovieListByGenreService(g.slug);
-                        }),
-                    );
-                    const moviesByGenresData = moviesByGenresRes.map((l) => {
-                        return {
-                            genre: l.data.data.titlePage,
-                            movies: l.data.data.items.map((item) => ({
-                                movieId: item._id,
-                                name: item.name,
-                                slug: item.slug,
-                                thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${item.thumb_url}`,
-                                type: item.tmdb.type === 'movie' ? MovieType.MOVIE : MovieType.TV,
-                            })),
-                        };
-                    });
+                } else {
+                    let storedGenreList = JSON.parse(sessionStorage.getItem('genreList') || '[]');
+                    if (storedGenreList.length === 0) {
+                        storedGenreList = await getGenreListService(source);
+                    }
+
+                    let i = 0;
+
+                    const moviesByGenresData: MovieCollection[] = [];
+
+                    while (moviesByGenresData.length < HOME_GENRE_DISPLAY_LIMIT && i < storedGenreList.length) {
+                        const g = storedGenreList[i];
+                        const movie = await getMovieListByGenreService(source, g.slug);
+
+                        if (movie.movies.length > 0) {
+                            moviesByGenresData.push(movie);
+                        }
+
+                        i++;
+                    }
+
                     setMoviesByGenres(moviesByGenresData);
                     sessionStorage.setItem('moviesByGenres', JSON.stringify(moviesByGenresData));
                 }
@@ -76,14 +61,18 @@ export default function Movies() {
                 console.error(error);
             }
         };
-        fetchMovites();
-    }, []);
+        const timeoutId = setTimeout(() => fetchMovites(), 0);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [source]);
 
     return (
-        <div className="pt-6">
+        <div className="pt-6 pb-6">
             <MovieRow title="Phim mới cập nhật" movieList={newlyUpdateMovies} />
-            {moviesByGenres.map((l, index) => {
-                return <MovieRow className="mt-10" title={l.genre} movieList={l.movies} key={`list-${index}`} />;
+            {moviesByGenres.map((m, index) => {
+                return <MovieRow className="mt-10" title={m.title} movieList={m.movies} key={`list-${index}`} />;
             })}
         </div>
     );

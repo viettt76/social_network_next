@@ -1,7 +1,7 @@
 'use client';
 
 import { MovieItem } from '@/app/components/MovieItem';
-import { BaseMovieData, MovieType } from '@/app/dataType';
+import { BaseMovieData } from '@/app/dataType';
 import { searchMovieService } from '@/lib/services/movieService';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ export default function SearchMovie() {
     const searchParams = useSearchParams();
     const keyword = searchParams.get('keyword');
     const page = Number(searchParams.get('page'));
+    const source = Number(searchParams.get('source'));
     const router = useRouter();
 
     const moviesPerSlide = useMoviesPerSlide();
@@ -40,19 +41,8 @@ export default function SearchMovie() {
         (async () => {
             try {
                 if (keyword) {
-                    const { data } = await searchMovieService(keyword, page);
-                    setResults({
-                        movies: data.data.items.map((i) => ({
-                            movieId: i._id,
-                            name: i.name,
-                            slug: i.slug,
-                            thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${i.thumb_url}`,
-                            type: i.type === 'series' ? MovieType.TV : MovieType.MOVIE,
-                        })),
-                        totalPages: Math.ceil(
-                            data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage,
-                        ),
-                    });
+                    const data = await searchMovieService(source, keyword, page);
+                    setResults(data);
                 } else {
                     setResults({
                         movies: [],
@@ -63,7 +53,7 @@ export default function SearchMovie() {
                 console.error(error);
             }
         })();
-    }, [keyword, page]);
+    }, [keyword, page, source]);
 
     return (
         <div className="px-10 pt-6">
@@ -74,6 +64,7 @@ export default function SearchMovie() {
                         <MovieItem
                             movieId={m.movieId}
                             name={m.name}
+                            originName={m.originName}
                             slug={m.slug}
                             thumbUrl={m.thumbUrl}
                             type={m.type}

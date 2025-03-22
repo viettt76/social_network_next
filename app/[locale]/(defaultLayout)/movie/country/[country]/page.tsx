@@ -1,7 +1,7 @@
 'use client';
 
 import { MovieItem } from '@/app/components/MovieItem';
-import { BaseMovieData } from '@/app/dataType';
+import { MovieCollection } from '@/app/dataType';
 import { getMovieListByCountryService } from '@/lib/services/movieService';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -9,22 +9,17 @@ import { useRouter } from '@/i18n/routing';
 import ReactPaginate from 'react-paginate';
 import useMoviesPerSlide from '@/hooks/useMoviesPerSlide';
 
-interface DataType {
-    title: string;
-    movies: BaseMovieData[];
-    totalMovies: number;
-    totalPages: number;
-}
-
 export default function MoviesByCountry() {
     const { country } = useParams();
     const searchParams = useSearchParams();
     const page = Number(searchParams.get('page'));
+    const source = Number(searchParams.get('source'));
+
     const router = useRouter();
 
     const moviesPerSlide = useMoviesPerSlide();
 
-    const [data, setData] = useState<DataType>({
+    const [data, setData] = useState<MovieCollection>({
         title: '',
         movies: [],
         totalMovies: 0,
@@ -46,27 +41,14 @@ export default function MoviesByCountry() {
         (async () => {
             try {
                 if (typeof country === 'string') {
-                    const { data } = await getMovieListByCountryService(country, page);
-                    setData({
-                        title: data.data.titlePage,
-                        movies: data.data.items.map((m) => ({
-                            movieId: m._id,
-                            name: m.name,
-                            slug: m.slug,
-                            thumbUrl: `${process.env.NEXT_PUBLIC_BASE_MOVIE_IMAGE}${m.thumb_url}`,
-                            type: m.tmdb.type,
-                        })),
-                        totalMovies: data.data.params.pagination.totalItems,
-                        totalPages: Math.ceil(
-                            data.data.params.pagination.totalItems / data.data.params.pagination.totalItemsPerPage,
-                        ),
-                    });
+                    const data = await getMovieListByCountryService(source, country, page);
+                    setData(data);
                 }
             } catch (error) {
                 console.error(error);
             }
         })();
-    }, [country, page]);
+    }, [country, page, source]);
 
     return (
         <div className="px-10 pt-6">
@@ -77,6 +59,7 @@ export default function MoviesByCountry() {
                         <MovieItem
                             movieId={m.movieId}
                             name={m.name}
+                            originName={m.originName}
                             slug={m.slug}
                             thumbUrl={m.thumbUrl}
                             type={m.type}
