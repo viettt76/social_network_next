@@ -19,12 +19,28 @@ export interface ConversationBubble {
     isFocus: boolean;
 }
 
+export enum CallType {
+    REQUEST = 'REQUEST',
+    INCOMING = 'INCOMING',
+}
+
+interface CallData {
+    token: string;
+    roomId: string;
+    callerInfo?: UserInfoType;
+    conversationName?: string;
+    conversationType: ConversationType;
+    callType: CallType;
+}
+
 interface ConversationState {
     openConversations: ConversationBubble[];
+    call: CallData | null;
 }
 
 const initialState: ConversationState = {
     openConversations: [],
+    call: null,
 };
 
 export const conversationSlice = createSlice({
@@ -179,6 +195,15 @@ export const conversationSlice = createSlice({
             if (!message) return;
             message.currentReaction = currentReaction;
         },
+        setCallData: (state, action: PayloadAction<Partial<CallData>>) => {
+            state.call = {
+                ...state.call,
+                ...action.payload,
+            } as CallData;
+        },
+        clearCallData: (state) => {
+            state.call = null;
+        },
     },
 });
 
@@ -195,6 +220,8 @@ export const {
     unfocusConversationPopup,
     updateMessageReactions,
     updateCurrentMessageReaction,
+    setCallData,
+    clearCallData,
 } = conversationSlice.actions;
 
 export const selectOpenConversations = (state: RootState) => state.conversation.openConversations;
@@ -203,5 +230,6 @@ export const selectMessagesByConversationId = (conversationId: string) =>
         (state: RootState) => state.conversation.openConversations,
         (openConversations) => openConversations.find((conv) => conv.conversationId === conversationId)?.messages || [],
     );
+export const selectCallData = (state: RootState) => state.conversation.call;
 
 export default conversationSlice.reducer;

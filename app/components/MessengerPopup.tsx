@@ -1,6 +1,6 @@
 'use client';
 
-import { Images, Minus, SendHorizonal, X } from 'lucide-react';
+import { Images, Minus, Phone, SendHorizonal, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
 import { ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
@@ -16,6 +16,8 @@ import {
     selectOpenConversations,
     updateMessageReactions,
     unfocusConversationPopup,
+    setCallData,
+    CallType,
 } from '@/lib/slices/conversationSlice';
 import { createConversationService, getMessagesService, sendMessageService } from '@/lib/services/conversationService';
 import { MessageType } from '@/app/dataType';
@@ -27,6 +29,7 @@ import React from 'react';
 import Message from '@/app/components/Message';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import MessengerPopupSettings from './MessengerPopupSettings';
+import { selectUserInfo } from '@/lib/slices/userSlice';
 
 interface MessengerPopupProps {
     index: number;
@@ -54,6 +57,7 @@ export default function MessengerPopup({
     const socket = useSocket();
     const dispatch = useAppDispatch();
 
+    const userInfo = useAppSelector(selectUserInfo);
     const openConversations = useAppSelector(selectOpenConversations);
     const messages = useAppSelector(selectMessagesByConversationId(conversationId));
 
@@ -373,6 +377,24 @@ export default function MessengerPopup({
         } ${padNumber(time.hours)}:${padNumber(time.minutes)}`;
     };
 
+    const handleCallRequest = () => {
+        const { id, firstName, lastName, avatar } = userInfo;
+        dispatch(
+            setCallData({
+                conversationType: type,
+                conversationName: name,
+                callType: CallType.REQUEST,
+            }),
+        );
+        socket.emit('call:start', {
+            conversationId,
+            conversationType: type,
+            callerInfo: { userId: id, firstName, lastName, avatar },
+            friendId,
+            conversationName: name,
+        });
+    };
+
     return (
         <div
             ref={messengerPopupRef}
@@ -380,7 +402,7 @@ export default function MessengerPopup({
                 'fixed flex flex-col bottom-0 bg-background w-[18rem] h-[26rem] rounded-t-xl border border-b-0',
                 className,
             )}
-            style={{ right: `${3.5 + index * 18.5}rem`, zIndex: 10000 - index }}
+            style={{ right: `${3.5 + index * 18.5}rem`, zIndex: 10 - index }}
             onClick={() => dispatch(focusConversationPopup(conversationId || friendId || ''))}
         >
             <div
@@ -409,6 +431,7 @@ export default function MessengerPopup({
                         friendId={friendId}
                         type={type}
                     />
+                    <Phone className="w-4 h-4" onClick={handleCallRequest} />
                 </div>
                 <div className="flex items-center gap-x-1">
                     <Minus

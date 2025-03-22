@@ -127,7 +127,7 @@ export default function ConversationBubbles() {
     };
 
     return (
-        <div className="fixed top-20 right-2 z-10">
+        <div className="fixed top-20 right-2 z-[15]">
             <div
                 className="p-2 bg-white text-black rounded-full border cursor-pointer"
                 onClick={showFriendList ? handleHideFriendList : handleShowFriendList}
@@ -137,7 +137,7 @@ export default function ConversationBubbles() {
             {showFriendList && (
                 <div
                     ref={friendListRef}
-                    className="z-10 absolute top-12 right-0 bg-background border w-52 max-h-[26rem] overflow-y-auto p-2 rounded-xl shadow-md cursor-pointer"
+                    className="z-[15] absolute top-12 right-0 bg-background border w-52 max-h-[26rem] overflow-y-auto p-2 rounded-xl shadow-md cursor-pointer"
                 >
                     <Tabs defaultValue="friends" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">

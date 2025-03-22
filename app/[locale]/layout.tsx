@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/sonner';
 
 import 'react-photo-view/dist/react-photo-view.css';
 import 'draft-js/dist/Draft.css';
+import '@livekit/components-styles';
 import '@/app/[locale]/globals.css';
 
 const geistSans = Geist({
