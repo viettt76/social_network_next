@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useSocket } from './SocketProvider';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { ConversationType, setCallData, selectCallData } from '@/lib/slices/conversationSlice';
+import { ConversationType, setCallData, selectCallData, clearCallData } from '@/lib/slices/conversationSlice';
 import { UserInfoType } from '@/app/dataType';
 import { PhoneCall, PhoneOff } from 'lucide-react';
 import { useLocale } from 'next-intl';
+import { selectUserInfo } from '@/lib/slices/userSlice';
 
 export default function CallProvider() {
     const socket = useSocket();
@@ -12,7 +13,9 @@ export default function CallProvider() {
     const locale = useLocale();
 
     const callData = useAppSelector(selectCallData);
+    const userInfo = useAppSelector(selectUserInfo);
 
+    // For the caller and receiver
     useEffect(() => {
         if (callData?.token) {
             const callingWindow = window.open(`/${locale}/calling`, '_blank', 'width=800,height=600');
@@ -21,15 +24,39 @@ export default function CallProvider() {
                 callingWindow.onload = function () {
                     setTimeout(() => {
                         const token = callData.token;
-                        callingWindow.postMessage({ token }, '*');
+                        callingWindow.postMessage({ token, userId: userInfo.id }, '*');
                     }, 100);
                 };
             }
         }
-    }, [locale, callData?.token]);
+    }, [locale, callData?.token, userInfo.id]);
+
+    useEffect(() => {
+        const handleEndCall = () => {
+            dispatch(clearCallData());
+        };
+
+        socket.on('call:end', handleEndCall);
+
+        return () => {
+            socket.off('call:end', handleEndCall);
+        };
+    }, [socket, dispatch]);
 
     // For the caller
+    useEffect(() => {
+        const handleGetCallerToken = ({ roomId, token }: { roomId: string; token: string }) => {
+            dispatch(setCallData({ token, roomId }));
+        };
 
+        socket.on('callerToken', handleGetCallerToken);
+
+        return () => {
+            socket.off('callerToken', handleGetCallerToken);
+        };
+    }, [socket, dispatch]);
+
+    // For the receiver
     useEffect(() => {
         const handleCallIncoming = ({
             roomId,
@@ -42,11 +69,12 @@ export default function CallProvider() {
             callerInfo: UserInfoType;
             conversationName: string;
         }) => {
-            dispatch(setCallData({ roomId, conversationType, callerInfo, conversationName }));
-        };
-
-        const handleGetCallerToken = ({ roomId, token }: { roomId: string; token: string }) => {
-            dispatch(setCallData({ token, roomId }));
+            // Participated in other calls
+            if (callData?.token) {
+                socket.emit('call:busy', callerInfo.userId);
+            } else {
+                dispatch(setCallData({ roomId, conversationType, callerInfo, conversationName }));
+            }
         };
 
         const handleJoinCall = (token: string) => {
@@ -54,21 +82,25 @@ export default function CallProvider() {
         };
 
         socket.on('call:incoming', handleCallIncoming);
-        socket.on('callerToken', handleGetCallerToken);
         socket.on('call:join', handleJoinCall);
 
         return () => {
             socket.off('call:incoming', handleCallIncoming);
-            socket.off('callerToken', handleGetCallerToken);
             socket.on('call:join', handleJoinCall);
         };
-    }, [socket, dispatch]);
+    }, [socket, dispatch, callData?.token]);
 
     const handleAnswerCall = () => {
         socket.emit('call:answer', callData?.roomId);
     };
 
-    const handleRefuseCall = () => {};
+    const handleRefuseCall = () => {
+        if (callData?.conversationType === ConversationType.PRIVATE) {
+            socket.emit('call:refuse', callData?.callerInfo?.userId);
+        }
+
+        dispatch(clearCallData());
+    };
 
     return (
         !callData?.token &&

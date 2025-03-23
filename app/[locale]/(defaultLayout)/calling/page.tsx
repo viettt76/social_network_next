@@ -2,7 +2,6 @@
 
 import { useSocket } from '@/app/components/SocketProvider';
 import { useAppDispatch } from '@/lib/hooks';
-import { clearCallData } from '@/lib/slices/conversationSlice';
 import {
     ControlBar,
     GridLayout,
@@ -16,12 +15,15 @@ import { Track } from 'livekit-client';
 import { useEffect, useState } from 'react';
 
 const CallingWindow = () => {
-    const [callToken, setCallToken] = useState('');
+    const [callData, setCallData] = useState({
+        token: '',
+        userId: '',
+    });
 
     useEffect(() => {
         window.addEventListener('message', (event) => {
-            const { token } = event.data;
-            setCallToken(token);
+            const { token, userId } = event.data;
+            setCallData({ token, userId });
         });
     }, []);
 
@@ -30,12 +32,12 @@ const CallingWindow = () => {
             <LiveKitRoom
                 video={false}
                 audio={false}
-                token={callToken}
+                token={callData.token}
                 serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
                 data-lk-theme="default"
                 style={{ height: '100vh' }}
             >
-                <MyVideoConference />
+                <MyVideoConference userId={callData.userId} />
                 <RoomAudioRenderer />
                 <ControlBar />
             </LiveKitRoom>
@@ -43,7 +45,7 @@ const CallingWindow = () => {
     );
 };
 
-function MyVideoConference() {
+function MyVideoConference({ userId }) {
     const dispatch = useAppDispatch();
     const socket = useSocket();
 
@@ -59,17 +61,22 @@ function MyVideoConference() {
 
     useEffect(() => {
         const handleClose = () => {
-            dispatch(clearCallData());
+            socket.emit('call:end', userId);
+
             if (window.opener) {
                 window.close();
             }
         };
+
+        socket.on('call:end', handleClose);
+
         room.on('disconnected', handleClose);
 
         return () => {
             room.off('disconnected', handleClose);
+            socket.off('call:end', handleClose);
         };
-    }, [room, socket, dispatch]);
+    }, [room, socket, dispatch, userId]);
 
     return (
         <GridLayout tracks={tracks} style={{ height: 'calc(100vh - 10rem)' }}>
