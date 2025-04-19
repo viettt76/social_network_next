@@ -64,6 +64,14 @@ export type PostInfoType = {
     createdAt: Date | string;
 };
 
+export type PostManagementType = {
+    postId: string;
+    creatorInfo: UserInfoType;
+    content?: string;
+    images?: string[];
+    createdAt: Date | string;
+};
+
 export type CommentType = {
     commentId: string;
     parentCommentId?: string;

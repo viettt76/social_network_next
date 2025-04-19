@@ -26,3 +26,7 @@ export const changeInformationService = (userInfo: {
 export const getUserImagesService = (userId: string) => {
     return axios.get(`/users/images/${userId}`);
 };
+
+export const searchService = (keyword: string) => {
+    return axios.get(`/users/search?keyword=${keyword}`);
+};
