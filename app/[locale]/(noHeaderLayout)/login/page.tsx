@@ -8,9 +8,18 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Link, useRouter } from '@/i18n/routing';
-import { loginService } from '@/lib/services/authService';
+import { loginService, recoverAccountService } from '@/lib/services/authService';
 import { AxiosError } from 'axios';
 import { useState } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 
 const formSchema = z.object({
     username: z.string().min(1, {
@@ -34,6 +43,8 @@ export default function Login() {
 
     const [isShowPassword, setIsShowPassword] = useState(false);
 
+    const [isAccountDeleted, setIsAccountDeleted] = useState(false);
+
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             await loginService(values);
@@ -43,6 +54,20 @@ export default function Login() {
                 type: 'manual',
                 message: error instanceof AxiosError && error.response?.data?.message,
             });
+            console.error(error);
+            if (error instanceof AxiosError && error.status === 403) {
+                setIsAccountDeleted(true);
+            }
+        }
+    };
+
+    const handleRecoverAccount = async () => {
+        try {
+            const values = form.getValues();
+            await recoverAccountService({ username: values.username, password: values.password });
+            setIsAccountDeleted(false);
+            form.clearErrors();
+        } catch (error) {
             console.error(error);
         }
     };
@@ -100,6 +125,10 @@ export default function Login() {
                                                     className="w-4/5 p-0 border-none outline-none focus:shadow-none focus:ring-transparent"
                                                     placeholder="Type your password"
                                                     {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        setIsAccountDeleted(false);
+                                                    }}
                                                 />
                                                 {isShowPassword ? (
                                                     <EyeSlash onClick={() => setIsShowPassword(false)} />
@@ -112,6 +141,29 @@ export default function Login() {
                                     </FormItem>
                                 )}
                             />
+                            {isAccountDeleted && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="text-primary text-sm underline mt-2 cursor-pointer">
+                                            Khôi phục tài khoản
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Khôi phục tài khoản</DialogTitle>
+                                            <DialogDescription>
+                                                <span className="block mt-3">
+                                                    Khôi phục lại toàn bộ thông tin của bạn, bao gồm cả tin nhắn, bài
+                                                    viết và các lượt tương tác.
+                                                </span>
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button onClick={handleRecoverAccount}>Khôi phục</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                             <Button className="w-3/5 mt-6 py-1 bg-primary text-background rounded-full" type="submit">
                                 Login
                             </Button>

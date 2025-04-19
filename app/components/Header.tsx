@@ -63,6 +63,8 @@ export default function Header() {
         }
     };
 
+    const handleHideUserDashboard = () => setShowUserDashboard(false);
+
     return (
         <div ref={parentRef} className="w-full">
             <div ref={headerRef} className="h-16 bg-background shadow-sm fixed top-0 left-0 z-50" style={{ width }}>
@@ -99,7 +101,7 @@ export default function Header() {
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
-                                <DropdownMenuLabel onClick={() => setShowUserDashboard(false)}>
+                                <DropdownMenuLabel onClick={handleHideUserDashboard}>
                                     <Link className="flex items-center" href="/profile">
                                         <Image
                                             className="w-8 h-8 rounded-full border me-2"
@@ -114,7 +116,11 @@ export default function Header() {
                                 <DropdownMenuSeparator />
 
                                 <DropdownMenuItem>
-                                    <Link href="/settings/profile" className="flex items-center">
+                                    <Link
+                                        href="/settings/profile"
+                                        className="flex items-center"
+                                        onClick={handleHideUserDashboard}
+                                    >
                                         <div className="w-6">
                                             <Gear className="w-5 h-5" />
                                         </div>

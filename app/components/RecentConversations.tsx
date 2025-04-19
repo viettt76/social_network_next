@@ -117,17 +117,14 @@ export default function RecentConversations({ className }: { className?: string 
                 };
 
                 if (existingIndex !== -1) {
-                    return prev
-                        .map((conversation, index) =>
-                            index === existingIndex
-                                ? {
-                                      ...conversation,
-                                      lastMessage,
-                                      lastUpdated,
-                                  }
-                                : conversation,
-                        )
-                        .sort((a, b) => b.lastUpdated - a.lastUpdated);
+                    return [
+                        {
+                            ...prev[existingIndex],
+                            lastMessage,
+                            lastUpdated,
+                        },
+                        ...prev.filter((_, i) => i !== existingIndex),
+                    ];
                 } else {
                     return [
                         {
@@ -166,7 +163,14 @@ export default function RecentConversations({ className }: { className?: string 
     // Socket handle a conversation group created to update recent conversation
     useEffect(() => {
         const handleNewConversationGroup = (newConversationGroup: any) => {
-            const { conversationId, conversationName, conversationAvatar, creator, lastUpdated } = newConversationGroup;
+            const {
+                conversationId,
+                conversationName,
+                conversationAvatar,
+                creator,
+                lastUpdated,
+                lastMessage: { messageId, content, messageType, createdAt },
+            } = newConversationGroup;
 
             setRecentConversations((prev) => {
                 return [
@@ -176,10 +180,10 @@ export default function RecentConversations({ className }: { className?: string 
                         conversationType: ConversationType.GROUP,
                         conversationAvatar,
                         lastMessage: {
-                            messageId: '',
+                            messageId,
                             conversationId,
-                            content: `${creator.lastName} ${creator.firstName} đã tạo nhóm`,
-                            messageType: MessageType.TEXT,
+                            content,
+                            messageType,
                             sender: {
                                 userId: creator.userId,
                                 firstName: creator.firstName,
@@ -188,7 +192,7 @@ export default function RecentConversations({ className }: { className?: string 
                             },
                             currentReaction: null,
                             reactions: [],
-                            createdAt: lastUpdated,
+                            createdAt,
                         },
                         lastUpdated,
                     },
@@ -346,6 +350,36 @@ export default function RecentConversations({ className }: { className?: string 
                             <div className="max-h-[22rem] overflow-y-auto">
                                 <div className="flex flex-col gap-y-2">
                                     {recentConversations.map((conversation) => {
+                                        const lastMessageContent = conversation.lastMessage.content;
+                                        let content = '';
+                                        const isPrivate = conversation.conversationType === ConversationType.PRIVATE;
+                                        const isGroup = conversation.conversationType === ConversationType.GROUP;
+                                        const isSender = conversation.lastMessage.sender.userId === userInfo.id;
+
+                                        switch (conversation.lastMessage.messageType) {
+                                            case MessageType.TEXT:
+                                                if (isPrivate) {
+                                                    if (isSender) content = `Bạn: ${lastMessageContent}`;
+                                                    else content = lastMessageContent;
+                                                } else if (isGroup) {
+                                                    if (isSender) content = `Bạn: ${lastMessageContent}`;
+                                                    else
+                                                        content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: ${lastMessageContent}`;
+                                                }
+                                                break;
+                                            case MessageType.IMAGE:
+                                                if (isSender) content = `Bạn vừa gửi 1 ảnh`;
+                                                else
+                                                    content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName} vừa gửi 1 ảnh`;
+
+                                                break;
+                                            case MessageType.NOTIFICATION:
+                                                content = lastMessageContent;
+                                                break;
+                                            default:
+                                                content = '';
+                                        }
+
                                         return (
                                             <div
                                                 className="flex items-center gap-x-2"
@@ -374,16 +408,7 @@ export default function RecentConversations({ className }: { className?: string 
                                                         {conversation.conversationName}
                                                     </div>
                                                     <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
-                                                        {conversation.conversationType === ConversationType.GROUP &&
-                                                            conversation.lastMessage.sender.userId !== userInfo.id &&
-                                                            `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: `}
-                                                        {conversation.lastMessage.messageType === MessageType.TEXT
-                                                            ? conversation.lastMessage.content
-                                                            : `${
-                                                                  conversation.lastMessage.sender.userId === userInfo.id
-                                                                      ? 'Bạn'
-                                                                      : ''
-                                                              } đã gửi 1 ảnh`}
+                                                        {content}
                                                     </div>
                                                 </div>
                                                 <div className="ms-6">

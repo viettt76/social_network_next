@@ -32,3 +32,18 @@ export const loginService = ({ username, password }: { username: string; passwor
 export const logoutService = () => {
     return axios.delete('/auth/token');
 };
+
+export const changePasswordService = ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) => {
+    return axios.patch('/auth/password', {
+        oldPassword,
+        newPassword,
+    });
+};
+
+export const deleteAccountService = (password: string) => {
+    return axios.delete('/auth/account', { data: { password } });
+};
+
+export const recoverAccountService = ({ username, password }: { username: string; password: string }) => {
+    return axios.post('/auth/recover-account', { username, password });
+};

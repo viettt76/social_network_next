@@ -4,13 +4,16 @@ import { UserPen } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 
-const MENU_SETTINGS = [{ href: '/settings/profile', icon: UserPen, label: 'Chỉnh sửa hồ sơ' }];
+const MENU_SETTINGS = [
+    { href: '/settings/profile', icon: UserPen, label: 'Chỉnh sửa hồ sơ' },
+    { href: '/settings/account', icon: UserPen, label: 'Tài khoản' },
+];
 
 export default function SettingsSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="bg-background h-fit sticky top-[72px] px-2 py-2 rounded-lg w-64">
+        <div className="bg-background h-fit sticky top-[72px] px-2 py-2 rounded-lg w-64 space-y-1">
             {MENU_SETTINGS.map((item) => {
                 const Icon = item.icon;
 

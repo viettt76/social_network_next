@@ -81,6 +81,7 @@ export enum MessageType {
     IMAGE = 'IMAGE',
     FILE = 'FILE',
     VIDEO = 'VIDEO',
+    NOTIFICATION = 'NOTIFICATION',
 }
 
 export type MessageData = {
