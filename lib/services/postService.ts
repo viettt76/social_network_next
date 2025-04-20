@@ -102,3 +102,23 @@ export const reactToCommentService = ({
 }) => {
     return axios.put(`/posts/comments/reactions/${commentId}`, { postId, reactionType });
 };
+
+export const bookmarkPostService = (postId: string) => {
+    return axios.post('/posts/bookmark', { postId });
+};
+
+export const deletePostService = (postId: string) => {
+    return axios.delete(`/posts/${postId}`);
+};
+
+export const getDeletedPostsService = (page: number) => {
+    return axios.get(`/posts/deleted?page=${page}`);
+};
+
+export const recoverPostService = (postId: string) => {
+    return axios.patch(`/posts/recover/${postId}`);
+};
+
+export const getBookmarkPostsService = (page: number) => {
+    return axios.get(`/posts/bookmark?page=${page}`);
+};

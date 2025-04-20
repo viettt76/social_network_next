@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { ImageSquare, Newspaper, Users } from '@phosphor-icons/react';
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo, setInfo } from '@/lib/slices/userSlice';
 import {
@@ -21,6 +21,14 @@ import Cropper from 'react-easy-crop';
 import { startLoadingApp, stopLoadingApp } from '@/lib/slices/loadingSlice';
 import { Link, usePathname } from '@/i18n/routing';
 import { useParams } from 'next/navigation';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuShortcut,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Crop {
     x: number;
@@ -198,23 +206,42 @@ export default function ProfileHeader() {
                     </>
                 )}
             </div>
-            <div className="w-full flex items-center bg-background mt-10 rounded-xl">
-                {PROFILE_TABS.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                        <Link
-                            href={tab.href}
-                            className={cn(
-                                'py-2 px-6 flex items-center cursor-pointer hover:bg-primary rounded-lg hover:text-background',
-                                pathname === tab.href && 'bg-primary text-background',
-                            )}
-                            key={`profile-tab-${tab.label}`}
-                        >
-                            <Icon className="me-2" />
-                            {tab.label}
-                        </Link>
-                    );
-                })}
+            <div className="flex w-full justify-between mt-10 bg-background rounded-xl items-center">
+                <div className="flex-1 flex items-center">
+                    {PROFILE_TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <Link
+                                href={tab.href}
+                                className={cn(
+                                    'py-2 px-6 flex items-center cursor-pointer hover:bg-primary rounded-lg hover:text-background',
+                                    pathname === tab.href && 'bg-primary text-background',
+                                )}
+                                key={`profile-tab-${tab.label}`}
+                            >
+                                <Icon className="me-2" />
+                                {tab.label}
+                            </Link>
+                        );
+                    })}
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Ellipsis className="me-4 cursor-pointer" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                        <DropdownMenuGroup>
+                            <Link href="/profile/deleted-posts">
+                                <DropdownMenuItem>
+                                    Bài viết đã xoá
+                                    <DropdownMenuShortcut>
+                                        <Trash2 />
+                                    </DropdownMenuShortcut>
+                                </DropdownMenuItem>
+                            </Link>
+                        </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
     );

@@ -113,10 +113,23 @@ export default function Profile() {
             });
         };
 
-        socket.on('newPost', handleNewPost);
+        socket.on('myNewPost', handleNewPost);
 
         return () => {
-            socket.off('newPost', handleNewPost);
+            socket.off('myNewPost', handleNewPost);
+        };
+    }, [socket]);
+
+    // Socket handle delete post
+    useEffect(() => {
+        const handleDeletePost = (postId: string) => {
+            setPosts((prev) => prev.filter((p) => p.postId !== postId));
+        };
+
+        socket.on('deletePost', handleDeletePost);
+
+        return () => {
+            socket.off('deletePost', handleDeletePost);
         };
     }, [socket]);
 

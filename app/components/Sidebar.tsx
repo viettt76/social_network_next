@@ -5,17 +5,11 @@ import { Link } from '@/i18n/routing';
 import { Source } from '@/lib/services/movieService';
 
 const MENU_ITEMS = [
-    { href: '', icon: Newspaper, label: 'Bản tin' },
-    { href: '', icon: Newspaper, label: 'Blog của tôi' },
-    { href: '', icon: Newspaper, label: 'Bài viết đã lưu' },
+    { href: '/', icon: Newspaper, label: 'Bản tin' },
+    { href: '/saved', icon: Newspaper, label: 'Bài viết đã lưu' },
 ];
 
-const EXPLORE_ITEMS = [
-    { href: '', icon: Newspaper, label: 'Người dùng' },
-    { href: '', icon: Newspaper, label: 'Trang' },
-    { href: '', icon: Newspaper, label: 'Nhóm' },
-    { href: `/movie?source=${Source.OPHIM}`, icon: Film, label: 'Phim' },
-];
+const EXPLORE_ITEMS = [{ href: `/movie?source=${Source.OPHIM}`, icon: Film, label: 'Phim' }];
 
 export default function Sidebar() {
     return (
