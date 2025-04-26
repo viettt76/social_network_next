@@ -107,6 +107,10 @@ export const bookmarkPostService = (postId: string) => {
     return axios.post('/posts/bookmark', { postId });
 };
 
+export const unbookmarkPostService = (postId: string) => {
+    return axios.delete(`/posts/bookmark/${postId}`);
+};
+
 export const deletePostService = (postId: string) => {
     return axios.delete(`/posts/${postId}`);
 };

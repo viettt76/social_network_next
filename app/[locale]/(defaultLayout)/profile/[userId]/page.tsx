@@ -77,6 +77,7 @@ export default function ProfileOther() {
                         ...data.map((post: any) => ({
                             postId: post.postId,
                             creatorInfo: post.posterInfo,
+                            isBookmarked: post.isBookmarked,
                             content: post.content,
                             currentReactionType: post.currentReactionType,
                             images: post.images.map((image: any) => image.imageUrl),

@@ -14,12 +14,17 @@ import {
     ReactionTypeIcon,
     ReactionTypeName,
 } from '@/app/dataType';
-import { bookmarkPostService, deletePostService, reactToPostService } from '@/lib/services/postService';
+import {
+    bookmarkPostService,
+    deletePostService,
+    reactToPostService,
+    unbookmarkPostService,
+} from '@/lib/services/postService';
 import { useAppSelector } from '@/lib/hooks';
 import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { createElement, Dispatch, SetStateAction, useState } from 'react';
 import { Link } from '@/i18n/routing';
-import { Bookmark, Ellipsis, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkMinus, Ellipsis, Trash2 } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -116,9 +121,29 @@ export default function PostContent({
         }
     };
 
+    const handleUnbookmarkPost = async () => {
+        try {
+            await unbookmarkPostService(postInfo.postId);
+            toast.success('Bỏ lưu bài viết thành công', {
+                duration: 2500,
+            });
+        } catch (error) {
+            console.error(error);
+            toast.error('Bỏ lưu bài viết thất bại', {
+                duration: 2500,
+            });
+        }
+    };
+
     const MENU_MY_POST = [[{ icon: Trash2, label: 'Xoá bài viết', callback: () => setShowDialogDeletePost(true) }]];
 
-    const MENU_OTHER_POST = [[{ icon: Bookmark, label: 'Lưu bài viết', callback: handleBookmarkPost }]];
+    const MENU_OTHER_POST = [
+        [
+            postInfo.isBookmarked
+                ? { icon: BookmarkMinus, label: 'Bỏ lưu bài viết', callback: handleUnbookmarkPost }
+                : { icon: Bookmark, label: 'Lưu bài viết', callback: handleBookmarkPost },
+        ],
+    ];
 
     const MENU_POST: {
         icon?: React.FC<any>;

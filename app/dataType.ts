@@ -56,6 +56,7 @@ export type CommentReactionType = ReactionTypeBase & {
 export type PostInfoType = {
     postId: string;
     creatorInfo: UserInfoType;
+    isBookmarked?: boolean;
     content?: string;
     currentReactionType?: ReactionNameType | null;
     images?: string[];
