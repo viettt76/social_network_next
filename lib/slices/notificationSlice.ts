@@ -8,36 +8,43 @@ export interface FriendRequestType {
     createdAt: Date | string;
 }
 
-interface NotificationState {
-    like: any[];
-    comment: any[];
-    conversation: any[];
-    friendRequest: FriendRequestType[];
+export enum NotificationType {
+    LIKE_POST = 'LIKE_POST',
+    LIKE_COMMENT = 'LIKE_COMMENT',
+    COMMENT = 'COMMENT',
+    FRIEND_REQUEST = 'FRIEND_REQUEST',
 }
 
-const initialState: NotificationState = {
-    like: [],
-    comment: [],
-    conversation: [],
-    friendRequest: [],
-};
+interface NotificationData {
+    notificationId: string;
+    actorId: string;
+    actorFirstName: string;
+    actorLastName: string;
+    actorAvatar: string;
+    type: NotificationType;
+    referenceId: string;
+    content: string;
+    isRead: boolean;
+    createdAt: Date | string;
+}
+
+const initialState: NotificationData[] = [];
 
 export const notificationSlice = createSlice({
     name: 'notification',
     initialState,
     reducers: {
-        addFriendRequestNotification(state, action: PayloadAction<FriendRequestType | FriendRequestType[]>) {
-            if (Array.isArray(action.payload)) {
-                state.friendRequest.unshift(...action.payload);
-            } else {
-                state.friendRequest.unshift(action.payload);
-            }
+        addNotification(state, action: PayloadAction<NotificationData | NotificationData[]>) {
+            state.push(...(Array.isArray(action.payload) ? action.payload : [action.payload]));
+        },
+        removeNotification(state, action: PayloadAction<string>) {
+            return state.filter((n) => n.notificationId !== action.payload);
         },
     },
 });
 
-export const { addFriendRequestNotification } = notificationSlice.actions;
+export const { addNotification, removeNotification } = notificationSlice.actions;
 
-export const selectFriendRequestNotification = (state: RootState) => state.notification.friendRequest;
+export const selectNotifications = (state: RootState) => state.notification;
 
 export default notificationSlice.reducer;

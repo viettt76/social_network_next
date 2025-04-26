@@ -27,7 +27,7 @@ export interface BasicUserInformation {
 export interface UserState extends BasicUserInformation {
     id: string;
     role: Role | null;
-    friendRequestCount: number | null;
+    friendRequestCount: number;
 }
 
 const initialState: UserState = {
@@ -42,7 +42,7 @@ const initialState: UserState = {
     avatar: '',
     isPrivate: null,
     role: null,
-    friendRequestCount: null,
+    friendRequestCount: 0,
 };
 
 export const userSlice = createSlice({
@@ -53,10 +53,16 @@ export const userSlice = createSlice({
             Object.assign(state, action.payload);
         },
         resetInfo: () => initialState,
+        addFriendRequestCount(state) {
+            state.friendRequestCount++;
+        },
+        minusFriendRequestCount(state) {
+            state.friendRequestCount--;
+        },
     },
 });
 
-export const { setInfo, resetInfo } = userSlice.actions;
+export const { setInfo, resetInfo, addFriendRequestCount, minusFriendRequestCount } = userSlice.actions;
 
 export const selectUserInfo = (state: RootState) => state.user;
 

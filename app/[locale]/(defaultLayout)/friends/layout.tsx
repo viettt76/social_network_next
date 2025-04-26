@@ -35,7 +35,7 @@ export default function FriendsLayout({ children }) {
                             >
                                 <span className="relative">
                                     Lời mời kết bạn
-                                    {Number(friendRequestCount) > 0 && (
+                                    {friendRequestCount > 0 && (
                                         <span className="absolute top-0 -right-3 text-destructive text-xs">
                                             {friendRequestCount}
                                         </span>

@@ -8,7 +8,7 @@ import { setInfo } from '@/lib/slices/userSlice';
 import { getPostReactionTypesService } from '@/lib/services/postService';
 import { setPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { getNotificationsService } from '@/lib/services/notificationService';
-import { addFriendRequestNotification } from '@/lib/slices/notificationSlice';
+import { addNotification } from '@/lib/slices/notificationSlice';
 import { getFriendRequestCountService, getFriendsService } from '@/lib/services/relationshipService';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectLoadingApp } from '@/lib/slices/loadingSlice';
@@ -54,8 +54,7 @@ const AppInitializer = () => {
                 dispatch(setInfo(userInfoRes.data));
                 dispatch(setPostReactionType(postReactionsRes.data));
 
-                const { FRIEND_REQUEST } = notificationsRes.data;
-                dispatch(addFriendRequestNotification(FRIEND_REQUEST));
+                dispatch(addNotification(notificationsRes.data));
 
                 dispatch(
                     setInfo({

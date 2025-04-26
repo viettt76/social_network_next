@@ -1,12 +1,15 @@
 'use client';
 
+import { useSocket } from '@/app/components/SocketProvider';
 import { UserInfoType } from '@/app/dataType';
 import useFetch from '@/hooks/useFetch';
+import { useAppDispatch } from '@/lib/hooks';
 import {
     acceptFriendRequestService,
     getFriendRequestsService,
     deleteFriendRequestService,
 } from '@/lib/services/relationshipService';
+import { minusFriendRequestCount } from '@/lib/slices/userSlice';
 import { AxiosError } from 'axios';
 import { UserCheck, X } from 'lucide-react';
 import Image from 'next/image';
@@ -18,6 +21,9 @@ type FriendRequestType = UserInfoType & {
 };
 
 export default function FriendRequests() {
+    const socket = useSocket();
+    const dispatch = useAppDispatch();
+
     const [friendRequests, setFriendRequests] = useState<FriendRequestType[]>([]);
     const [page, setPage] = useState(1);
 
@@ -26,6 +32,18 @@ export default function FriendRequests() {
     useEffect(() => {
         setFriendRequests(data || []);
     }, [data]);
+
+    useEffect(() => {
+        const handleNewFriendRequest = (newFriendRequest) => {
+            setFriendRequests((prev) => [newFriendRequest, ...prev]);
+        };
+
+        socket.on('newFriendRequest', handleNewFriendRequest);
+
+        return () => {
+            socket.off('newFriendRequest', handleNewFriendRequest);
+        };
+    }, [socket, dispatch]);
 
     const handleAcceptFriendRequest = async ({
         friendRequestId,
@@ -53,8 +71,14 @@ export default function FriendRequests() {
     const handleRefuseFriendRequest = async (friendRequestId: string) => {
         try {
             setFriendRequests((prev) => prev.filter((fr) => fr.friendRequestId != friendRequestId));
+            dispatch(minusFriendRequestCount());
             await deleteFriendRequestService(friendRequestId);
         } catch (error) {
+            if (error instanceof AxiosError && error.status === 404) {
+                toast.error(error.response?.data.message, {
+                    duration: 2500,
+                });
+            }
             console.error(error);
         }
     };

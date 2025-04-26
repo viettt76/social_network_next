@@ -22,6 +22,7 @@ import useDebounce from '@/hooks/useDebounce';
 import { searchService } from '@/lib/services/userService';
 import { UserInfoType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
+import SystemNotification from './SystemNotification';
 
 export default function Header() {
     const { theme, setTheme } = useTheme();
@@ -149,7 +150,7 @@ export default function Header() {
                             <UserPlus className="text-ring" />
                         </Link>
                         <RecentConversations />
-                        <BellRinging className="text-ring" />
+                        <SystemNotification />
                         <DropdownMenu modal={false} open={showUserDashboard} onOpenChange={setShowUserDashboard}>
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center cursor-pointer">

@@ -330,7 +330,7 @@ export default function RecentConversations({ className }: { className?: string 
     };
 
     return (
-        <div className="relative">
+        <div ref={recentConversationsRef} className="relative">
             <ChatCenteredDots
                 className={cn('text-ring cursor-pointer', className)}
                 onClick={handleShowRecentConversations}
@@ -341,12 +341,9 @@ export default function RecentConversations({ className }: { className?: string 
                 </div>
             )}
             {showRecentConversations && (
-                <div
-                    ref={recentConversationsRef}
-                    className="absolute top-6 left-0 w-80 bg-background border shadow-all-sides rounded-xl px-2 pt-2"
-                >
+                <div className="absolute top-[calc(100%+0.5rem)] left-0 w-80 bg-background border shadow-all-sides rounded-xl pt-2">
                     {showAddGroup ? (
-                        <>
+                        <div className="px-2">
                             <div className="flex justify-between">
                                 <ArrowLeft className="cursor-pointer" onClick={handleCloseAddGroup} />
                                 <span
@@ -396,19 +393,18 @@ export default function RecentConversations({ className }: { className?: string 
                                     })}
                                 </div>
                             </div>
-                        </>
+                        </div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-x-2 mb-4">
+                            <div className="flex items-center justify-between gap-x-2 mb-2 border-b px-4 pb-2">
+                                <div className="font-semibold ">Tin nhắn</div>
                                 {/* <input className="border px-2 py-1 rounded-3xl flex-1" placeholder="Tìm kiếm..." /> */}
                                 {/* <Plus onClick={handleOpenAddGroup} /> */}
-                                <div className="w-full flex justify-end">
-                                    <span className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
-                                        Tạo nhóm
-                                    </span>
+                                <div className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
+                                    Tạo nhóm
                                 </div>
                             </div>
-                            <div className="max-h-[22rem] overflow-y-auto">
+                            <div className="max-h-[22rem] overflow-y-auto px-2">
                                 <div className="flex flex-col">
                                     {recentConversations.map((conversation) => {
                                         const lastMessageContent = conversation.lastMessage.content;
