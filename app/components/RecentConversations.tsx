@@ -4,12 +4,22 @@ import { ChatCenteredDots } from '@phosphor-icons/react';
 import Image from 'next/image';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, CircleCheck, Plus } from 'lucide-react';
-import { createConversationService, getRecentConversationsService } from '@/lib/services/conversationService';
-import { MessageType, MessengerType } from '@/app/dataType';
+import {
+    createConversationService,
+    getRecentConversationsService,
+    readMessageService,
+} from '@/lib/services/conversationService';
+import { MessageType, MessengerType, UserInfoType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
-import { ConversationType, openConversation } from '@/lib/slices/conversationSlice';
+import {
+    ConversationType,
+    openConversation,
+    selectConversationsUnread,
+    addConversationsUnread,
+    removeConversationsUnread,
+} from '@/lib/slices/conversationSlice';
 import { selectFriends } from '@/lib/slices/relationshipSlice';
 import { useSocket } from './SocketProvider';
 import { cn } from '@/lib/utils';
@@ -22,6 +32,7 @@ export default function RecentConversations({ className }: { className?: string 
 
     const friends = useAppSelector(selectFriends);
     const userInfo = useAppSelector(selectUserInfo);
+    const conversationsUnread = useAppSelector(selectConversationsUnread);
 
     const recentConversationsRef = useRef<HTMLDivElement>(null);
     const [showRecentConversations, setShowRecentConversations] = useState(false);
@@ -38,6 +49,30 @@ export default function RecentConversations({ className }: { className?: string 
     const [showAddGroup, setShowAddGroup] = useState(false);
     const [groupName, setGroupName] = useState('');
     const [groupMembers, setGroupMembers] = useState<string[]>([]);
+
+    const [searchFriendsResult, setSearchFriendsResult] = useState<UserInfoType[]>([]);
+    const [keywordSearchFriends, setKeywordSearchFriends] = useState('');
+
+    const normalize = useCallback((str) => {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }, []);
+
+    const includesInsensitive = useCallback(
+        (source, keyword) => {
+            return normalize(source).toLowerCase().includes(normalize(keyword).toLowerCase());
+        },
+        [normalize],
+    );
+
+    useEffect(() => {
+        if (keywordSearchFriends.trim() === '') {
+            setSearchFriendsResult(friends);
+        } else {
+            setSearchFriendsResult(
+                friends.filter((f) => includesInsensitive(`${f.lastName} ${f.firstName}`, keywordSearchFriends.trim())),
+            );
+        }
+    }, [friends, keywordSearchFriends, includesInsensitive]);
 
     // Get recent conversations
     useEffect(() => {
@@ -151,6 +186,15 @@ export default function RecentConversations({ className }: { className?: string 
                     ];
                 }
             });
+
+            if (sender.userId !== userInfo.id) {
+                console.log(conversationsUnread, conversationId);
+                const existingConversationUnread = conversationsUnread.includes(conversationId);
+
+                if (!existingConversationUnread) {
+                    dispatch(addConversationsUnread(conversationId));
+                }
+            }
         };
 
         socket.on('newMessage', handleNewMessage);
@@ -158,7 +202,7 @@ export default function RecentConversations({ className }: { className?: string 
         return () => {
             socket.off('newMessage', handleNewMessage);
         };
-    }, [socket, userInfo.id]);
+    }, [socket, userInfo.id, conversationsUnread, dispatch]);
 
     // Socket handle a conversation group created to update recent conversation
     useEffect(() => {
@@ -229,14 +273,15 @@ export default function RecentConversations({ className }: { className?: string 
 
     useClickOutside(recentConversationsRef, handleHideRecentConversations);
 
-    const handleOpenMessengerPopup = (conversationInfo: {
+    const handleOpenMessengerPopup = async (conversationInfo: {
         conversationId: string;
         type: ConversationType;
         friendId?: string;
         name: string;
         avatar?: string;
+        lastMessageSenderId: string;
     }) => {
-        const { conversationId, type, friendId, name, avatar } = conversationInfo;
+        const { conversationId, type, friendId, name, avatar, lastMessageSenderId } = conversationInfo;
         handleHideRecentConversations();
         dispatch(
             openConversation({
@@ -251,6 +296,11 @@ export default function RecentConversations({ className }: { className?: string 
                 isFocus: true,
             }),
         );
+        dispatch(removeConversationsUnread(conversationId));
+
+        if (lastMessageSenderId !== userInfo.id) {
+            await readMessageService(conversationId);
+        }
     };
 
     const handleOpenAddGroup = () => setShowAddGroup(true);
@@ -285,6 +335,11 @@ export default function RecentConversations({ className }: { className?: string 
                 className={cn('text-ring cursor-pointer', className)}
                 onClick={handleShowRecentConversations}
             />
+            {conversationsUnread.length > 0 && (
+                <div className="absolute -top-2 -right-2 text-background bg-destructive rounded-full text-sm w-4 h-4 flex justify-center items-center">
+                    {conversationsUnread.length}
+                </div>
+            )}
             {showRecentConversations && (
                 <div
                     ref={recentConversationsRef}
@@ -293,7 +348,7 @@ export default function RecentConversations({ className }: { className?: string 
                     {showAddGroup ? (
                         <>
                             <div className="flex justify-between">
-                                <ArrowLeft onClick={handleCloseAddGroup} />
+                                <ArrowLeft className="cursor-pointer" onClick={handleCloseAddGroup} />
                                 <span
                                     className={`${
                                         groupName && groupMembers.length >= 2
@@ -315,9 +370,10 @@ export default function RecentConversations({ className }: { className?: string 
                                 <input
                                     className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full mt-2"
                                     placeholder="Tìm kiếm thành viên"
+                                    onChange={(e) => setKeywordSearchFriends(e.target.value)}
                                 />
                                 <div className="mt-2 flex flex-col gap-y-2">
-                                    {friends.map((friend) => {
+                                    {searchFriendsResult.map((friend) => {
                                         return (
                                             <div className="flex items-center gap-x-2" key={`friend-${friend.userId}`}>
                                                 <Image
@@ -344,11 +400,16 @@ export default function RecentConversations({ className }: { className?: string 
                     ) : (
                         <>
                             <div className="flex items-center gap-x-2 mb-4">
-                                <input className="border px-2 py-1 rounded-3xl flex-1" placeholder="Tìm kiếm..." />
-                                <Plus onClick={handleOpenAddGroup} />
+                                {/* <input className="border px-2 py-1 rounded-3xl flex-1" placeholder="Tìm kiếm..." /> */}
+                                {/* <Plus onClick={handleOpenAddGroup} /> */}
+                                <div className="w-full flex justify-end">
+                                    <span className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
+                                        Tạo nhóm
+                                    </span>
+                                </div>
                             </div>
                             <div className="max-h-[22rem] overflow-y-auto">
-                                <div className="flex flex-col gap-y-2">
+                                <div className="flex flex-col">
                                     {recentConversations.map((conversation) => {
                                         const lastMessageContent = conversation.lastMessage.content;
                                         let content = '';
@@ -356,6 +417,7 @@ export default function RecentConversations({ className }: { className?: string 
                                         const isGroup = conversation.conversationType === ConversationType.GROUP;
                                         const isSender = conversation.lastMessage.sender.userId === userInfo.id;
 
+                                        console.log(conversation);
                                         switch (conversation.lastMessage.messageType) {
                                             case MessageType.TEXT:
                                                 if (isPrivate) {
@@ -382,7 +444,10 @@ export default function RecentConversations({ className }: { className?: string 
 
                                         return (
                                             <div
-                                                className="flex items-center gap-x-2"
+                                                className={`flex items-center gap-x-2 p-2 rounded-xl hover:bg-foreground/5 ${
+                                                    conversationsUnread.includes(conversation.conversationId) &&
+                                                    'bg-foreground/5'
+                                                }`}
                                                 key={`recent-conversation-${conversation.conversationId}`}
                                                 onClick={() =>
                                                     handleOpenMessengerPopup({
@@ -391,6 +456,7 @@ export default function RecentConversations({ className }: { className?: string 
                                                         friendId: conversation.friendId,
                                                         name: conversation.conversationName,
                                                         avatar: conversation.conversationAvatar,
+                                                        lastMessageSenderId: conversation.lastMessage.sender.userId,
                                                     })
                                                 }
                                             >
@@ -412,7 +478,7 @@ export default function RecentConversations({ className }: { className?: string 
                                                     </div>
                                                 </div>
                                                 <div className="ms-6">
-                                                    <CircleCheck className="w-6 h-6 text-background fill-primary" />
+                                                    {/* <CircleCheck className="w-6 h-6 text-background fill-primary" /> */}
                                                     {/* <CircleCheck className="text-primary w-5 h-5" />
                                                     <Image
                                                         className="w-5 h-5 object-cover rounded-full border"

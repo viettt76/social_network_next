@@ -34,11 +34,13 @@ interface CallData {
 }
 
 interface ConversationState {
+    conversationsUnread: string[];
     openConversations: ConversationBubble[];
     call: CallData | null;
 }
 
 const initialState: ConversationState = {
+    conversationsUnread: [],
     openConversations: [],
     call: null,
 };
@@ -204,6 +206,12 @@ export const conversationSlice = createSlice({
         clearCallData: (state) => {
             state.call = null;
         },
+        addConversationsUnread: (state, action: PayloadAction<string | string[]>) => {
+            state.conversationsUnread.push(...(Array.isArray(action.payload) ? action.payload : [action.payload]));
+        },
+        removeConversationsUnread: (state, action: PayloadAction<string>) => {
+            state.conversationsUnread = state.conversationsUnread.filter((c) => c !== action.payload);
+        },
     },
 });
 
@@ -222,6 +230,8 @@ export const {
     updateCurrentMessageReaction,
     setCallData,
     clearCallData,
+    addConversationsUnread,
+    removeConversationsUnread,
 } = conversationSlice.actions;
 
 export const selectOpenConversations = (state: RootState) => state.conversation.openConversations;
@@ -231,5 +241,6 @@ export const selectMessagesByConversationId = (conversationId: string) =>
         (openConversations) => openConversations.find((conv) => conv.conversationId === conversationId)?.messages || [],
     );
 export const selectCallData = (state: RootState) => state.conversation.call;
+export const selectConversationsUnread = (state: RootState) => state.conversation.conversationsUnread;
 
 export default conversationSlice.reducer;

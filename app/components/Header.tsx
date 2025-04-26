@@ -94,7 +94,6 @@ export default function Header() {
     const handleHideUserDashboard = () => setShowUserDashboard(false);
 
     const handleShowSearchResult = () => setShowSearchResult(true);
-    const handleHideSearchResult = () => setShowSearchResult(false);
 
     return (
         <div ref={parentRef} className="w-full">

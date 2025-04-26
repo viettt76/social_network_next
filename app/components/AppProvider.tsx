@@ -14,6 +14,8 @@ import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectLoadingApp } from '@/lib/slices/loadingSlice';
 import { Spinner } from 'flowbite-react';
 import { addFriends } from '@/lib/slices/relationshipSlice';
+import { getConversationsUnreadService } from '@/lib/services/conversationService';
+import { addConversationsUnread } from '@/lib/slices/conversationSlice';
 
 const LoadingScreen = () => {
     const isLoadingApp = useAppSelector(selectLoadingApp);
@@ -33,14 +35,21 @@ const AppInitializer = () => {
     useEffect(() => {
         (async () => {
             try {
-                const [userInfoRes, postReactionsRes, notificationsRes, friendRequestCountRes, friendsRes] =
-                    await Promise.all([
-                        getMyInfoService(),
-                        getPostReactionTypesService(),
-                        getNotificationsService(),
-                        getFriendRequestCountService(),
-                        getFriendsService(),
-                    ]);
+                const [
+                    userInfoRes,
+                    postReactionsRes,
+                    notificationsRes,
+                    friendRequestCountRes,
+                    friendsRes,
+                    conversationsUnreadRes,
+                ] = await Promise.all([
+                    getMyInfoService(),
+                    getPostReactionTypesService(),
+                    getNotificationsService(),
+                    getFriendRequestCountService(),
+                    getFriendsService(),
+                    getConversationsUnreadService(),
+                ]);
 
                 dispatch(setInfo(userInfoRes.data));
                 dispatch(setPostReactionType(postReactionsRes.data));
@@ -63,6 +72,8 @@ const AppInitializer = () => {
                         })),
                     ),
                 );
+
+                dispatch(addConversationsUnread(conversationsUnreadRes.data));
             } catch (error) {
                 console.error(error);
             }

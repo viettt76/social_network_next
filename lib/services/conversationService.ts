@@ -51,6 +51,10 @@ export const getRecentConversationsService = (page: number) => {
     return axios.get(`/conversations/recent?page=${page}`);
 };
 
+export const getConversationsUnreadService = () => {
+    return axios.get('/conversations/unread');
+};
+
 export const getGroupMembersService = ({ conversationId, page }: { conversationId: string; page: number }) => {
     return axios.get(`/conversations/groups/members/${conversationId}?page=${page}`);
 };
@@ -80,4 +84,8 @@ export const addGroupMembersService = ({
     return axios.post(`/conversations/members/${conversationId}`, {
         participants,
     });
+};
+
+export const readMessageService = (conversationId: string) => {
+    return axios.post(`/conversations/messages/read/${conversationId}`);
 };

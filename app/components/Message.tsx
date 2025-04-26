@@ -21,6 +21,7 @@ interface MessageProps {
     conversationType: ConversationType;
     currentReaction: ReactionNameType | null;
     prevSenderId?: string;
+    prevMessageType: MessageType;
     index: number;
 }
 
@@ -30,6 +31,7 @@ export default function Message({
     conversationType,
     currentReaction,
     prevSenderId,
+    prevMessageType,
     index,
 }: MessageProps) {
     const dispatch = useAppDispatch();
@@ -132,6 +134,9 @@ export default function Message({
                 </PhotoProvider>
             );
             break;
+        case MessageType.NOTIFICATION:
+            content = <div className={'flex-1 text-center text-gray text-xs my-1'}>{message.content}</div>;
+            break;
         default:
             content = (
                 <div
@@ -147,8 +152,9 @@ export default function Message({
     return (
         <div key={`message-${message.messageId}`} className={`${index > 1 && senderId !== prevSenderId && 'mt-2'}`}>
             {conversationType === ConversationType.GROUP &&
+                message.messageType !== MessageType.NOTIFICATION &&
                 senderId !== userInfo.id &&
-                (index === 0 || senderId !== prevSenderId) && (
+                (index === 0 || senderId !== prevSenderId || prevMessageType === MessageType.NOTIFICATION) && (
                     <div className="flex">
                         <div className="w-10"></div>
                         <div className={'line-clamp-1 break-all text-xs'}>
@@ -157,9 +163,9 @@ export default function Message({
                     </div>
                 )}
             <div className="flex">
-                {senderId !== userInfo.id && (
+                {senderId !== userInfo.id && message.messageType !== MessageType.NOTIFICATION && (
                     <div className="w-10">
-                        {(index === 0 || senderId !== prevSenderId) && (
+                        {(index === 0 || senderId !== prevSenderId || prevMessageType === MessageType.NOTIFICATION) && (
                             <Image
                                 className="w-8 h-8 rounded-full border"
                                 src={message.sender.avatar || '/images/default-avatar.png'}
@@ -170,80 +176,86 @@ export default function Message({
                         )}
                     </div>
                 )}
-                <div
-                    className={`flex-1 flex ${isSender && 'justify-end'}`}
-                    onMouseEnter={() => setIsTooltipVisible(true)}
-                    onMouseLeave={() => setIsTooltipVisible(false)}
-                >
-                    <div className="relative">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>{content}</TooltipTrigger>
-                                <TooltipContent align="center" side="left">
-                                    <span>{formatTimeDisplay(time)}</span>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {mostReactions.length > 0 && (
-                            <div
-                                className={`absolute cursor-pointer bg-white w-fit px-0.5 py-[2px] rounded-full border flex items-center justify-center -bottom-2 ${
-                                    isSender ? '-left-3' : '-right-3'
-                                }`}
-                            >
-                                {createElement(ReactionTypeIcon[mostReactions[0]], {
-                                    width: 15,
-                                    height: 15,
-                                })}
-                                {mostReactions.length > 1 &&
-                                    createElement(ReactionTypeIcon[mostReactions[1]], {
+                {message.messageType === MessageType.NOTIFICATION ? (
+                    content
+                ) : (
+                    <div
+                        className={`flex-1 flex ${isSender && 'justify-end'}`}
+                        onMouseEnter={() => setIsTooltipVisible(true)}
+                        onMouseLeave={() => setIsTooltipVisible(false)}
+                    >
+                        <div className="relative">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>{content}</TooltipTrigger>
+                                    <TooltipContent align="center" side="left">
+                                        <span>{formatTimeDisplay(time)}</span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            {mostReactions.length > 0 && (
+                                <div
+                                    className={`absolute cursor-pointer bg-white w-fit px-0.5 py-[2px] rounded-full border flex items-center justify-center -bottom-2 ${
+                                        isSender ? '-left-3' : '-right-3'
+                                    }`}
+                                >
+                                    {createElement(ReactionTypeIcon[mostReactions[0]], {
                                         width: 15,
                                         height: 15,
-                                        className: 'ms-[1px]',
                                     })}
-                                {message.reactions.length > 1 && (
-                                    <span className="text-black ms-1 text-[10px]">{message.reactions.length}</span>
-                                )}
-                            </div>
-                        )}
-                        {isTooltipVisible && (
-                            <span className={`absolute top-1/2 -translate-y-1/2 ${isSender ? '-left-8' : '-right-8'}`}>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="cursor-pointer bg-white w-5 h-5 rounded-full border flex items-center justify-center">
-                                                <Heart className="text-gray w-3 h-3" />
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="p-0 flex bg-background px-1 border shadow-md rounded-full shadow-all-sides">
-                                            {Object.keys(postReactionType).map((reactionType) => {
-                                                const Icon = ReactionTypeIcon[reactionType];
-                                                return (
-                                                    <div
-                                                        className={`w-9 cursor-pointer py-1 px-1 rounded-full ${
-                                                            currentReaction === reactionType && 'bg-gray/50'
-                                                        }`}
-                                                        key={reactionType}
-                                                        onClick={() =>
-                                                            handleReactToMessage({
-                                                                messageId: message.messageId,
-                                                                reactionType:
-                                                                    currentReaction === reactionType
-                                                                        ? null
-                                                                        : (reactionType as ReactionNameType),
-                                                            })
-                                                        }
-                                                    >
-                                                        <Icon width={28} height={28} />
-                                                    </div>
-                                                );
-                                            })}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </span>
-                        )}
+                                    {mostReactions.length > 1 &&
+                                        createElement(ReactionTypeIcon[mostReactions[1]], {
+                                            width: 15,
+                                            height: 15,
+                                            className: 'ms-[1px]',
+                                        })}
+                                    {message.reactions.length > 1 && (
+                                        <span className="text-black ms-1 text-[10px]">{message.reactions.length}</span>
+                                    )}
+                                </div>
+                            )}
+                            {isTooltipVisible && (
+                                <span
+                                    className={`absolute top-1/2 -translate-y-1/2 ${isSender ? '-left-8' : '-right-8'}`}
+                                >
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="cursor-pointer bg-white w-5 h-5 rounded-full border flex items-center justify-center">
+                                                    <Heart className="text-gray w-3 h-3" />
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="p-0 flex bg-background px-1 border shadow-md rounded-full shadow-all-sides">
+                                                {Object.keys(postReactionType).map((reactionType) => {
+                                                    const Icon = ReactionTypeIcon[reactionType];
+                                                    return (
+                                                        <div
+                                                            className={`w-9 cursor-pointer py-1 px-1 rounded-full ${
+                                                                currentReaction === reactionType && 'bg-gray/50'
+                                                            }`}
+                                                            key={reactionType}
+                                                            onClick={() =>
+                                                                handleReactToMessage({
+                                                                    messageId: message.messageId,
+                                                                    reactionType:
+                                                                        currentReaction === reactionType
+                                                                            ? null
+                                                                            : (reactionType as ReactionNameType),
+                                                                })
+                                                            }
+                                                        >
+                                                            <Icon width={28} height={28} />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </span>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

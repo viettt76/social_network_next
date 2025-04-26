@@ -18,8 +18,14 @@ import {
     unfocusConversationPopup,
     setCallData,
     CallType,
+    removeConversationsUnread,
 } from '@/lib/slices/conversationSlice';
-import { createConversationService, getMessagesService, sendMessageService } from '@/lib/services/conversationService';
+import {
+    createConversationService,
+    getMessagesService,
+    readMessageService,
+    sendMessageService,
+} from '@/lib/services/conversationService';
 import { MessageType } from '@/app/dataType';
 import { cn, getTimeFromISO, padNumber, uploadToCloudinary } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
@@ -395,6 +401,15 @@ export default function MessengerPopup({
         });
     };
 
+    const handleFocusMessengerPopup = async () => {
+        dispatch(focusConversationPopup(conversationId || friendId || ''));
+        dispatch(removeConversationsUnread(conversationId));
+
+        if (conversationId) {
+            await readMessageService(conversationId);
+        }
+    };
+
     return (
         <div
             ref={messengerPopupRef}
@@ -403,7 +418,7 @@ export default function MessengerPopup({
                 className,
             )}
             style={{ right: `${3.5 + index * 18.5}rem`, zIndex: 10 - index }}
-            onClick={() => dispatch(focusConversationPopup(conversationId || friendId || ''))}
+            onClick={handleFocusMessengerPopup}
         >
             <div
                 className={`flex justify-between items-center bg-primary text-background rounded-t-xl py-1 px-2 shadow-md ${
@@ -469,6 +484,7 @@ export default function MessengerPopup({
                                         conversationType={type}
                                         currentReaction={message.currentReaction}
                                         prevSenderId={prevMessage?.sender.userId ?? ''}
+                                        prevMessageType={prevMessage?.messageType}
                                         index={index}
                                     />
                                 </div>
