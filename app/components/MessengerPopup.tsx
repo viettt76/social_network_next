@@ -1,6 +1,6 @@
 'use client';
 
-import { Images, Minus, Phone, SendHorizonal, X } from 'lucide-react';
+import { Images, Minus, Phone, SendHorizonal, Smile, X } from 'lucide-react';
 import Textarea from '@/app/components/Textarea';
 import { ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState, WheelEvent } from 'react';
 import Image from 'next/image';
@@ -36,6 +36,11 @@ import Message from '@/app/components/Message';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import MessengerPopupSettings from './MessengerPopupSettings';
 import { selectUserInfo } from '@/lib/slices/userSlice';
+import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
+import wordIcon from '@/public/icons/word.svg';
+import excelIcon from '@/public/icons/excel.svg';
+import pdfIcon from '@/public/icons/pdf.svg';
+import fileAltIcon from '@/public/icons/file.svg';
 
 interface MessengerPopupProps {
     index: number;
@@ -83,11 +88,22 @@ export default function MessengerPopup({
     const [isAtBottom, setIsAtBottom] = useState(true);
 
     const [text, setText] = useState('');
-    const [images, setImages] = useState<string[]>([]);
-    const [imagesUpload, setImagesUpload] = useState<File[]>([]);
+    const [files, setFiles] = useState<
+        {
+            url: string;
+            type: string;
+            name: string;
+        }[]
+    >([]);
+    const [filesUpload, setFilesUpload] = useState<File[]>([]);
     const [sendingMessage, setSendingMessage] = useState(false);
 
     const imageWrapperRef = useRef<HTMLDivElement>(null);
+
+    const [showEmojiList, setShowEmojiList] = useState(false);
+    const emojiListRef = useRef(null);
+
+    useClickOutside(emojiListRef, () => setShowEmojiList(false));
 
     // Get messages
     useEffect(() => {
@@ -106,6 +122,7 @@ export default function MessengerPopup({
                                     messageId: message.id,
                                     conversationId: message.conversationId,
                                     content: message.content,
+                                    fileName: message.fileName,
                                     messageType: message.messageType,
                                     sender: {
                                         userId: message.sender.id,
@@ -250,23 +267,25 @@ export default function MessengerPopup({
     }, [messages.length]);
 
     const handleChooseFile = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
+        const selectedFiles = e.target.files;
 
-        if (files) {
-            const imagesArray = Array.from(files).map((file) => {
-                return URL.createObjectURL(file);
-            });
+        if (selectedFiles) {
+            const filesArray = Array.from(selectedFiles).map((file) => ({
+                url: URL.createObjectURL(file),
+                type: file.type,
+                name: file.name,
+            }));
 
-            setImages([...images, ...imagesArray]);
-            setImagesUpload([...imagesUpload, ...files]);
+            setFiles((prev) => [...prev, ...filesArray]);
+            setFilesUpload((prev) => [...prev, ...selectedFiles]);
         }
     };
 
     const handleDeleteImage = (index: number) => {
-        setImages((prev) => {
+        setFiles((prev) => {
             return [...prev.slice(0, index), ...prev.slice(index + 1)];
         });
-        setImagesUpload((prev) => {
+        setFilesUpload((prev) => {
             return [...prev.slice(0, index), ...prev.slice(index + 1)];
         });
     };
@@ -288,7 +307,7 @@ export default function MessengerPopup({
 
     const handleSendMessage = async () => {
         try {
-            if ((!text && images.length === 0) || sendingMessage) return;
+            if ((!text && files.length === 0) || sendingMessage) return;
             setSendingMessage(true);
             let _conversationId = conversationId;
             if (!_conversationId && friendId) {
@@ -314,15 +333,19 @@ export default function MessengerPopup({
                 });
             }
             setText('');
-            setImages([]);
-            if (imagesUpload.length > 0) {
+            setFiles([]);
+            if (filesUpload.length > 0) {
                 await Promise.all(
-                    imagesUpload.map(async (image) => {
-                        const imageUrl = await uploadToCloudinary(image);
+                    filesUpload.map(async (file) => {
+                        const fileData = await uploadToCloudinary(file);
+
+                        const isImage = file.type.startsWith('image/');
+
                         await sendMessageService({
                             conversationId: _conversationId,
-                            image: imageUrl,
-                            type: MessageType.IMAGE,
+                            fileUrl: fileData?.fileUrl,
+                            type: isImage ? MessageType.IMAGE : MessageType.FILE,
+                            ...(!isImage && { fileName: fileData?.fileName }),
                         });
                     }),
                 );
@@ -512,24 +535,56 @@ export default function MessengerPopup({
                 <input type="file" multiple hidden id="write-post-select-file" onChange={handleChooseFile} />
                 <div className="flex-1 overflow-hidden">
                     <div className="flex overflow-x-auto gap-2 pt-1" ref={imageWrapperRef} onWheel={handleWheel}>
-                        {images.map((image, index) => (
-                            <div key={`image-${index}`} className="min-w-10 w-10 h-12 mb-1 relative rounded-xl">
-                                <Image
-                                    className="w-10 h-12 object-cover rounded-sm border"
-                                    src={image}
-                                    alt="image"
-                                    width={800}
-                                    height={800}
-                                    draggable={false}
-                                />
+                        {files.map((file, index) => {
+                            let src, alt;
+                            const isImage = file.type.startsWith('image/');
+
+                            if (file.type.startsWith('image/')) {
+                                src = file.url;
+                                alt = 'Image';
+                            } else if (file.type === 'application/pdf') {
+                                src = pdfIcon;
+                                alt = 'PDF';
+                            } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+                                src = wordIcon;
+                                alt = 'Word';
+                            } else if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+                                src = excelIcon;
+                                alt = 'Excel';
+                            } else {
+                                src = fileAltIcon;
+                                alt = 'File';
+                            }
+
+                            return (
                                 <div
-                                    className="absolute -top-1 -right-1 bg-muted-foreground/70 rounded-full p-1 cursor-pointer"
-                                    onClick={() => handleDeleteImage(index)}
+                                    key={`file-${index}`}
+                                    className={`mb-1 relative rounded-xl ${
+                                        isImage ? 'min-w-10 w-10 h-12' : 'w-fit ps-4'
+                                    }`}
                                 >
-                                    <X className="text-background w-3 h-3" />
+                                    <div className="flex items-center">
+                                        <Image
+                                            className={`object-cover rounded-sm border ${
+                                                isImage ? 'w-10 h-12' : 'w-4 h-4'
+                                            }`}
+                                            src={src}
+                                            alt={alt}
+                                            width={800}
+                                            height={800}
+                                            draggable={false}
+                                        />
+                                        {!isImage && file.name}
+                                    </div>
+                                    <div
+                                        className="absolute -top-1 -right-1 bg-muted-foreground/70 rounded-full p-1 cursor-pointer"
+                                        onClick={() => handleDeleteImage(index)}
+                                    >
+                                        <X className="text-background w-3 h-3" />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <Textarea
                         className="border-none outline-none focus:shadow-none focus:ring-0 bg-input rounded-3xl px-2 py-2 min-h-9 max-h-40"
@@ -540,10 +595,19 @@ export default function MessengerPopup({
                         onKeyDown={handleEnterKeydown}
                     />
                 </div>
-
+                <div ref={emojiListRef} className="mb-2 relative">
+                    {showEmojiList && (
+                        <EmojiPicker
+                            className="!absolute bottom-[calc(100%+1rem)] right-1/4"
+                            emojiStyle={EmojiStyle.FACEBOOK}
+                            onEmojiClick={(e) => setText((prev) => prev + e.emoji)}
+                        />
+                    )}
+                    <Smile onClick={() => setShowEmojiList(true)} />
+                </div>
                 <SendHorizonal
-                    className={`mb-2 ${(text || images.length > 0) && 'fill-primary/40 text-primary'}`}
-                    onClick={() => (text || images.length > 0) && handleSendMessage()}
+                    className={`mb-2 ${(text || files.length > 0) && 'fill-primary/40 text-primary'}`}
+                    onClick={() => (text || files.length > 0) && handleSendMessage()}
                 />
             </div>
         </div>

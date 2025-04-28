@@ -13,7 +13,8 @@ import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { selectPostReactionType } from '@/lib/slices/reactionTypeSlice';
 import { groupBy, sortBy } from 'lodash';
-import { getTimeFromISO, padNumber } from '@/lib/utils';
+import { getFileType, getTimeFromISO, padNumber } from '@/lib/utils';
+import FileIcon from './FileIcon';
 
 interface MessageProps {
     message: MessageData;
@@ -111,7 +112,7 @@ export default function Message({
             );
             break;
         case MessageType.IMAGE:
-            content = (
+            content = message.content && (
                 <PhotoProvider>
                     <PhotoView src={message.content}>
                         <TooltipProvider>
@@ -132,6 +133,20 @@ export default function Message({
                         </TooltipProvider>
                     </PhotoView>
                 </PhotoProvider>
+            );
+            break;
+        case MessageType.FILE:
+            const fileType = getFileType(message.content);
+            content = (
+                <a
+                    className="flex items-center gap-2 p-2 border rounded-lg bg-gray-100 text-blue-600"
+                    href={message.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <FileIcon type={fileType} />
+                    {message.fileName}
+                </a>
             );
             break;
         case MessageType.NOTIFICATION:

@@ -249,7 +249,7 @@ export default function Comment({ postId, comment }: { postId: string; comment: 
             setSendingReply(true);
             let imageUrl;
             if (imageUploadWriteComment) {
-                imageUrl = await uploadToCloudinary(imageUploadWriteComment);
+                imageUrl = (await uploadToCloudinary(imageUploadWriteComment))?.fileUrl;
             }
             handleClearFile();
             setContentReply('');

@@ -188,7 +188,6 @@ export default function RecentConversations({ className }: { className?: string 
             });
 
             if (sender.userId !== userInfo.id) {
-                console.log(conversationsUnread, conversationId);
                 const existingConversationUnread = conversationsUnread.includes(conversationId);
 
                 if (!existingConversationUnread) {
@@ -413,7 +412,6 @@ export default function RecentConversations({ className }: { className?: string 
                                         const isGroup = conversation.conversationType === ConversationType.GROUP;
                                         const isSender = conversation.lastMessage.sender.userId === userInfo.id;
 
-                                        console.log(conversation);
                                         switch (conversation.lastMessage.messageType) {
                                             case MessageType.TEXT:
                                                 if (isPrivate) {

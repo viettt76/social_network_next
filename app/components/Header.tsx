@@ -1,6 +1,6 @@
 'use client';
 
-import { BellRinging, CaretDown, Moon, MagnifyingGlass, Sun, UserPlus, SignOut, Gear } from '@phosphor-icons/react';
+import { CaretDown, Moon, MagnifyingGlass, Sun, UserPlus, SignOut, Gear } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { Link, useRouter } from '@/i18n/routing';

@@ -97,6 +97,7 @@ export type MessageData = {
     messageId: string;
     conversationId: string;
     content: string;
+    fileName?: string;
     messageType: MessageType;
     sender: UserInfoType;
     currentReaction: ReactionNameType | null;

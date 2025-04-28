@@ -6,18 +6,28 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-export const uploadToCloudinary = async (image: File) => {
+export const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
 
-    formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_KEY as string);
-    formData.append('file', image);
-    formData.append('public_id', `file_${Date.now()}`);
-    formData.append('timestamp', (Date.now() / 1000).toString());
+    formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET as string);
 
+    const isImage = file.type.startsWith('image/');
+
+    const uploadUrl = isImage
+        ? `${process.env.NEXT_PUBLIC_CLOUDINARY_URL}/image/upload`
+        : `${process.env.NEXT_PUBLIC_CLOUDINARY_URL}/raw/upload`;
+
+    // formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_KEY as string);
+    // formData.append('public_id', `file_${Date.now()}`);
+    // formData.append('timestamp', (Date.now() / 1000).toString());
+
     try {
-        const res = await axios.post(process.env.NEXT_PUBLIC_CLOUDINARY_URL as string, formData);
-        return res.data?.secure_url;
+        const res = await axios.post(uploadUrl, formData);
+        return {
+            fileUrl: res.data?.secure_url,
+            fileName: res.data?.original_filename,
+        };
     } catch (error) {
         console.error('Error uploading image to Cloudinary:', error);
     }
@@ -87,4 +97,19 @@ export const getTimeFromISO = (isoString: string | Date) => {
 
 export const padNumber = (number: number | string, length = 2) => {
     return number.toString().padStart(length, '0');
+};
+
+export const getFileType = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase();
+
+    if (!extension) return 'file';
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) return 'image';
+    if (['doc', 'docx'].includes(extension)) return 'word';
+    if (['xls', 'xlsx'].includes(extension)) return 'excel';
+    if (['pdf'].includes(extension)) return 'pdf';
+    if (['ppt', 'pptx'].includes(extension)) return 'powerpoint';
+    if (['zip', 'rar', '7z'].includes(extension)) return 'archive';
+
+    return 'file';
 };

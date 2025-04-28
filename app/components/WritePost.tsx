@@ -56,7 +56,7 @@ export default function WritePost() {
         try {
             const imageUrls = await Promise.all(
                 imagesUpload.map(async (image) => {
-                    return await uploadToCloudinary(image);
+                    return (await uploadToCloudinary(image))?.fileUrl;
                 }),
             );
 

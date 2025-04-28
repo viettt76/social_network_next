@@ -33,14 +33,16 @@ export const sendMessageService = ({
     conversationId,
     content,
     type,
-    image,
+    fileUrl,
+    fileName,
 }: {
     conversationId: string;
     content?: string;
     type: MessageType;
-    image?: string;
+    fileUrl?: string;
+    fileName?: string;
 }) => {
-    return axios.post('/conversations/messages', { conversationId, content, type, image });
+    return axios.post('/conversations/messages', { conversationId, content, type, image: fileUrl, fileName });
 };
 
 export const getMessagesService = ({ conversationId, page }: { conversationId: string; page: number }) => {

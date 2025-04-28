@@ -255,7 +255,7 @@ export default function Post({ postInfo }: { postInfo: PostInfoType }) {
         try {
             let imageUrl;
             if (imageUploadWriteComment) {
-                imageUrl = await uploadToCloudinary(imageUploadWriteComment);
+                imageUrl = (await uploadToCloudinary(imageUploadWriteComment))?.fileUrl;
             }
             handleClearFile();
             setContentWriteComment('');

@@ -115,7 +115,7 @@ export default function ProfileHeader() {
             const file = await fetch(croppedImage)
                 .then((res) => res.blob())
                 .then((blob) => new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' }));
-            const imageUrl = await uploadToCloudinary(file);
+            const imageUrl = (await uploadToCloudinary(file))?.fileUrl;
             await changeInformationService({ avatar: imageUrl });
 
             dispatch(setInfo({ avatar: imageUrl }));
