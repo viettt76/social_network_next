@@ -169,7 +169,7 @@ export default function Login() {
                             </Button>
                             <div className="text-sm mt-2">
                                 Bạn chưa có tài khoản?
-                                <Link href="signup" className="text-primary ms-1">
+                                <Link href="/signup" className="text-primary ms-1">
                                     Đăng ký
                                 </Link>
                             </div>

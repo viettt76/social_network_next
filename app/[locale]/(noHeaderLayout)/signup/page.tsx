@@ -260,7 +260,7 @@ export default function Signup() {
                         </form>
                     </Form>
                     <div className="flex justify-center">
-                        <Link href="login" className="text-primary underline mt-2">
+                        <Link href="/login" className="text-primary underline mt-2">
                             Login
                         </Link>
                     </div>
