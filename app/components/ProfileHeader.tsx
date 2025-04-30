@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { ImageSquare, Newspaper, Users } from '@phosphor-icons/react';
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
+import { Check, Ellipsis, Pencil, Trash2, UserX } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo, setInfo } from '@/lib/slices/userSlice';
 import {
@@ -29,6 +29,18 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import {
+    deleteFriendRequestByUserIdService,
+    deleteFriendRequestService,
+    sendFriendRequestService,
+    unfriendService,
+} from '@/lib/services/relationshipService';
+import { removeFriend, selectFriends } from '@/lib/slices/relationshipSlice';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Button as ButtonFlowBite } from 'flowbite-react';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 interface Crop {
     x: number;
@@ -56,8 +68,10 @@ export default function ProfileHeader() {
 
     const dispatch = useAppDispatch();
     const currentUserInfo = useAppSelector(selectUserInfo);
+    const friends = useAppSelector(selectFriends);
 
     const [userInfo, setUserInfo] = useState<UserInfoType>();
+    const [isSentFriendRequest, setIsSentFriendRequest] = useState(false);
 
     const [updateAvatar, setUpdateAvatar] = useState<string>('');
     const [showModalUpdateAvatar, setShowModalUpdateAvatar] = useState(false);
@@ -65,6 +79,9 @@ export default function ProfileHeader() {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Crop | null>(null);
+
+    const [showModalUnfriend, setShowModalUnfriend] = useState(false);
+    const [showMenuFriend, setShowMenuFriend] = useState(false);
 
     useEffect(() => {
         if (!userId) {
@@ -79,6 +96,7 @@ export default function ProfileHeader() {
                     avatar: data.avatar,
                     isPrivate: data.isPrivate,
                 });
+                setIsSentFriendRequest(data.relationship === 'FRIEND_REQUEST');
             })();
         }
     }, [userId, currentUserInfo]);
@@ -127,12 +145,51 @@ export default function ProfileHeader() {
         }
     };
 
+    const handleSendFriendRequest = async () => {
+        try {
+            if (typeof userId === 'string') {
+                await sendFriendRequestService(userId);
+                setIsSentFriendRequest(true);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleUnfriend = async () => {
+        try {
+            if (typeof userId === 'string') {
+                dispatch(removeFriend(userId));
+                setShowModalUnfriend(false);
+                await unfriendService(userId);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleRevokeRequest = async () => {
+        try {
+            if (typeof userId === 'string') {
+                await deleteFriendRequestByUserIdService(userId);
+                setIsSentFriendRequest(false);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError && error.status === 404) {
+                toast.info(error.response?.data.message, {
+                    duration: 2500,
+                });
+            }
+            console.error(error);
+        }
+    };
+
     return (
         <div className="max-w-[1024px] mx-auto">
             <div
                 className="bg-norepeat bg-center relative h-36 rounded-ee-lg rounded-es-lg drop-shadow-xl"
                 style={{
-                    background: 'url("/images/logo.png")',
+                    background: 'url("/images/nature.jpg")',
                 }}
             >
                 <div className="flex items-center absolute -bottom-6 left-6">
@@ -143,8 +200,75 @@ export default function ProfileHeader() {
                         height={800}
                         alt="avatar"
                     />
-                    <div className="text-3xl -translate-y-4 font-semibold text-background drop-shadow-2xl">
-                        {userInfo?.lastName} {userInfo?.firstName}
+                    <div className="relative">
+                        <div className="text-3xl -translate-y-4 font-semibold text-background drop-shadow-2xl">
+                            {userInfo?.lastName} {userInfo?.firstName}
+                        </div>
+                        {userId && (
+                            <div className="absolute -bottom-5">
+                                {friends.some((f) => f.userId === userId) ? (
+                                    <>
+                                        <DropdownMenu open={showMenuFriend} onOpenChange={setShowMenuFriend}>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    className="bg-blue-600 hover:bg-blue-70"
+                                                    onClick={() => setShowMenuFriend(true)}
+                                                >
+                                                    Bạn bè <Check />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-40">
+                                                <DropdownMenuGroup>
+                                                    <DropdownMenuItem
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setShowModalUnfriend(true);
+                                                            setShowMenuFriend(false);
+                                                        }}
+                                                    >
+                                                        Huỷ kết bạn
+                                                        <DropdownMenuShortcut>
+                                                            <UserX />
+                                                        </DropdownMenuShortcut>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+
+                                        <Dialog open={showModalUnfriend} onOpenChange={setShowModalUnfriend}>
+                                            <DialogContent className="sm:max-w-[600px]">
+                                                <DialogTitle></DialogTitle>
+                                                <span className="whitespace-nowrap">
+                                                    Bạn có chắc chắn muốn huỷ kết bạn với{' '}
+                                                    <b>
+                                                        {userInfo?.lastName} {userInfo?.firstName}
+                                                    </b>
+                                                </span>
+                                                <DialogFooter>
+                                                    <ButtonFlowBite
+                                                        color="failure"
+                                                        onClick={() => setShowModalUnfriend(false)}
+                                                    >
+                                                        Huỷ
+                                                    </ButtonFlowBite>
+                                                    <ButtonFlowBite color="blue" onClick={handleUnfriend}>
+                                                        Xác nhận
+                                                    </ButtonFlowBite>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </>
+                                ) : isSentFriendRequest ? (
+                                    <Button variant="destructive" onClick={handleRevokeRequest}>
+                                        Huỷ lời mời
+                                    </Button>
+                                ) : (
+                                    <Button className="bg-blue-600 hover:bg-blue-70" onClick={handleSendFriendRequest}>
+                                        Thêm bạn bè
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
                 {!userId && (

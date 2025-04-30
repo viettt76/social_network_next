@@ -127,7 +127,7 @@ export default function ProfileOther() {
             <div className="flex-1 justify-end">
                 {posts.length > 0 && (
                     <>
-                        <div className="mt-4">
+                        <div>
                             {posts.map((post: PostInfoType) => (
                                 <Post key={`post-${post.postId}`} postInfo={post} />
                             ))}
