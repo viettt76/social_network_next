@@ -29,11 +29,10 @@ interface WatchHistory {
         }
     >;
 }
-
-export const HISTORY_KEY = 'watchHistory';
+const HISTORY_KEY = 'watchHistory';
 
 // Get history from localstorage
-export const getWatchHistory = (): Record<string, WatchHistory> => {
+const getWatchHistory = (): Record<string, WatchHistory> => {
     if (typeof window === 'undefined') return {};
     try {
         return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
@@ -43,7 +42,7 @@ export const getWatchHistory = (): Record<string, WatchHistory> => {
 };
 
 // Update history view
-export const updateWatchHistory = (slug: string, progress: number, type: MovieType, currentEpisode?: number) => {
+const updateWatchHistory = (slug: string, progress: number, type: MovieType, currentEpisode?: number) => {
     const history = getWatchHistory();
     history[slug] = {
         slug,
@@ -65,13 +64,13 @@ export const updateWatchHistory = (slug: string, progress: number, type: MovieTy
 };
 
 // Get the history of a movie
-export const getShowHistory = (slug: string): WatchHistory | null => {
+const getShowHistory = (slug: string): WatchHistory | null => {
     const history = getWatchHistory();
     return history[slug] || null;
 };
 
 // Delete the viewing process
-export const removeWatchProgress = (slug: string, episode?: number) => {
+const removeWatchProgress = (slug: string, episode?: number) => {
     const history = getWatchHistory();
     if (history[slug].type === MovieType.MOVIE) {
         delete history[slug];

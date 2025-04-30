@@ -6,7 +6,6 @@ import { getMovieDetailBySlugService } from '@/lib/services/movieService';
 import { MediaPlayer, MediaPlayerInstance, MediaProvider, Poster } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import { cn } from '@/lib/utils';
-import { getShowHistory, removeWatchProgress, updateWatchHistory } from '../page';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -18,6 +17,70 @@ import { Button } from '@/components/ui/button';
 import { convertSecondsToTime } from '@/lib/utils';
 import { MovieSource, MovieType } from '@/app/dataType';
 import AutoLink from '@/app/components/AutoLink';
+
+interface WatchHistory {
+    slug: string;
+    type: MovieType;
+    currentEpisode?: number;
+    progress?: number;
+    episodes?: Record<
+        number,
+        {
+            episode: number;
+            progress: number;
+        }
+    >;
+}
+const HISTORY_KEY = 'watchHistory';
+
+// Get history from localstorage
+const getWatchHistory = (): Record<string, WatchHistory> => {
+    if (typeof window === 'undefined') return {};
+    try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+    } catch {
+        return {};
+    }
+};
+
+// Update history view
+const updateWatchHistory = (slug: string, progress: number, type: MovieType, currentEpisode?: number) => {
+    const history = getWatchHistory();
+    history[slug] = {
+        slug,
+        type,
+        ...(type === MovieType.MOVIE && { progress }),
+        ...(type === MovieType.TV &&
+            currentEpisode && {
+                episodes: {
+                    ...history[slug]?.episodes,
+                    [currentEpisode]: {
+                        progress,
+                        episode: currentEpisode,
+                    },
+                },
+            }),
+    };
+
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+};
+
+// Get the history of a movie
+const getShowHistory = (slug: string): WatchHistory | null => {
+    const history = getWatchHistory();
+    return history[slug] || null;
+};
+
+// Delete the viewing process
+const removeWatchProgress = (slug: string, episode?: number) => {
+    const history = getWatchHistory();
+    if (history[slug].type === MovieType.MOVIE) {
+        delete history[slug];
+    } else if (history[slug].episodes && episode) {
+        delete history[slug].episodes[episode];
+    }
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+};
 
 export default function WatchTVShow() {
     const searchParams = useSearchParams();
