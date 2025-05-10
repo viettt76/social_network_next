@@ -6,36 +6,54 @@ const instance = axios.create({
     withCredentials: true,
 });
 
-export const SetupInterceptors = (router) => {
-    instance.interceptors.request.use(
-        function (config) {
-            return config;
-        },
-        function (error) {
-            return Promise.reject(error);
-        },
-    );
+// export const SetupInterceptors = (router) => {
+//     instance.interceptors.request.use(
+//         function (config) {
+//             return config;
+//         },
+//         function (error) {
+//             return Promise.reject(error);
+//         },
+//     );
 
-    instance.interceptors.response.use(
-        function (response) {
-            return response;
-        },
-        function (error) {
-            if (
-                error instanceof AxiosError &&
-                error.status === 403 &&
-                error.response?.data?.code === 'ACCOUNT_LOCKED'
-            ) {
-                router.push(`/login`);
-                toast.error(error.response?.data.message, {
-                    duration: 2500,
-                });
-            }
-            return Promise.reject(error);
-        },
-    );
+//     instance.interceptors.response.use(
+//         function (response) {
+//             return response;
+//         },
+//         function (error) {
+//             if (
+//                 error instanceof AxiosError &&
+//                 error.status === 403 &&
+//                 error.response?.data?.code === 'ACCOUNT_LOCKED'
+//             ) {
+//                 router.push(`/login`);
+//                 toast.error(error.response?.data.message, {
+//                     duration: 2500,
+//                 });
+//             }
+//             return Promise.reject(error);
+//         },
+//     );
 
-    return instance;
-};
+//     return instance;
+// };
+
+instance.interceptors.request.use(
+    function (config) {
+        return config;
+    },
+    function (error) {
+        return Promise.reject(error);
+    },
+);
+
+instance.interceptors.response.use(
+    function (response) {
+        return response;
+    },
+    function (error) {
+        return Promise.reject(error);
+    },
+);
 
 export default instance;

@@ -5,10 +5,10 @@ import AppProvider from '@/app/components/AppProvider';
 import ScrollToTop from '@/app/components/ScrollToTop';
 import SocketProvider from '@/app/components/SocketProvider';
 import ConversationBubbles from '@/app/components/ConversationBubbles';
-import { usePathname, useRouter } from '@/i18n/routing';
+import { usePathname } from '@/i18n/routing';
 import MovieHeader from '@/app/components/MovieHeader';
-import { useState } from 'react';
-import { SetupInterceptors } from '@/lib/services/api';
+// import { useState } from 'react';
+// import { SetupInterceptors } from '@/lib/services/api';
 
 export default function DefaultLayout({
     children,
@@ -19,7 +19,7 @@ export default function DefaultLayout({
 
     return (
         <AppProvider>
-            <NavigateFunctionComponent />
+            {/* <NavigateFunctionComponent /> */}
             <SocketProvider>
                 <ConversationBubbles />
                 <ScrollToTop />
@@ -32,13 +32,13 @@ export default function DefaultLayout({
     );
 }
 
-function NavigateFunctionComponent() {
-    const router = useRouter();
-    const [ran, setRan] = useState(false);
+// function NavigateFunctionComponent() {
+//     const router = useRouter();
+//     const [ran, setRan] = useState(false);
 
-    if (!ran) {
-        SetupInterceptors(router);
-        setRan(true);
-    }
-    return <></>;
-}
+//     if (!ran) {
+//         SetupInterceptors(router);
+//         setRan(true);
+//     }
+//     return <></>;
+// }
