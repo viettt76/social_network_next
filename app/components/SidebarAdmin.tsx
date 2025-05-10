@@ -1,12 +1,13 @@
 'use client';
 
-import { CircleX, LayoutList } from 'lucide-react';
+import { CircleX, LayoutList, UserRoundCog } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 
 const MENU_SETTINGS = [
     { href: '/admin/manage-posts', icon: LayoutList, label: 'Quản lý bài viết' },
     { href: '/admin/rejected-posts', icon: CircleX, label: 'Bài viết đã từ chối' },
+    { href: '/admin/manage-users', icon: UserRoundCog, label: 'Quản lý người dùng' },
 ];
 
 export default function SidebarAdmin() {

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { useAppDispatch } from '@/lib/hooks';
 import { resetInfo } from '@/lib/slices/userSlice';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 export default function AccountSettings() {
     const router = useRouter();
@@ -58,6 +59,7 @@ export default function AccountSettings() {
                 newPassword: changePasswordFormData.newPassword,
             });
             dispatch(resetInfo());
+            toast.success('Cập nhật mật khẩu thành công');
 
             router.push('/login');
         } catch (error) {
@@ -70,11 +72,11 @@ export default function AccountSettings() {
         try {
             await deleteAccountService(passwordToDeleteAccount);
             dispatch(resetInfo());
-
+            toast.info('Tài khoản');
             router.push('/login');
         } catch (error) {
             console.log(error);
-            if (error instanceof AxiosError && error.status === 400) {
+            if (error instanceof AxiosError && (error.status === 400 || error.status === 422)) {
                 setPasswordToDeleteAccountIncorrect(true);
             }
         }

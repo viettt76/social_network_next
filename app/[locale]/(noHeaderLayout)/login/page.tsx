@@ -55,7 +55,11 @@ export default function Login() {
                 message: error instanceof AxiosError && error.response?.data?.message,
             });
             console.error(error);
-            if (error instanceof AxiosError && error.status === 403) {
+            if (
+                error instanceof AxiosError &&
+                error.status === 403 &&
+                error.response?.data?.code === 'ACCOUNT_SOFT_DELETED'
+            ) {
                 setIsAccountDeleted(true);
             }
         }
@@ -165,7 +169,7 @@ export default function Login() {
                                 </Dialog>
                             )}
                             <Button className="w-3/5 mt-6 py-1 bg-primary text-background rounded-full" type="submit">
-                                Login
+                                Đăng nhập
                             </Button>
                             <div className="text-sm mt-2">
                                 Bạn chưa có tài khoản?

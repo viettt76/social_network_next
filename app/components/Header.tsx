@@ -13,8 +13,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
-import { resetInfo, selectUserInfo } from '@/lib/slices/userSlice';
+import { resetInfo, Role, selectUserInfo } from '@/lib/slices/userSlice';
 import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 import RecentConversations from './RecentConversations';
@@ -23,11 +22,14 @@ import { searchService } from '@/lib/services/userService';
 import { UserInfoType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
 import SystemNotification from './SystemNotification';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { BadgeCheck } from 'lucide-react';
 
 export default function Header() {
     const { theme, setTheme } = useTheme();
     const dispatch = useAppDispatch();
-    const { toast } = useToast();
     const router = useRouter();
 
     const userInfo = useAppSelector(selectUserInfo);
@@ -46,6 +48,8 @@ export default function Header() {
 
     const searchRef = useRef<HTMLDivElement | null>(null);
     useClickOutside(searchRef, () => setShowSearchResult(false));
+
+    const [showConfirmLogout, setShowConfirmLogout] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -85,8 +89,8 @@ export default function Header() {
             dispatch(resetInfo());
             router.push('/login');
         } catch (error) {
-            toast({
-                title: 'Logout fail!',
+            toast.error('Có lỗi xảy ra. Vui lòng thực hiện lại!', {
+                duration: 2500,
             });
             console.error(error);
         }
@@ -191,16 +195,46 @@ export default function Header() {
                                         Cài đặt
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
+
+                                {userInfo.role === Role.ADMIN && (
+                                    <DropdownMenuItem>
+                                        <Link
+                                            href="/admin/manage-posts"
+                                            className="flex items-center"
+                                            onClick={handleHideUserDashboard}
+                                        >
+                                            <div className="w-6">
+                                                <BadgeCheck className="w-5 h-5" />
+                                            </div>
+                                            Trang admin
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem className="cursor-pointer" onClick={() => setShowConfirmLogout(true)}>
                                     <div className="flex items-center">
                                         <div className="w-6">
                                             <SignOut className="w-5 h-5" />
                                         </div>
-                                        Log out
+                                        Đăng xuất
                                     </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Dialog open={showConfirmLogout} onOpenChange={setShowConfirmLogout}>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Bạn có chắc muốn đăng xuất</DialogTitle>
+                                </DialogHeader>
+                                <DialogFooter>
+                                    <Button variant="ghost" onClick={() => setShowConfirmLogout(false)}>
+                                        Huỷ
+                                    </Button>
+                                    <Button variant="destructive" onClick={handleLogout}>
+                                        Đăng xuất
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                         <button
                             onClick={toggleTheme}
                             className="relative w-12 h-6 bg-muted rounded-full transition-all duration-300 flex items-center justify-between px-1"
