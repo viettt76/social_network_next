@@ -30,7 +30,7 @@ export default function SuggestionsPanel() {
             <div className="bg-background rounded-xl py-2 px-2">
                 <div className="flex justify-between items-center">
                     <div className="text-sm">Bạn bè được đề xuất</div>
-                    <Link href="/friend/suggestions" tabIndex={-1} className="text-sm text-primary font-medium">
+                    <Link href="/friends/suggestions" tabIndex={-1} className="text-sm text-primary font-medium">
                         Xem tất cả
                     </Link>
                 </div>
