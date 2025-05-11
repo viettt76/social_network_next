@@ -221,16 +221,10 @@ export default function ManageUsers() {
                                                         <div className="w-full border-b pb-2 flex items-center mt-3">
                                                             <LockKey className="w-5 h-5 me-2" />
                                                             <input
-                                                                type={isShowPassword ? 'text' : 'password'}
                                                                 className="w-4/5 p-0 border-none outline-none focus:shadow-none focus:ring-transparent"
                                                                 placeholder="Type your password"
                                                                 {...field}
                                                             />
-                                                            {isShowPassword ? (
-                                                                <EyeSlash onClick={() => setIsShowPassword(false)} />
-                                                            ) : (
-                                                                <Eye onClick={() => setIsShowPassword(true)} />
-                                                            )}
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage className="!mt-1" />
@@ -246,7 +240,6 @@ export default function ManageUsers() {
                                                         <div className="w-full border-b pb-2 flex items-center mt-3">
                                                             <LockKey className="w-5 h-5 me-2" />
                                                             <input
-                                                                type={isShowPassword ? 'text' : 'password'}
                                                                 className="w-4/5 p-0 border-none outline-none focus:shadow-none focus:ring-transparent"
                                                                 placeholder="Type your confirm password"
                                                                 {...field}
