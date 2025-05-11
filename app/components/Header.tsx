@@ -210,7 +210,7 @@ export default function Header() {
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem className="cursor-pointer" onClick={() => setShowConfirmLogout(true)}>
+                                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                                     <div className="flex items-center">
                                         <div className="w-6">
                                             <SignOut className="w-5 h-5" />
@@ -220,7 +220,7 @@ export default function Header() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Dialog open={showConfirmLogout} onOpenChange={setShowConfirmLogout}>
+                        {/* <Dialog open={showConfirmLogout} onOpenChange={setShowConfirmLogout}>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
                                     <DialogTitle>Bạn có chắc muốn đăng xuất</DialogTitle>
@@ -234,7 +234,7 @@ export default function Header() {
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
-                        </Dialog>
+                        </Dialog> */}
                         <button
                             onClick={toggleTheme}
                             className="relative w-12 h-6 bg-muted rounded-full transition-all duration-300 flex items-center justify-between px-1"

@@ -72,7 +72,7 @@ export default function AccountSettings() {
         try {
             await deleteAccountService(passwordToDeleteAccount);
             dispatch(resetInfo());
-            toast.info('Tài khoản');
+            toast.info('Tài khoản của bạn đã bị xoá');
             router.push('/login');
         } catch (error) {
             console.log(error);
