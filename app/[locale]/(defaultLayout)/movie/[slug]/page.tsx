@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { convertSecondsToTime } from '@/lib/utils';
 import { MovieSource, MovieType } from '@/app/dataType';
+import SuggestedMovies from '@/app/components/SuggestedMovies';
 
 interface WatchHistory {
     slug: string;
@@ -137,50 +138,57 @@ export default function WatchMovie() {
     };
 
     return (
-        <div className="max-w-[1024px] mx-auto px-2 sm:px-4">
-            {movieInfo && (
-                <>
-                    {showContinueModal && (
-                        <AlertDialog open={showContinueModal} onOpenChange={setShowContinueModal}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                        <div className="text-base font-normal">
-                                            Bạn đang xem đến{' '}
-                                            <span className="text-orange-400">
-                                                {convertSecondsToTime(watchHistory?.progress || 0)}
-                                            </span>
-                                        </div>
-                                        <div className="text-base font-normal">Bạn có muốn tiếp tục xem không?</div>
-                                    </AlertDialogTitle>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <Button variant="outline" onClick={handleStartFromBeginning}>
-                                        Bắt đầu mới
-                                    </Button>
-                                    <Button onClick={handleContinueWatching}>Tiếp tục xem</Button>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                    <MediaPlayer
-                        ref={playerRef}
-                        className="mt-2 max-w-full w-full aspect-video"
-                        src={movieInfo.source}
-                        viewType="video"
-                        streamType="on-demand"
-                        logLevel="warn"
-                        crossOrigin
-                        playsInline
-                        poster={movieInfo.posterUrl}
-                    >
-                        <MediaProvider>
-                            <Poster className="vds-poster" />
-                        </MediaProvider>
-                        <DefaultVideoLayout icons={defaultLayoutIcons} />
-                    </MediaPlayer>
-                </>
-            )}
+        <div className="flex px-10 pt-2">
+            <div className="max-w-[900px] px-2 sm:px-4">
+                {movieInfo && (
+                    <>
+                        {showContinueModal && (
+                            <AlertDialog open={showContinueModal} onOpenChange={setShowContinueModal}>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            <div className="text-base font-normal">
+                                                Bạn đang xem đến{' '}
+                                                <span className="text-orange-400">
+                                                    {convertSecondsToTime(watchHistory?.progress || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="text-base font-normal">Bạn có muốn tiếp tục xem không?</div>
+                                        </AlertDialogTitle>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <Button variant="outline" onClick={handleStartFromBeginning}>
+                                            Bắt đầu mới
+                                        </Button>
+                                        <Button onClick={handleContinueWatching}>Tiếp tục xem</Button>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                        <MediaPlayer
+                            ref={playerRef}
+                            className="max-w-full w-full aspect-video"
+                            src={movieInfo.source}
+                            viewType="video"
+                            streamType="on-demand"
+                            logLevel="warn"
+                            crossOrigin
+                            playsInline
+                            poster={movieInfo.posterUrl}
+                        >
+                            <MediaProvider>
+                                <Poster className="vds-poster" />
+                            </MediaProvider>
+                            <DefaultVideoLayout icons={defaultLayoutIcons} />
+                        </MediaPlayer>
+                        <div className="mt-6 pt-6 border-t border-white">
+                            <div className="text-white text-2xl font-semibold">{movieInfo.name}</div>
+                            <div className="text-gray mt-4">{movieInfo.content}</div>
+                        </div>
+                    </>
+                )}
+            </div>
+            {movieInfo?.genres && <SuggestedMovies className="flex-1" genres={movieInfo.genres} />}
         </div>
     );
 }

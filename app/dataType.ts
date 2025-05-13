@@ -158,6 +158,8 @@ export interface MovieSource {
     posterUrl: string;
     numberOfEpisodes: number;
     type: MovieType;
+    genres: [];
+    content: string;
 }
 
 export interface MovieCountry {

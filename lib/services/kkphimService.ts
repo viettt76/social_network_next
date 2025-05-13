@@ -33,6 +33,8 @@ export const getMovieDetailBySlugService = async (slug: string): Promise<MovieSo
         posterUrl: data.movie.poster_url,
         numberOfEpisodes: data.episodes[0].server_data.length,
         type: data.movie.tmdb.type,
+        genres: data.movie.category.map((c) => c.slug),
+        content: data.movie.content,
     };
 };
 

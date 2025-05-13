@@ -22,6 +22,7 @@ interface MovieItemProps {
     type: MovieType;
     isFirst: boolean;
     isLast: boolean;
+    className?: string;
     favoriteSource?: number;
     handleRemoveFavoriteMovie?: ({ movieId, favoriteSource }: { movieId: string; favoriteSource: Source }) => void;
 }
@@ -35,6 +36,7 @@ export function MovieItem({
     type,
     isFirst,
     isLast,
+    className,
     favoriteSource,
     handleRemoveFavoriteMovie,
 }: MovieItemProps) {
@@ -135,7 +137,7 @@ export function MovieItem({
                         >
                             <Image
                                 loading="eager"
-                                className="w-full h-full object-cover cursor-pointer rounded-sm"
+                                className={cn('w-full h-full object-cover cursor-pointer rounded-sm', className)}
                                 src={thumbUrl}
                                 alt="thumb"
                                 width={2000}

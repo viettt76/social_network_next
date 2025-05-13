@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { convertSecondsToTime } from '@/lib/utils';
 import { MovieSource, MovieType } from '@/app/dataType';
 import AutoLink from '@/app/components/AutoLink';
+import SuggestedMovies from '@/app/components/SuggestedMovies';
 
 interface WatchHistory {
     slug: string;
@@ -149,72 +150,81 @@ export default function WatchTVShow() {
     };
 
     return (
-        <div className="max-w-[1024px] mx-auto px-2 sm:px-4">
-            {movieInfo && (
-                <>
-                    {showContinueModal && (
-                        <AlertDialog open={showContinueModal} onOpenChange={setShowContinueModal}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                        <div className="text-base font-normal">
-                                            Bạn đang xem đến{' '}
-                                            <span className="text-orange-400">
-                                                {watchHistory?.episodes &&
-                                                    convertSecondsToTime(
-                                                        watchHistory.episodes[currentEpisode].progress || 0,
-                                                    )}
-                                            </span>
-                                        </div>
-                                        <div className="text-base font-normal">Bạn có muốn tiếp tục xem không?</div>
-                                    </AlertDialogTitle>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <Button variant="outline" onClick={handleStartFromBeginning}>
-                                        Bắt đầu mới
-                                    </Button>
-                                    <Button onClick={handleContinueWatching}>Tiếp tục xem</Button>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                    <MediaPlayer
-                        ref={playerRef}
-                        className="mt-2 max-w-full w-full aspect-video"
-                        src={movieInfo?.source}
-                        viewType="video"
-                        streamType="on-demand"
-                        logLevel="warn"
-                        crossOrigin
-                        playsInline
-                        poster={movieInfo?.posterUrl}
-                    >
-                        <MediaProvider>
-                            <Poster className="vds-poster" />
-                        </MediaProvider>
-                        <DefaultVideoLayout icons={defaultLayoutIcons} />
-                    </MediaPlayer>
-                    <div className="text-white mt-6 mb-4">
-                        <div className="text-2xl text-orange-400">TẬP PHIM</div>
-                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 mt-3">
-                            {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
-                                return (
-                                    <AutoLink
-                                        href={`/movie/${slug}/${i + 1}`}
-                                        className={cn(
-                                            'bg-white text-black h-10 flex justify-center items-center rounded-md',
-                                            i === currentEpisode - 1 && 'bg-red-600 text-white',
-                                        )}
-                                        key={`${slug}-episode-${i}`}
-                                    >
-                                        {i + 1}
-                                    </AutoLink>
-                                );
-                            })}
+        <div className="flex px-10 pt-2">
+            <div className="max-w-[900px] px-2 sm:px-4">
+                {movieInfo && (
+                    <>
+                        {showContinueModal && (
+                            <AlertDialog open={showContinueModal} onOpenChange={setShowContinueModal}>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            <div className="text-base font-normal">
+                                                Bạn đang xem đến{' '}
+                                                <span className="text-orange-400">
+                                                    {watchHistory?.episodes &&
+                                                        convertSecondsToTime(
+                                                            watchHistory.episodes[currentEpisode].progress || 0,
+                                                        )}
+                                                </span>
+                                            </div>
+                                            <div className="text-base font-normal">Bạn có muốn tiếp tục xem không?</div>
+                                        </AlertDialogTitle>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <Button variant="outline" onClick={handleStartFromBeginning}>
+                                            Bắt đầu mới
+                                        </Button>
+                                        <Button onClick={handleContinueWatching}>Tiếp tục xem</Button>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                        <MediaPlayer
+                            ref={playerRef}
+                            className="max-w-full w-full aspect-video"
+                            src={movieInfo?.source}
+                            viewType="video"
+                            streamType="on-demand"
+                            logLevel="warn"
+                            crossOrigin
+                            playsInline
+                            poster={movieInfo?.posterUrl}
+                        >
+                            <MediaProvider>
+                                <Poster className="vds-poster" />
+                            </MediaProvider>
+                            <DefaultVideoLayout icons={defaultLayoutIcons} />
+                        </MediaPlayer>
+                        <div className="text-white mt-6 mb-4">
+                            <div className="text-2xl text-orange-400">TẬP PHIM</div>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 mt-3">
+                                {[...Array(movieInfo?.numberOfEpisodes).keys()].map((i) => {
+                                    return (
+                                        <AutoLink
+                                            href={`/movie/${slug}/${i + 1}`}
+                                            className={cn(
+                                                'bg-white text-black h-10 flex justify-center items-center rounded-md',
+                                                i === currentEpisode - 1 && 'bg-red-600 text-white',
+                                            )}
+                                            key={`${slug}-episode-${i}`}
+                                        >
+                                            {i + 1}
+                                        </AutoLink>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </>
-            )}
+                        <div className="mt-6 pt-6 border-t border-white">
+                            <div className="text-white text-2xl font-semibold">
+                                {movieInfo.name} - Tập {episode}
+                            </div>
+                            <div className="text-gray mt-4">{movieInfo.content}</div>
+                        </div>
+                    </>
+                )}
+            </div>
+            {movieInfo?.genres && <SuggestedMovies className="flex-1" genres={movieInfo.genres} />}
         </div>
     );
 }
