@@ -4,13 +4,14 @@ import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { acceptFriendRequestService, deleteFriendRequestService } from '@/lib/services/relationshipService';
 import { NotificationType, removeNotification, selectNotifications } from '@/lib/slices/notificationSlice';
 import { minusFriendRequestCount } from '@/lib/slices/userSlice';
+import { cn } from '@/lib/utils';
 import { BellRinging } from '@phosphor-icons/react';
 import { AxiosError } from 'axios';
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-export default function SystemNotification() {
+export default function SystemNotification({ className }: { className: string }) {
     const dispatch = useAppDispatch();
     const notifications = useAppSelector(selectNotifications);
 
@@ -67,7 +68,7 @@ export default function SystemNotification() {
     };
 
     return (
-        <div ref={systemNotificationRef} className="relative">
+        <div ref={systemNotificationRef} className={cn('relative', className)}>
             <BellRinging className="text-ring cursor-pointer" onClick={() => setShowNotifications(true)} />
             {notifications.length > 0 && (
                 <div className="absolute -top-2 -right-2 text-background bg-destructive rounded-full text-sm w-4 h-4 flex justify-center items-center">

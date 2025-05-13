@@ -19,7 +19,6 @@ import { logoutService } from '@/lib/services/authService';
 import { useEffect, useRef, useState } from 'react';
 import { AlignJustify, ChevronRight } from 'lucide-react';
 import { Drawer } from 'flowbite-react';
-import RecentConversations from './RecentConversations';
 import useDebounce from '@/hooks/useDebounce';
 import { searchMovieService, Source } from '@/lib/services/movieService';
 import { BaseMovieData } from '@/app/dataType';
@@ -27,6 +26,7 @@ import useClickOutside from '@/hooks/useClickOutside';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AutoLink from '@/app/components/AutoLink';
 import { useSearchParams } from 'next/navigation';
+import HeaderRight from './HeaderRight';
 
 export default function MovieHeader() {
     const { theme, setTheme } = useTheme();
@@ -276,47 +276,7 @@ export default function MovieHeader() {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center justify-around w-64">
-                        <AutoLink href="/friends/suggestions">
-                            <UserPlus className="text-white" />
-                        </AutoLink>
-                        <RecentConversations className="text-white" />
-                        <BellRinging className="text-white" />
-                        <DropdownMenu modal={false} open={showUserDashboard} onOpenChange={setShowUserDashboard}>
-                            <DropdownMenuTrigger asChild>
-                                <div className="flex items-center cursor-pointer">
-                                    <Image
-                                        className="rounded-full w-7 h-7 border border-white"
-                                        src="/images/default-avatar.png"
-                                        alt="avatar"
-                                        width={800}
-                                        height={800}
-                                    />
-                                    <CaretDown className="w-4 h-4 text-white" />
-                                </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56">
-                                <DropdownMenuLabel onClick={() => setShowUserDashboard(false)}>
-                                    <AutoLink href="/profile">My Account</AutoLink>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
-                                    <SignOut />
-                                    Log out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <button
-                            onClick={toggleTheme}
-                            className="relative w-12 h-6 bg-muted rounded-full transition-all duration-300 flex items-center justify-between px-1"
-                        >
-                            {theme === 'dark' ? (
-                                <Moon className="absolute top-1 right-1 w-4 h-4" />
-                            ) : (
-                                <Sun className="absolute color-red top-1 left-1 w-4 h-4" />
-                            )}
-                        </button>
-                    </div>
+                    <HeaderRight isDarkMode={true} />
                 </div>
             </div>
             <div className="h-16"></div>

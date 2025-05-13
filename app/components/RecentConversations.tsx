@@ -5,13 +5,14 @@ import Image from 'next/image';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CircleCheck, Plus } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import {
     createConversationService,
+    getGroupConversationsService,
     getRecentConversationsService,
     readMessageService,
 } from '@/lib/services/conversationService';
-import { MessageType, MessengerType, UserInfoType } from '@/app/dataType';
+import { GroupConversationType, MessageType, MessengerType, UserInfoType } from '@/app/dataType';
 import useClickOutside from '@/hooks/useClickOutside';
 import {
     ConversationType,
@@ -46,12 +47,17 @@ export default function RecentConversations({ className }: { className?: string 
         loading,
     });
 
+    const [searchFriendsToChat, setSearchFriendsToChat] = useState<UserInfoType[]>([]);
+    const [keywordSearchFriendsToChat, setKeywordSearchFriendsToChat] = useState('');
+
+    const [groups, setGroups] = useState<GroupConversationType[]>([]);
+
     const [showAddGroup, setShowAddGroup] = useState(false);
     const [groupName, setGroupName] = useState('');
     const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
-    const [searchFriendsResult, setSearchFriendsResult] = useState<UserInfoType[]>([]);
-    const [keywordSearchFriends, setKeywordSearchFriends] = useState('');
+    const [searchFriendsToCreateGroup, setSearchFriendsToCreateGroup] = useState<UserInfoType[]>([]);
+    const [keywordSearchFriendsToCreateGroup, setKeywordSearchFriendsToCreateGroup] = useState('');
 
     const normalize = useCallback((str) => {
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -65,14 +71,46 @@ export default function RecentConversations({ className }: { className?: string 
     );
 
     useEffect(() => {
-        if (keywordSearchFriends.trim() === '') {
-            setSearchFriendsResult(friends);
+        if (keywordSearchFriendsToChat.trim() === '') {
+            setSearchFriendsToChat([]);
         } else {
-            setSearchFriendsResult(
-                friends.filter((f) => includesInsensitive(`${f.lastName} ${f.firstName}`, keywordSearchFriends.trim())),
+            setSearchFriendsToChat([
+                ...friends.filter((f) =>
+                    includesInsensitive(`${f.lastName} ${f.firstName}`, keywordSearchFriendsToChat.trim()),
+                ),
+            ]);
+        }
+    }, [friends, keywordSearchFriendsToChat, includesInsensitive]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await getGroupConversationsService();
+                setGroups(
+                    res.data.map((g) => ({
+                        conversationId: g.conversationId,
+                        type: g.type,
+                        name: g.name,
+                        avatar: g.avatar,
+                    })),
+                );
+            } catch (error) {
+                console.error(error);
+            }
+        })();
+    }, []);
+
+    useEffect(() => {
+        if (keywordSearchFriendsToCreateGroup.trim() === '') {
+            setSearchFriendsToCreateGroup(friends);
+        } else {
+            setSearchFriendsToCreateGroup(
+                friends.filter((f) =>
+                    includesInsensitive(`${f.lastName} ${f.firstName}`, keywordSearchFriendsToCreateGroup.trim()),
+                ),
             );
         }
-    }, [friends, keywordSearchFriends, includesInsensitive]);
+    }, [friends, keywordSearchFriendsToCreateGroup, includesInsensitive]);
 
     // Get recent conversations
     useEffect(() => {
@@ -303,7 +341,10 @@ export default function RecentConversations({ className }: { className?: string 
     };
 
     const handleOpenAddGroup = () => setShowAddGroup(true);
-    const handleCloseAddGroup = () => setShowAddGroup(false);
+    const handleCloseAddGroup = () => {
+        setShowAddGroup(false);
+        setKeywordSearchFriendsToCreateGroup('');
+    };
 
     const handleChangeGroupMembers = (friendId: string) => {
         setGroupMembers((prev) => {
@@ -340,7 +381,7 @@ export default function RecentConversations({ className }: { className?: string 
                 </div>
             )}
             {showRecentConversations && (
-                <div className="absolute top-[calc(100%+0.5rem)] left-0 w-80 bg-background border shadow-all-sides rounded-xl pt-2">
+                <div className="absolute top-[calc(100%+0.5rem)] -right-10 w-80 bg-background border shadow-all-sides rounded-xl pt-2">
                     {showAddGroup ? (
                         <div className="px-2">
                             <div className="flex justify-between">
@@ -366,10 +407,10 @@ export default function RecentConversations({ className }: { className?: string 
                                 <input
                                     className="border px-2 py-1 text-sm placeholder:text-sm rounded-3xl w-full mt-2"
                                     placeholder="Tìm kiếm thành viên"
-                                    onChange={(e) => setKeywordSearchFriends(e.target.value)}
+                                    onChange={(e) => setKeywordSearchFriendsToCreateGroup(e.target.value)}
                                 />
                                 <div className="mt-2 flex flex-col gap-y-2">
-                                    {searchFriendsResult.map((friend) => {
+                                    {searchFriendsToCreateGroup.map((friend) => {
                                         return (
                                             <div className="flex items-center gap-x-2" key={`friend-${friend.userId}`}>
                                                 <Image
@@ -396,84 +437,125 @@ export default function RecentConversations({ className }: { className?: string 
                     ) : (
                         <>
                             <div className="flex items-center justify-between gap-x-2 mb-2 border-b px-4 pb-2">
-                                <div className="font-semibold ">Tin nhắn</div>
-                                {/* <input className="border px-2 py-1 rounded-3xl flex-1" placeholder="Tìm kiếm..." /> */}
-                                {/* <Plus onClick={handleOpenAddGroup} /> */}
-                                <div className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
-                                    Tạo nhóm
-                                </div>
+                                {/* <div className="font-semibold ">Tin nhắn</div> */}
+                                {keywordSearchFriendsToChat && (
+                                    <ArrowLeft
+                                        className="cursor-pointer"
+                                        onClick={() => setKeywordSearchFriendsToChat('')}
+                                    />
+                                )}
+                                <input
+                                    className="border px-2 py-1 rounded-3xl flex-1"
+                                    value={keywordSearchFriendsToChat}
+                                    placeholder="Tìm kiếm..."
+                                    onChange={(e) => setKeywordSearchFriendsToChat(e.target.value)}
+                                />
+                                <Plus className="text-primary cursor-pointer" onClick={handleOpenAddGroup} />
+                                {/* <div className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
+                                    <Plus className="w-10" />
+                                </div> */}
                             </div>
                             <div className="max-h-[22rem] overflow-y-auto px-2">
-                                <div className="flex flex-col">
-                                    {recentConversations.map((conversation) => {
-                                        const lastMessageContent = conversation.lastMessage.content;
-                                        let content = '';
-                                        const isPrivate = conversation.conversationType === ConversationType.PRIVATE;
-                                        const isGroup = conversation.conversationType === ConversationType.GROUP;
-                                        const isSender = conversation.lastMessage.sender.userId === userInfo.id;
-
-                                        switch (conversation.lastMessage.messageType) {
-                                            case MessageType.TEXT:
-                                                if (isPrivate) {
-                                                    if (isSender) content = `Bạn: ${lastMessageContent}`;
-                                                    else content = lastMessageContent;
-                                                } else if (isGroup) {
-                                                    if (isSender) content = `Bạn: ${lastMessageContent}`;
-                                                    else
-                                                        content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: ${lastMessageContent}`;
-                                                }
-                                                break;
-                                            case MessageType.IMAGE:
-                                                if (isSender) content = `Bạn vừa gửi 1 ảnh`;
-                                                else
-                                                    content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName} vừa gửi 1 ảnh`;
-
-                                                break;
-                                            case MessageType.NOTIFICATION:
-                                                content = lastMessageContent;
-                                                break;
-                                            default:
-                                                content = '';
-                                        }
-
-                                        return (
-                                            <div
-                                                className={`flex items-center gap-x-2 p-2 rounded-xl hover:bg-foreground/5 ${
-                                                    conversationsUnread.includes(conversation.conversationId) &&
-                                                    'bg-foreground/5'
-                                                }`}
-                                                key={`recent-conversation-${conversation.conversationId}`}
-                                                onClick={() =>
-                                                    handleOpenMessengerPopup({
-                                                        conversationId: conversation.conversationId,
-                                                        type: conversation.conversationType,
-                                                        friendId: conversation.friendId,
-                                                        name: conversation.conversationName,
-                                                        avatar: conversation.conversationAvatar,
-                                                        lastMessageSenderId: conversation.lastMessage.sender.userId,
-                                                    })
-                                                }
-                                            >
-                                                <Image
-                                                    className="w-10 h-10 object-cover rounded-full border"
-                                                    src={
-                                                        conversation.conversationAvatar || '/images/default-avatar.png'
-                                                    }
-                                                    alt="avatar"
-                                                    width={800}
-                                                    height={800}
-                                                />
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-sm">
-                                                        {conversation.conversationName}
-                                                    </div>
-                                                    <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
-                                                        {content}
+                                {keywordSearchFriendsToChat ? (
+                                    searchFriendsToChat.length > 0 ? (
+                                        <div className="flex flex-col">
+                                            {searchFriendsToChat.map((f) => (
+                                                <div
+                                                    className="flex items-center px-2 py-1 gap-x-2"
+                                                    key={`friend-${f.userId}`}
+                                                >
+                                                    <Image
+                                                        className="h-8 w-8 rounded-full"
+                                                        src={f.avatar || '/images/default-avatar.png'}
+                                                        alt="avatar"
+                                                        width={800}
+                                                        height={800}
+                                                    />
+                                                    <div className="font-semibold line-clamp-1 break-alls">
+                                                        {f.lastName} {f.firstName}
                                                     </div>
                                                 </div>
-                                                <div className="ms-6">
-                                                    {/* <CircleCheck className="w-6 h-6 text-background fill-primary" /> */}
-                                                    {/* <CircleCheck className="text-primary w-5 h-5" />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-2">Không tìm thấy kết quả nào</div>
+                                    )
+                                ) : (
+                                    <>
+                                        <div className="flex flex-col">
+                                            {recentConversations.map((conversation) => {
+                                                const lastMessageContent = conversation.lastMessage.content;
+                                                let content = '';
+                                                const isPrivate =
+                                                    conversation.conversationType === ConversationType.PRIVATE;
+                                                const isGroup =
+                                                    conversation.conversationType === ConversationType.GROUP;
+                                                const isSender = conversation.lastMessage.sender.userId === userInfo.id;
+
+                                                switch (conversation.lastMessage.messageType) {
+                                                    case MessageType.TEXT:
+                                                        if (isPrivate) {
+                                                            if (isSender) content = `Bạn: ${lastMessageContent}`;
+                                                            else content = lastMessageContent;
+                                                        } else if (isGroup) {
+                                                            if (isSender) content = `Bạn: ${lastMessageContent}`;
+                                                            else
+                                                                content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName}: ${lastMessageContent}`;
+                                                        }
+                                                        break;
+                                                    case MessageType.IMAGE:
+                                                        if (isSender) content = `Bạn vừa gửi 1 ảnh`;
+                                                        else
+                                                            content = `${conversation.lastMessage.sender.lastName} ${conversation.lastMessage.sender.firstName} vừa gửi 1 ảnh`;
+
+                                                        break;
+                                                    case MessageType.NOTIFICATION:
+                                                        content = lastMessageContent;
+                                                        break;
+                                                    default:
+                                                        content = '';
+                                                }
+
+                                                return (
+                                                    <div
+                                                        className={`flex items-center gap-x-2 p-2 rounded-xl hover:bg-foreground/5 ${
+                                                            conversationsUnread.includes(conversation.conversationId) &&
+                                                            'bg-foreground/5'
+                                                        }`}
+                                                        key={`recent-conversation-${conversation.conversationId}`}
+                                                        onClick={() =>
+                                                            handleOpenMessengerPopup({
+                                                                conversationId: conversation.conversationId,
+                                                                type: conversation.conversationType,
+                                                                friendId: conversation.friendId,
+                                                                name: conversation.conversationName,
+                                                                avatar: conversation.conversationAvatar,
+                                                                lastMessageSenderId:
+                                                                    conversation.lastMessage.sender.userId,
+                                                            })
+                                                        }
+                                                    >
+                                                        <Image
+                                                            className="w-10 h-10 object-cover rounded-full border"
+                                                            src={
+                                                                conversation.conversationAvatar ||
+                                                                '/images/default-avatar.png'
+                                                            }
+                                                            alt="avatar"
+                                                            width={800}
+                                                            height={800}
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="font-semibold text-sm">
+                                                                {conversation.conversationName}
+                                                            </div>
+                                                            <div className="text-gray text-xs line-clamp-1 break-all overflow-x-hidden">
+                                                                {content}
+                                                            </div>
+                                                        </div>
+                                                        <div className="ms-6">
+                                                            {/* <CircleCheck className="w-6 h-6 text-background fill-primary" /> */}
+                                                            {/* <CircleCheck className="text-primary w-5 h-5" />
                                                     <Image
                                                         className="w-5 h-5 object-cover rounded-full border"
                                                         src={
@@ -484,12 +566,14 @@ export default function RecentConversations({ className }: { className?: string 
                                                         width={800}
                                                         height={800}
                                                     /> */}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div ref={observerTarget} className="h-2"></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div ref={observerTarget} className="h-2"></div>
+                                    </>
+                                )}
                             </div>
                         </>
                     )}
