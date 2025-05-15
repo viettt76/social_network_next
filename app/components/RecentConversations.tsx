@@ -340,7 +340,10 @@ export default function RecentConversations({ className }: { className?: string 
         }
     };
 
-    const handleOpenAddGroup = () => setShowAddGroup(true);
+    const handleOpenAddGroup = () => {
+        setShowAddGroup(true);
+        setKeywordSearchFriendsToChat('');
+    };
     const handleCloseAddGroup = () => {
         setShowAddGroup(false);
         setKeywordSearchFriendsToCreateGroup('');
@@ -364,6 +367,7 @@ export default function RecentConversations({ className }: { className?: string 
                 participants: groupMembers,
             });
             handleCloseAddGroup();
+            setGroupName('');
         } catch (error) {
             console.error(error);
         }
@@ -400,6 +404,7 @@ export default function RecentConversations({ className }: { className?: string 
                             <input
                                 className="border px-2 py-1 rounded-3xl w-full mt-2"
                                 placeholder="Tên nhóm"
+                                value={groupName}
                                 onChange={(e) => setGroupName(e.target.value)}
                             />
                             <div className="mt-2">
