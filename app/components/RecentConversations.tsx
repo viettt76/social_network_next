@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import {
     createConversationService,
+    getConversationWithFriendService,
     getGroupConversationsService,
     getRecentConversationsService,
     readMessageService,
@@ -47,7 +48,13 @@ export default function RecentConversations({ className }: { className?: string 
         loading,
     });
 
-    const [searchFriendsToChat, setSearchFriendsToChat] = useState<UserInfoType[]>([]);
+    const [searchFriendsToChat, setSearchFriendsToChat] = useState<{
+        friends: UserInfoType[];
+        groups: GroupConversationType[];
+    }>({
+        friends: [],
+        groups: [],
+    });
     const [keywordSearchFriendsToChat, setKeywordSearchFriendsToChat] = useState('');
 
     const [groups, setGroups] = useState<GroupConversationType[]>([]);
@@ -72,15 +79,19 @@ export default function RecentConversations({ className }: { className?: string 
 
     useEffect(() => {
         if (keywordSearchFriendsToChat.trim() === '') {
-            setSearchFriendsToChat([]);
+            setSearchFriendsToChat({
+                friends: [],
+                groups: [],
+            });
         } else {
-            setSearchFriendsToChat([
-                ...friends.filter((f) =>
+            setSearchFriendsToChat({
+                friends: friends.filter((f) =>
                     includesInsensitive(`${f.lastName} ${f.firstName}`, keywordSearchFriendsToChat.trim()),
                 ),
-            ]);
+                groups: groups.filter((g) => includesInsensitive(g.name, keywordSearchFriendsToChat.trim())),
+            });
         }
-    }, [friends, keywordSearchFriendsToChat, includesInsensitive]);
+    }, [friends, groups, keywordSearchFriendsToChat, includesInsensitive]);
 
     useEffect(() => {
         (async () => {
@@ -373,6 +384,50 @@ export default function RecentConversations({ className }: { className?: string 
         }
     };
 
+    const handleAddOpenPrivateConversation = async (friendInfo: UserInfoType) => {
+        try {
+            const res = await getConversationWithFriendService(friendInfo.userId);
+            dispatch(
+                openConversation({
+                    conversationId: res.data?.conversationId,
+                    name: `${friendInfo.lastName} ${friendInfo.firstName}`,
+                    friendId: friendInfo.userId,
+                    type: ConversationType.PRIVATE,
+                    avatar: friendInfo.avatar,
+                    unreadCount: 0,
+                    isMinimized: false,
+                    isFocus: true,
+                    messages: [],
+                }),
+            );
+            handleHideRecentConversations();
+            setKeywordSearchFriendsToChat('');
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleAddOpenGroupConversation = async (groupInfo: GroupConversationType) => {
+        try {
+            dispatch(
+                openConversation({
+                    conversationId: groupInfo.conversationId,
+                    name: groupInfo.name,
+                    type: ConversationType.GROUP,
+                    avatar: groupInfo.avatar,
+                    unreadCount: 0,
+                    isMinimized: false,
+                    isFocus: true,
+                    messages: [],
+                }),
+            );
+            handleHideRecentConversations();
+            setKeywordSearchFriendsToChat('');
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <div ref={recentConversationsRef} className="relative">
             <ChatCenteredDots
@@ -442,7 +497,6 @@ export default function RecentConversations({ className }: { className?: string 
                     ) : (
                         <>
                             <div className="flex items-center justify-between gap-x-2 mb-2 border-b px-4 pb-2">
-                                {/* <div className="font-semibold ">Tin nhắn</div> */}
                                 {keywordSearchFriendsToChat && (
                                     <ArrowLeft
                                         className="cursor-pointer"
@@ -456,18 +510,17 @@ export default function RecentConversations({ className }: { className?: string 
                                     onChange={(e) => setKeywordSearchFriendsToChat(e.target.value)}
                                 />
                                 <Plus className="text-primary cursor-pointer" onClick={handleOpenAddGroup} />
-                                {/* <div className="text-primary cursor-pointer" onClick={handleOpenAddGroup}>
-                                    <Plus className="w-10" />
-                                </div> */}
                             </div>
-                            <div className="max-h-[22rem] overflow-y-auto px-2">
+                            <div className="max-h-[22rem] overflow-y-auto">
                                 {keywordSearchFriendsToChat ? (
-                                    searchFriendsToChat.length > 0 ? (
+                                    searchFriendsToChat.friends.length > 0 || searchFriendsToChat.groups.length > 0 ? (
                                         <div className="flex flex-col">
-                                            {searchFriendsToChat.map((f) => (
+                                            <div className="px-4">Bạn bè</div>
+                                            {searchFriendsToChat.friends.map((f) => (
                                                 <div
-                                                    className="flex items-center px-2 py-1 gap-x-2"
+                                                    className="flex items-center px-4 py-1 gap-x-2"
                                                     key={`friend-${f.userId}`}
+                                                    onClick={() => handleAddOpenPrivateConversation(f)}
                                                 >
                                                     <Image
                                                         className="h-8 w-8 rounded-full"
@@ -478,6 +531,25 @@ export default function RecentConversations({ className }: { className?: string 
                                                     />
                                                     <div className="font-semibold line-clamp-1 break-alls">
                                                         {f.lastName} {f.firstName}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <div className="mt-3 border-t pt-2 px-4">Nhóm</div>
+                                            {searchFriendsToChat.groups.map((g) => (
+                                                <div
+                                                    className="flex items-center px-4 py-1 gap-x-2"
+                                                    key={`group-${g.conversationId}`}
+                                                    onClick={() => handleAddOpenGroupConversation(g)}
+                                                >
+                                                    <Image
+                                                        className="h-8 w-8 rounded-full"
+                                                        src={g.avatar || '/images/default-avatar.png'}
+                                                        alt="avatar"
+                                                        width={800}
+                                                        height={800}
+                                                    />
+                                                    <div className="font-semibold line-clamp-1 break-alls">
+                                                        {g.name}
                                                     </div>
                                                 </div>
                                             ))}

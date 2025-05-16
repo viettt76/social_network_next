@@ -99,7 +99,7 @@ export default function ConversationBubbles() {
 
     useClickOutside(friendListRef, handleHideFriendList);
 
-    const handleAddOpenConversation = async (friendInfo: UserInfoType) => {
+    const handleAddOpenPrivateConversation = async (friendInfo: UserInfoType) => {
         try {
             const res = await getConversationWithFriendService(friendInfo.userId);
             dispatch(
@@ -109,6 +109,26 @@ export default function ConversationBubbles() {
                     friendId: friendInfo.userId,
                     type: ConversationType.PRIVATE,
                     avatar: friendInfo.avatar,
+                    unreadCount: 0,
+                    isMinimized: false,
+                    isFocus: true,
+                    messages: [],
+                }),
+            );
+            handleHideFriendList();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleAddOpenGroupConversation = async (groupInfo: GroupConversationType) => {
+        try {
+            dispatch(
+                openConversation({
+                    conversationId: groupInfo.conversationId,
+                    name: groupInfo.name,
+                    type: ConversationType.GROUP,
+                    avatar: groupInfo.avatar,
                     unreadCount: 0,
                     isMinimized: false,
                     isFocus: true,
@@ -152,7 +172,7 @@ export default function ConversationBubbles() {
                                             <div
                                                 className="flex items-center"
                                                 key={`conversation-${friend.userId}`}
-                                                onClick={() => handleAddOpenConversation(friend)}
+                                                onClick={() => handleAddOpenPrivateConversation(friend)}
                                             >
                                                 <Image
                                                     className="rounded-full border w-8 h-8 object-cover border"
@@ -180,7 +200,7 @@ export default function ConversationBubbles() {
                                             <div
                                                 className="flex items-center"
                                                 key={`conversation-${group.conversationId}`}
-                                                // onClick={() => handleAddOpenConversation(group)}
+                                                onClick={() => handleAddOpenGroupConversation(group)}
                                             >
                                                 <Image
                                                     className="rounded-full border w-8 h-8 object-cover border"
