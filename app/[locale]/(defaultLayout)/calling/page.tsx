@@ -1,7 +1,5 @@
 'use client';
 
-import { useSocket } from '@/app/components/SocketProvider';
-import { useAppDispatch } from '@/lib/hooks';
 import {
     ControlBar,
     GridLayout,
@@ -10,11 +8,19 @@ import {
     RoomAudioRenderer,
     useRoomContext,
     useTracks,
+    VideoTrack,
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSocket } from '@/app/components/SocketProvider';
+import { useAppDispatch } from '@/lib/hooks';
+import type { TrackReference, TrackReferenceOrPlaceholder } from '@livekit/components-core';
 
-const CallingWindow = () => {
+function isTrackReference(t: TrackReference | TrackReferenceOrPlaceholder): t is TrackReference {
+    return !!t.publication && !!t.publication.track;
+}
+
+export default function CallingWindow() {
     const [callData, setCallData] = useState({
         token: '',
         userId: '',
@@ -43,46 +49,93 @@ const CallingWindow = () => {
             </LiveKitRoom>
         </div>
     );
-};
+}
 
 function MyVideoConference({ userId }) {
     const dispatch = useAppDispatch();
     const socket = useSocket();
-
     const room = useRoomContext();
 
-    const tracks = useTracks(
-        [
-            { source: Track.Source.Camera, withPlaceholder: true },
-            { source: Track.Source.ScreenShare, withPlaceholder: false },
-        ],
-        { onlySubscribed: false },
-    );
+    const [isScreenFull, setIsScreenFull] = useState(false);
+    const screenRef = useRef<HTMLVideoElement | null>(null);
+
+    const cameraTracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }], { onlySubscribed: false });
+
+    const screenTracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }], {
+        onlySubscribed: true,
+    });
+
+    const screenTrack = screenTracks.find(isTrackReference);
+
+    const handleToggleFullscreen = () => {
+        setIsScreenFull((prev) => !prev);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsScreenFull(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         const handleClose = () => {
             socket.emit('call:end', userId);
-
-            if (window.opener) {
-                window.close();
-            }
+            if (window.opener) window.close();
         };
 
         socket.on('call:end', handleClose);
-
         room.on('disconnected', handleClose);
 
         return () => {
-            room.off('disconnected', handleClose);
             socket.off('call:end', handleClose);
+            room.off('disconnected', handleClose);
         };
     }, [room, socket, dispatch, userId]);
 
     return (
-        <GridLayout tracks={tracks} style={{ height: 'calc(100vh - 10rem)' }}>
-            <ParticipantTile />
-        </GridLayout>
+        <>
+            {screenTrack && isScreenFull && (
+                <div className="fixed inset-0 z-50 bg-black">
+                    <VideoTrack
+                        trackRef={screenTrack}
+                        className="w-full h-full object-contain"
+                        ref={screenRef}
+                        onDoubleClick={handleToggleFullscreen}
+                    />
+                    <button
+                        onClick={handleToggleFullscreen}
+                        className="absolute top-4 right-4 z-50 bg-white text-black px-3 py-1 rounded"
+                    >
+                        Thoát full màn hình
+                    </button>
+                </div>
+            )}
+            {!isScreenFull && (
+                <div className="flex">
+                    {screenTrack && (
+                        <div className="w-[70vw] bg-black">
+                            <VideoTrack
+                                trackRef={screenTrack}
+                                className="w-full h-full object-contain"
+                                ref={screenRef}
+                                onDoubleClick={handleToggleFullscreen}
+                            />
+                        </div>
+                    )}
+
+                    <GridLayout
+                        tracks={cameraTracks}
+                        className={`${screenTrack ? 'w-[30vw]' : 'w-[100vw]'}`}
+                        style={{ height: 'calc(100vh - 5rem)' }}
+                    >
+                        <ParticipantTile />
+                    </GridLayout>
+                </div>
+            )}
+        </>
     );
 }
-
-export default CallingWindow;
