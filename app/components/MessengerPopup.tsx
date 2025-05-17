@@ -51,6 +51,7 @@ interface MessengerPopupProps {
     avatar?: string;
     isMinimized: boolean;
     isFocus: boolean;
+    unreadCount: number;
     className?: string;
 }
 
@@ -63,6 +64,7 @@ export default function MessengerPopup({
     avatar,
     isMinimized,
     isFocus,
+    unreadCount,
     className,
 }: MessengerPopupProps) {
     const socket = useSocket();
@@ -428,7 +430,7 @@ export default function MessengerPopup({
         dispatch(focusConversationPopup(conversationId || friendId || ''));
         dispatch(removeConversationsUnread(conversationId));
 
-        if (conversationId) {
+        if (conversationId && unreadCount > 0) {
             await readMessageService(conversationId);
         }
     };

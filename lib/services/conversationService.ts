@@ -88,6 +88,10 @@ export const addGroupMembersService = ({
     });
 };
 
+export const outGroupService = (conversationId: string) => {
+    return axios.delete(`/conversations/members/${conversationId}`);
+};
+
 export const readMessageService = (conversationId: string) => {
     return axios.post(`/conversations/messages/read/${conversationId}`);
 };

@@ -27,7 +27,10 @@ export function DrilldownMenuProvider({ children, className }: DrilldownMenuProv
     const triggerRef = useRef<HTMLSpanElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
-    useClickOutside([triggerRef, contentRef], () => setIsOpen(false));
+    useClickOutside([triggerRef, contentRef], () => {
+        setIsOpen(false);
+        setActiveMenu('root');
+    });
 
     return (
         <DrilldownMenuContext.Provider value={{ activeMenu, setActiveMenu, isOpen, toggleMenu, triggerRef }}>
@@ -124,16 +127,17 @@ interface DrilldownMenuItemProps {
     children: ReactNode;
     submenu?: string;
     className?: string;
+    onClick?: () => void;
 }
 
-export function DrilldownMenuItem({ children, submenu, className }: DrilldownMenuItemProps) {
+export function DrilldownMenuItem({ children, submenu, className, onClick }: DrilldownMenuItemProps) {
     const context = useContext(DrilldownMenuContext);
     if (!context) throw new Error('DrilldownMenuItem must be used within DrilldownMenuProvider');
     const { setActiveMenu } = context;
 
     return (
         <div
-            onClick={() => submenu && setActiveMenu(submenu)}
+            onClick={() => (onClick ? onClick() : submenu && setActiveMenu(submenu))}
             className={cn('px-2 py-1 cursor-pointer hover:bg-gray-100 text-black whitespace-nowrap', className)}
         >
             {children}

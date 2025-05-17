@@ -267,6 +267,7 @@ export default function ConversationBubbles() {
                         name={conversation.name}
                         isMinimized={conversation.isMinimized}
                         isFocus={conversation.isFocus}
+                        unreadCount={conversation.unreadCount}
                         className={`${!openConversationIndexs.includes(index) && 'hidden'}`}
                     />
                 );

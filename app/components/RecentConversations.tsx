@@ -252,7 +252,7 @@ export default function RecentConversations({ className }: { className?: string 
         };
     }, [socket, userInfo.id, conversationsUnread, dispatch]);
 
-    // Socket handle a conversation group created to update recent conversation
+    // Socket handle a conversation group created and out group to update recent conversation
     useEffect(() => {
         const handleNewConversationGroup = (newConversationGroup: any) => {
             const {
@@ -293,17 +293,59 @@ export default function RecentConversations({ className }: { className?: string 
             });
         };
 
+        const handleOutGroupChat = (conversationId) => {
+            setRecentConversations((prev) => prev.filter((c) => c.conversationId !== conversationId));
+        };
+
         socket.on('newConversationGroup', handleNewConversationGroup);
+        socket.on('outGroupChat', handleOutGroupChat);
 
         return () => {
             socket.off('newConversationGroup', handleNewConversationGroup);
+            socket.off('outGroupChat', handleOutGroupChat);
         };
     }, [socket]);
 
     // Socket handle added to the group
     useEffect(() => {
-        const handleAddedToGroup = () => {
+        const handleAddedToGroup = async () => {
             setRecentConversationsPage(1);
+            setLoading(true);
+
+            try {
+                const { data } = await getRecentConversationsService(1);
+
+                if (data.length > 0) {
+                    setRecentConversations(
+                        data.map((c) => ({
+                            conversationId: c.conversationId,
+                            conversationName: c.conversationName,
+                            conversationType: c.conversationType,
+                            conversationAvatar: c.conversationAvatar,
+                            lastMessage: {
+                                messageId: c.lastMessageId,
+                                conversationId: c.conversationId,
+                                content: c.lastMessageContent,
+                                messageType: c.lastMessageType,
+                                sender: {
+                                    userId: c.senderId,
+                                    firstName: c.senderFirstName,
+                                    lastName: c.senderLastName,
+                                    avatar: c.senderAvatar,
+                                },
+                            },
+                            lastUpdated: c.lastUpdated,
+                            ...(c.conversationType === ConversationType.PRIVATE && {
+                                friendId: c.friendId,
+                            }),
+                        })),
+                    );
+
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error(error);
+            }
         };
 
         socket.on('addedToGroup', handleAddedToGroup);

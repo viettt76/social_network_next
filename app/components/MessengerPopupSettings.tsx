@@ -1,10 +1,10 @@
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ConversationType } from '@/lib/slices/conversationSlice';
-import { addGroupMembersService, getGroupMembersService } from '@/lib/services/conversationService';
+import { closeConversation, ConversationType } from '@/lib/slices/conversationSlice';
+import { addGroupMembersService, getGroupMembersService, outGroupService } from '@/lib/services/conversationService';
 import { ConversationRole, UserInfoType } from '@/app/dataType';
-import { useAppSelector } from '@/lib/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { selectUserInfo } from '@/lib/slices/userSlice';
 import { useSocket } from '@/app/components/SocketProvider';
 import React from 'react';
@@ -13,6 +13,8 @@ import { selectFriends } from '@/lib/slices/relationshipSlice';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DrilldownMenuContent, DrilldownMenuItem, DrilldownMenuProvider, DrilldownMenuTrigger } from './DrilldownMenu';
 import { Link } from '@/i18n/routing';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type GroupMemberType = UserInfoType & {
     role: ConversationRole;
@@ -34,6 +36,7 @@ export default function MessengerPopupSettings({
 }: MessengerPopupSettingsProps) {
     const socket = useSocket();
 
+    const dispatch = useAppDispatch();
     const userInfo = useAppSelector(selectUserInfo);
     const friends = useAppSelector(selectFriends);
 
@@ -43,6 +46,8 @@ export default function MessengerPopupSettings({
     const [isAdmin, setIsAdmin] = useState(false);
 
     const [groupMembersToAdd, setGroupMembersToAdd] = useState<UserInfoType[]>([]);
+
+    const [showDialogOutGroup, setShowDialogOutGroup] = useState(false);
 
     const { observerTarget: observerGroupMembersTarget } = useInfiniteScroll({
         callback: () => setGroupMembersonsPage((prev) => prev + 1),
@@ -85,16 +90,22 @@ export default function MessengerPopupSettings({
         setIsAdmin(groupMembers.find((m) => m.userId === userInfo.id)?.role === ConversationRole.ADMIN);
     }, [groupMembers, userInfo.id]);
 
-    // Socket handle more member to conversation group
+    // Socket handle more and reduce member to conversation group
     useEffect(() => {
         const handleMoreMemberToGroup = (newMembers: GroupMemberType[]) => {
             setGroupMembers((prev) => [...prev, ...newMembers]);
         };
 
+        const handleReduceMemberToGroup = (memberId: string) => {
+            setGroupMembers((prev) => prev.filter((m) => m.userId !== memberId));
+        };
+
         socket.on('moreMemberToGroup', handleMoreMemberToGroup);
+        socket.on('reduceMemberToGroup', handleReduceMemberToGroup);
 
         return () => {
             socket.off('moreMemberToGroup', handleMoreMemberToGroup);
+            socket.off('reduceMemberToGroup', handleReduceMemberToGroup);
         };
     }, [socket, type]);
 
@@ -122,6 +133,16 @@ export default function MessengerPopupSettings({
         }
     }, [conversationId, groupMembersToAdd]);
 
+    const handleOutGroup = async () => {
+        try {
+            await outGroupService(conversationId);
+            setShowDialogOutGroup(false);
+            dispatch(closeConversation(conversationId));
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <DrilldownMenuProvider>
             <DrilldownMenuTrigger>
@@ -139,6 +160,7 @@ export default function MessengerPopupSettings({
                     <>
                         <DrilldownMenuItem submenu="group-members">Thành viên nhóm</DrilldownMenuItem>
                         {isAdmin && <DrilldownMenuItem submenu="add-members">Thêm thành viên</DrilldownMenuItem>}
+                        <DrilldownMenuItem onClick={() => setShowDialogOutGroup(true)}>Rời nhóm</DrilldownMenuItem>
                     </>
                 )}
             </DrilldownMenuContent>
@@ -226,6 +248,19 @@ export default function MessengerPopupSettings({
                     </DrilldownMenuItem>
                 </DrilldownMenuContent>
             )}
+
+            <Dialog open={showDialogOutGroup} onOpenChange={setShowDialogOutGroup}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Bạn có chắc chắn muốn rời nhóm không</DialogTitle>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="destructive" onClick={handleOutGroup}>
+                            Rời nhóm
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DrilldownMenuProvider>
     );
 }
