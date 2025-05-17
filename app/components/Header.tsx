@@ -77,32 +77,45 @@ export default function Header() {
                             onFocus={handleShowSearchResult}
                         />
                         <MagnifyingGlass />
-                        {searchResult.length > 0 && showSearchResult && (
-                            <div className="absolute top-[calc(100%+0.4rem)] left-0 right-0 rounded-lg bg-background p-1 border shadow-all-sides">
-                                {searchResult.map((r, index) => (
+                        {showSearchResult &&
+                            keywordDebounced.length > 0 &&
+                            (searchResult.length > 0 ? (
+                                <div className="absolute top-[calc(100%+0.4rem)] left-0 right-0 rounded-lg bg-background p-1 border shadow-all-sides">
+                                    {searchResult.slice(0, 8).map((r, index) => (
+                                        <Link
+                                            href={`/profile/${r.userId}`}
+                                            className="flex items-center gap-x-2 px-2 py-1 rounded-lg hover:bg-gray/10"
+                                            key={`result-${index}`}
+                                            onClick={() => {
+                                                setKeyword('');
+                                                setShowSearchResult(false);
+                                            }}
+                                        >
+                                            <Image
+                                                className="rounded-full border w-9 h-9"
+                                                src={r.avatar || '/images/default-avatar.png'}
+                                                width={2000}
+                                                height={2000}
+                                                alt="avatar"
+                                            />
+                                            <div className="font-semibold">
+                                                {r.lastName} {r.firstName}
+                                            </div>
+                                        </Link>
+                                    ))}
                                     <Link
-                                        href={`/profile/${r.userId}`}
-                                        className="flex items-center gap-x-2 px-2 py-1 rounded-lg hover:bg-gray/10"
-                                        key={`result-${index}`}
-                                        onClick={() => {
-                                            setKeyword('');
-                                            setShowSearchResult(false);
-                                        }}
+                                        className="text-primary p-2 inline-block"
+                                        href={`/search/${keyword}`}
+                                        onClick={() => setShowSearchResult(false)}
                                     >
-                                        <Image
-                                            className="rounded-full border w-9 h-9"
-                                            src={r.avatar || '/images/default-avatar.png'}
-                                            width={2000}
-                                            height={2000}
-                                            alt="avatar"
-                                        />
-                                        <div className="font-semibold">
-                                            {r.lastName} {r.firstName}
-                                        </div>
+                                        Xem tất cả
                                     </Link>
-                                ))}
-                            </div>
-                        )}
+                                </div>
+                            ) : (
+                                <div className="absolute top-[calc(100%+0.4rem)] left-0 right-0 rounded-lg bg-background p-3 border shadow-all-sides text-center">
+                                    Không có kết quả nào
+                                </div>
+                            ))}
                     </div>
 
                     <HeaderRight />

@@ -58,7 +58,7 @@ export default function FriendsLayout({ children }) {
                             </Link>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="groups">
+                    {/* <AccordionItem value="groups">
                         <AccordionTrigger className={`${pathname.includes('/groups') && 'text-primary'}`}>
                             Nhóm
                         </AccordionTrigger>
@@ -67,7 +67,7 @@ export default function FriendsLayout({ children }) {
                                 Gợi ý
                             </Link>
                         </AccordionContent>
-                    </AccordionItem>
+                    </AccordionItem> */}
                 </Accordion>
             </div>
             <div className="flex-1">{children}</div>
