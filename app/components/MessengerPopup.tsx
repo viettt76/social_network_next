@@ -471,7 +471,10 @@ export default function MessengerPopup({
                         friendId={friendId}
                         type={type}
                     />
-                    <Phone className="w-4 h-4" onClick={handleCallRequest} />
+                    <Phone
+                        className={`${isFocus ? 'text-background' : 'text-foreground'} w-4 h-4`}
+                        onClick={handleCallRequest}
+                    />
                 </div>
                 <div className="flex items-center gap-x-1">
                     <Minus

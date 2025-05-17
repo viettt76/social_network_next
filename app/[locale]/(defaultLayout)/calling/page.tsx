@@ -83,16 +83,21 @@ function MyVideoConference({ userId }) {
 
     useEffect(() => {
         const handleClose = () => {
-            socket.emit('call:end', userId);
             if (window.opener) window.close();
+        };
+
+        const handleUnload = () => {
+            socket.emit('call:end', userId);
         };
 
         socket.on('call:end', handleClose);
         room.on('disconnected', handleClose);
+        window.addEventListener('beforeunload', handleUnload);
 
         return () => {
             socket.off('call:end', handleClose);
             room.off('disconnected', handleClose);
+            window.removeEventListener('beforeunload', handleUnload);
         };
     }, [room, socket, dispatch, userId]);
 

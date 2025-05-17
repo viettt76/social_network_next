@@ -46,18 +46,13 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             });
         };
 
-        const handleEndCall = () => {
-            dispatch(clearCallData());
-        };
-
         socket.on('newFriendRequest', handleNewFriendRequest);
 
         socket.on('accountLocked', handleAccountLocked);
 
-        socket.on('call:end', handleEndCall);
-
         return () => {
             socket.off('newFriendRequest', handleNewFriendRequest);
+            socket.off('accountLocked', handleAccountLocked);
             socket.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
